@@ -3,8 +3,21 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>Reproductor | Streamix</title>
+<title id="pageTitle">Reproductor | Streamix</title>
 <meta name="description" content="Reproductor de películas y series con múltiples servidores.">
+
+<!-- Open Graph / redes sociales (se actualizan por JS con los datos del título real al cargar) -->
+<meta property="og:type" content="video.other">
+<meta property="og:site_name" content="Streamix">
+<meta id="ogTitle" property="og:title" content="Streamix | Reproductor">
+<meta id="ogDescription" property="og:description" content="Reproductor de películas y series con múltiples servidores.">
+<meta id="ogImage" property="og:image" content="https://i.ibb.co/V0Sst1qh/20260203-025506.png">
+
+<!-- Twitter Card -->
+<meta name="twitter:card" content="summary_large_image">
+<meta id="twitterTitle" name="twitter:title" content="Streamix | Reproductor">
+<meta id="twitterDescription" name="twitter:description" content="Reproductor de películas y series con múltiples servidores.">
+<meta id="twitterImage" name="twitter:image" content="https://i.ibb.co/V0Sst1qh/20260203-025506.png">
 
 <!-- Tailwind CSS CDN -->
 <script src="https://cdn.tailwindcss.com"></script>
@@ -13,6 +26,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+<!-- Font Awesome (para el ícono de la sección API) -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 
 <script>
   tailwind.config = {
@@ -39,6 +55,34 @@
 
 <style>
   /* ================================================================
+     TEMA DINÁMICO POR POSTER
+     ----------------------------------------------------------------
+     --accent-rgb se actualiza por JS (updatePosterTheme) con el color
+     dominante del poster del título actual. Por defecto es el rojo de
+     marca de Streamix. Todo lo que deba adaptarse al color dinámico
+     usa estas clases en vez del rojo/brand fijo de Tailwind.
+     ================================================================ */
+  :root {
+    --accent-rgb: 229, 9, 20; /* rojo Streamix por defecto */
+  }
+  .dynamic-accent-bg {
+    background-color: rgb(var(--accent-rgb));
+    transition: background-color 0.6s ease;
+  }
+  .dynamic-accent-text {
+    color: rgb(var(--accent-rgb));
+    transition: color 0.6s ease;
+  }
+  .dynamic-accent-border {
+    border-color: rgba(var(--accent-rgb), 0.4);
+    transition: border-color 0.6s ease;
+  }
+  .dynamic-accent-glow {
+    box-shadow: 0 8px 28px -6px rgba(var(--accent-rgb), 0.55);
+    transition: box-shadow 0.6s ease;
+  }
+
+  /* ================================================================
      BASE
      ================================================================ */
   * { -webkit-tap-highlight-color: transparent; }
@@ -46,6 +90,10 @@
     font-family: 'Poppins', sans-serif;
     background: #0A0A0A;
     color: #fff;
+    padding-bottom: 80px; /* espacio para la bottom nav flotante móvil (h-14 + márgenes) */
+  }
+  @media (min-width: 768px) {
+    body { padding-bottom: 0; } /* la bottom nav solo existe en móvil */
   }
 
   ::-webkit-scrollbar { width: 8px; height: 0; }
@@ -116,14 +164,14 @@
     box-shadow: 0 8px 24px -6px var(--server-glow, rgba(229,9,20,0.5));
   }
 
-  .server-dropdown-panel {
-    transform-origin: top right;
-    transition: opacity 0.25s ease, transform 0.25s cubic-bezier(.16,1,.3,1);
+  /* Highlight temporal en el grid al sugerir "cambiar de servidor" desde
+     el loader o el estado de error, en vez del dropdown eliminado. */
+  .server-grid-highlight {
+    animation: gridPulse 1.4s ease-in-out 2;
   }
-  .server-dropdown-panel.closed {
-    opacity: 0;
-    transform: scale(0.95) translateY(-8px);
-    pointer-events: none;
+  @keyframes gridPulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(229,9,20,0); }
+    50% { box-shadow: 0 0 0 4px rgba(229,9,20,0.35); }
   }
 
   /* ================================================================
@@ -227,6 +275,18 @@
   }
 
   /* ================================================================
+     RATING BUTTONS (Trakt)
+     ================================================================ */
+  .rating-btn.active-like {
+    background: rgba(34, 197, 94, 0.2);
+    color: rgb(74, 222, 128);
+  }
+  .rating-btn.active-dislike {
+    background: rgba(var(--accent-rgb), 0.2);
+    color: rgb(var(--accent-rgb));
+  }
+
+  /* ================================================================
      EPISODE CARDS
      ================================================================ */
   .episode-card {
@@ -236,8 +296,9 @@
     background-color: rgba(255,255,255,0.08);
   }
   .episode-card.active {
-    background-color: rgba(229,9,20,0.12);
-    border-color: rgba(229,9,20,0.45);
+    background-color: rgba(var(--accent-rgb), 0.12);
+    border-color: rgba(var(--accent-rgb), 0.45);
+    transition: background-color 0.6s ease, border-color 0.6s ease;
   }
   .episode-thumb-play {
     opacity: 0;
@@ -246,6 +307,25 @@
   .episode-card:hover .episode-thumb-play,
   .episode-card.active .episode-thumb-play {
     opacity: 1;
+  }
+
+  /* ================================================================
+     BOTTOM NAV (móvil)
+     ================================================================ */
+  #bottomNav {
+    bottom: calc(0.75rem + env(safe-area-inset-bottom, 0px));
+  }
+  .bottom-nav-item {
+    transition: color 0.2s ease, transform 0.2s ease;
+  }
+  .bottom-nav-item.active {
+    color: #E50914;
+  }
+  .bottom-nav-item:active {
+    transform: scale(0.92);
+  }
+  .bottom-nav-item .nav-icon-dot {
+    transition: opacity 0.2s ease, transform 0.2s ease;
   }
 </style>
 </head>
@@ -258,15 +338,14 @@
 <header class="glass sticky top-0 z-30 border-b border-white/5">
   <div class="max-w-6xl mx-auto px-4 md:px-6 h-14 md:h-16 flex items-center justify-between gap-3">
     <div class="flex items-center gap-2 min-w-0">
-      <span class="w-8 h-8 rounded-lg bg-brand flex items-center justify-center font-black text-sm shrink-0">S</span>
+      <span class="w-8 h-8 rounded-lg overflow-hidden flex items-center justify-center shrink-0">
+        <img src="https://i.ibb.co/V0Sst1qh/20260203-025506.png" alt="Streamix" class="w-full h-full object-cover" />
+      </span>
       <div class="min-w-0">
         <p id="mediaTitle" class="font-bold text-sm md:text-base leading-tight truncate">Cargando título…</p>
         <p id="mediaSubtitle" class="text-[11px] md:text-xs text-white/45 leading-tight truncate"></p>
       </div>
     </div>
-    <button id="backBtn" class="btn-ripple shrink-0 w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors" aria-label="Volver">
-      <svg class="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-    </button>
   </div>
 </header>
 
@@ -295,14 +374,20 @@
       <div id="loaderOverlay" class="absolute inset-0 z-20 flex flex-col items-center justify-center gap-4 bg-bg">
         <div class="spinner w-12 h-12 md:w-14 md:h-14"></div>
         <div class="flex items-center gap-1.5 text-white/60 text-sm font-medium">
-          <span>Conectando con</span>
+          <span id="loaderPrefixText">Conectando con</span>
           <span id="loaderServerName" class="text-white font-bold">servidor</span>
           <span class="flex gap-0.5 ml-0.5">
-            <span class="pulse-dot w-1 h-1 rounded-full bg-brand" style="animation-delay:0s"></span>
-            <span class="pulse-dot w-1 h-1 rounded-full bg-brand" style="animation-delay:0.2s"></span>
-            <span class="pulse-dot w-1 h-1 rounded-full bg-brand" style="animation-delay:0.4s"></span>
+            <span class="pulse-dot w-1 h-1 rounded-full dynamic-accent-bg" style="animation-delay:0s"></span>
+            <span class="pulse-dot w-1 h-1 rounded-full dynamic-accent-bg" style="animation-delay:0.2s"></span>
+            <span class="pulse-dot w-1 h-1 rounded-full dynamic-accent-bg" style="animation-delay:0.4s"></span>
           </span>
         </div>
+
+        <!-- Aparece solo si la carga se demora más de lo normal (ver LOAD_SLOW_HINT_MS) -->
+        <button id="loaderSwitchServerBtn" class="hidden fade-in btn-ripple inline-flex items-center gap-2 bg-white/10 hover:bg-white/20 transition-colors px-4 py-2 rounded-lg text-xs md:text-sm font-semibold mt-1">
+          <i class="fa-solid fa-shuffle text-xs"></i>
+          ¿Tarda mucho? Probar otro servidor
+        </button>
       </div>
 
       <!-- Error overlay -->
@@ -327,6 +412,12 @@
 
       <!-- Badge de temporada/episodio (solo series) -->
       <div id="episodeBadge" class="hidden absolute top-3 left-3 md:top-4 md:left-4 z-10 glass px-3 py-1.5 rounded-full text-xs md:text-sm font-bold"></div>
+
+      <!-- Botón flotante: siguiente episodio (solo series, si hay uno disponible) -->
+      <button id="nextEpisodeBtn" class="hidden btn-ripple absolute top-3 right-3 md:top-4 md:right-4 z-10 glass-strong hover:bg-white/15 px-3 md:px-4 py-1.5 md:py-2 rounded-full text-xs md:text-sm font-bold flex items-center gap-1.5 transition-colors">
+        <span>Siguiente</span>
+        <i class="fa-solid fa-forward-step"></i>
+      </button>
     </div>
   </section>
 
@@ -348,21 +439,6 @@
         <div class="flex items-center gap-2 shrink-0">
           <!-- Selector de idioma: filtra qué servidores se muestran -->
           <div id="languageTabs" class="flex items-center gap-1 bg-white/5 border border-white/10 rounded-xl p-1"></div>
-
-          <!-- Toggle de servidores en desktop: se abre como dropdown -->
-          <div class="relative shrink-0">
-            <button id="serverDropdownToggle" class="btn-ripple flex items-center gap-2 bg-white/10 hover:bg-white/20 transition-colors px-4 py-2.5 rounded-xl font-semibold text-sm">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7"/></svg>
-              <span class="hidden sm:inline">Servidores</span>
-              <svg id="dropdownChevron" class="w-3.5 h-3.5 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
-            </button>
-
-            <!-- Dropdown panel -->
-            <div id="serverDropdownPanel" class="server-dropdown-panel closed absolute right-0 mt-2 w-64 glass-strong rounded-2xl p-2 z-30 border border-white/10 shadow-2xl">
-              <p class="text-[11px] font-bold text-white/40 uppercase tracking-wide px-3 pt-2 pb-1.5">Elegir servidor</p>
-              <div id="serverDropdownList" class="flex flex-col gap-1"></div>
-            </div>
-          </div>
         </div>
       </div>
 
@@ -434,6 +510,23 @@
 
           <p id="detailsOverview" class="text-white/80 text-sm md:text-base leading-relaxed mb-4"></p>
 
+          <div class="flex flex-wrap items-center gap-2 mb-4">
+            <button id="trailerBtn" class="hidden btn-ripple inline-flex items-center gap-2 bg-white/10 hover:bg-white/20 transition-colors px-4 py-2 rounded-lg font-bold text-sm">
+              <i class="fa-solid fa-play"></i>
+              Ver Tráiler
+            </button>
+
+            <!-- Valoración con Trakt: solo visible si hay sesión activa -->
+            <div id="ratingButtons" class="hidden flex items-center gap-1.5">
+              <button id="thumbUpBtn" class="rating-btn btn-ripple w-10 h-10 rounded-lg bg-white/10 hover:bg-white/20 transition-colors flex items-center justify-center" aria-label="Me gusta">
+                <i class="fa-solid fa-thumbs-up text-sm"></i>
+              </button>
+              <button id="thumbDownBtn" class="rating-btn btn-ripple w-10 h-10 rounded-lg bg-white/10 hover:bg-white/20 transition-colors flex items-center justify-center" aria-label="No me gusta">
+                <i class="fa-solid fa-thumbs-down text-sm"></i>
+              </button>
+            </div>
+          </div>
+
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3 text-sm">
             <div id="detailsDirectorWrap" class="hidden">
               <span class="text-white/40 font-medium text-xs uppercase tracking-wide">Director</span>
@@ -455,6 +548,19 @@
       <div id="castWrap" class="hidden mt-5 md:mt-6 pt-5 md:pt-6 border-t border-white/10">
         <h3 class="text-sm md:text-base font-bold mb-3">Reparto principal</h3>
         <div id="castRow" class="flex gap-3 overflow-x-auto no-scrollbar pb-1"></div>
+      </div>
+
+      <!-- Saga/colección (solo películas que pertenecen a una) -->
+      <div id="collectionWrap" class="hidden mt-5 md:mt-6 pt-5 md:pt-6 border-t border-white/10">
+        <h3 class="text-sm md:text-base font-bold mb-3">Parte de la saga</h3>
+        <a id="collectionLink" href="index.html" class="flex items-center gap-3 p-3 rounded-xl bg-white/5 hover:bg-white/10 transition-colors">
+          <img id="collectionPoster" src="" alt="" class="w-12 h-16 rounded-lg object-cover shrink-0" />
+          <div class="min-w-0">
+            <p id="collectionName" class="font-bold text-sm leading-tight truncate"></p>
+            <p class="text-xs text-white/45 mt-0.5">Ver todas las películas de la saga</p>
+          </div>
+          <i class="fa-solid fa-chevron-right text-white/40 ml-auto shrink-0"></i>
+        </a>
       </div>
     </div>
 
@@ -495,6 +601,48 @@
     </div>
   </section>
 </main>
+
+<!-- ============================================================ -->
+<!-- BOTTOM NAV (solo móvil): Inicio · Películas · Series · Anime · API -->
+<!-- ============================================================ -->
+<nav id="bottomNav" class="md:hidden fixed bottom-3 left-3 right-3 z-40 glass-strong border border-white/10 rounded-full shadow-2xl">
+  <div class="grid grid-cols-5 h-14">
+    <button id="bottomNavBack" type="button" class="bottom-nav-item flex flex-col items-center justify-center gap-0.5 text-white/55 rounded-full" aria-label="Volver">
+      <i class="fa-solid fa-arrow-left text-sm"></i>
+      <span class="text-[9px] font-semibold">Volver</span>
+    </button>
+    <button id="bottomNavHome" type="button" class="bottom-nav-item flex flex-col items-center justify-center gap-0.5 text-white/55 rounded-full" aria-label="Inicio">
+      <i class="fa-solid fa-house text-sm"></i>
+      <span class="text-[9px] font-semibold">Inicio</span>
+    </button>
+    <button id="bottomNavSearch" type="button" class="bottom-nav-item flex flex-col items-center justify-center gap-0.5 text-white/55 rounded-full" aria-label="Buscar">
+      <i class="fa-solid fa-magnifying-glass text-sm"></i>
+      <span class="text-[9px] font-semibold">Buscar</span>
+    </button>
+    <button id="bottomNavSaved" type="button" class="bottom-nav-item flex flex-col items-center justify-center gap-0.5 text-white/55 rounded-full" aria-label="Guardados">
+      <i class="fa-solid fa-bookmark text-sm"></i>
+      <span class="text-[9px] font-semibold">Guardados</span>
+    </button>
+    <a href="https://tonplayer.space" target="_blank" rel="noopener noreferrer" class="bottom-nav-item flex flex-col items-center justify-center gap-0.5 text-white/55 rounded-full" aria-label="API">
+      <i class="fa-solid fa-code text-sm"></i>
+      <span class="text-[9px] font-semibold">API</span>
+    </a>
+  </div>
+</nav>
+
+<!-- ============================================================ -->
+<!-- MODAL: TRÁILER (embed de YouTube) -->
+<!-- ============================================================ -->
+<div id="trailerModal" class="hidden fixed inset-0 z-[70] flex items-center justify-center bg-black/85 backdrop-blur-sm px-4">
+  <div class="relative w-full max-w-3xl">
+    <button id="trailerCloseBtn" class="absolute -top-11 right-0 md:-right-2 w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors" aria-label="Cerrar tráiler">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+    </button>
+    <div class="player-wrap w-full rounded-xl overflow-hidden bg-black">
+      <iframe id="trailerIframe" class="absolute inset-0 w-full h-full border-0" src="" title="Tráiler" allow="autoplay; fullscreen" allowfullscreen></iframe>
+    </div>
+  </div>
+</div>
 
 <!-- ================================================================
      SCRIPT PRINCIPAL DEL REPRODUCTOR
@@ -551,7 +699,7 @@
     },
     {
       nombre: "Unlimplay",
-      icono: "https://www.google.com/s2/favicons?domain=unlimplay.com&sz=64",
+      icono: "https://www.google.com/s2/favicons?domain=Unlimplay.com&sz=64",
       color: "#3B82F6", // azul
       urlBase: "https://unlimplay.com",
       idioma: "es",
@@ -561,38 +709,30 @@
       },
     },
     {
-nombre: "Vimeus",
+      nombre: "Vimeus",
       icono: "https://www.google.com/s2/favicons?domain=vimeus.com&sz=64",
-      color: "#3B82F6", // azul
+      color: "#22C55E", // verde
       urlBase: "https://vimeus.com",
       idioma: "es",
-      formatoUrl: {
-        movie: "{urlBase}/e/movie?tmdb={tmdb_id}&view_key=E12rVOsnfQkR5JTSg4VbnmxJ_5jawynteLk3fTY0wA&title=PVHD&autoplay=1",
-        tv: "{urlBase}/e/serie?tmdb={tmdb_id}&view_key=E12rVOsnfQkR5JTSg4VbnmxJ_5jawynteLk3fTY0wA&se={season}&ep={episode}&title=PVHD&autoplay=1",
-      },
-    },
-    {
-      nombre: "Servidor C",
-      icono: "https://www.google.com/s2/favicons?domain=2embed.cc&sz=64",
-      color: "#22C55E", // verde
-      urlBase: "https://api3.ejemplo.com",
-      idioma: "pt",
       // Ejemplo de fórmula personalizada: este servidor usa "/embed/" en vez de "/play/"
       formatoUrl: {
-        movie: "{urlBase}/embed/movie/{tmdb_id}",
-        tv: "{urlBase}/embed/tv/{tmdb_id}/{season}/{episode}",
+        movie: "{urlBase}/e/movie?tmdb={tmdb_id}&view_key=2EOKjEd-ocsv9E_PZzrfBGgOiTLm6jtPFbp8apcC2Q",
+        tv: "{urlBase}/e/serie?tmdb={tmdb_id}&view_key=rmEZpTbdvA9V7oAkOlDwjyry88rqLvT2wy452Y_qgw&se={season}&ep={episode}",
       },
     },
     {
-      nombre: "Servidor D",
-      icono: "https://www.google.com/s2/favicons?domain=smashystream.com&sz=64",
-      color: "#A855F7", // violeta
-      urlBase: "https://api4.ejemplo.com",
-      idioma: "en",
-      // Ejemplo de fórmula personalizada: este servidor usa query params en vez de segmentos de ruta
+      nombre: "Embed69",
+      icono: "https://www.google.com/s2/favicons?domain=embed69.com&sz=64",
+      color: "#3B82F6", // azul
+      urlBase: "https://embed69.org",
+      idioma: "es",
+      // Ejemplo de fórmula personalizada: este servidor identifica el
+      // contenido por IMDB ID en vez de TMDB ID (común en varias APIs
+      // de streaming reales). El placeholder {imdb_id} se resuelve
+      // automáticamente pidiendo external_ids a TMDB antes de cargar.
       formatoUrl: {
-        movie: "{urlBase}/watch?type=movie&tmdb={tmdb_id}",
-        tv: "{urlBase}/watch?type=tv&tmdb={tmdb_id}&s={season}&e={episode}",
+        movie: "{urlBase}/f/{imdb_id}/",
+        tv: "{urlBase}/f/{imdb_id}-{season}x{episode}",
       },
     },
   ];
@@ -609,11 +749,18 @@ nombre: "Vimeus",
   const LAST_SERVER_KEY = "streamix_last_server_v1";
   const LAST_LANGUAGE_KEY = "streamix_last_language_v1";
   const LOAD_TIMEOUT_MS = 12000; // si el iframe no confirma carga en este tiempo, se asume error
+  const LOAD_SLOW_HINT_MS = 6000; // a los 6s sin confirmar carga, se sugiere cambiar de servidor
 
   let currentServerIndex = 0;
   let currentLanguage = LANGUAGES[0].code; // se resuelve de verdad en init()
   let loadTimeoutId = null;
-  let media = { tipo: "movie", tmdbId: null, temporada: null, episodio: null };
+  let loadSlowHintTimeoutId = null;
+  let media = { tipo: "movie", tmdbId: null, temporada: null, episodio: null, imdbId: null };
+
+  // Estado de episodios (solo series): usado para calcular "Siguiente episodio",
+  // incluyendo saltar a la primera de la siguiente temporada si corresponde.
+  let allSeasons = [];           // lista completa de temporadas de la serie
+  let currentSeasonEpisodes = []; // episodios de la temporada actualmente cargada
 
   const byId = (id) => document.getElementById(id);
 
@@ -655,7 +802,12 @@ nombre: "Vimeus",
 
      Si el servidor define "formatoUrl", se usa esa plantilla en su
      lugar, reemplazando los placeholders {urlBase}, {tmdb_id},
-     {season} y {episode} por los valores reales.
+     {season}, {episode} e {imdb_id} por los valores reales.
+
+     {imdb_id} se resuelve pidiendo a TMDB los IDs externos del título
+     (endpoint external_ids), ya que el reproductor solo recibe el TMDB
+     ID por URL. Mientras ese dato no haya llegado (o el título no
+     tenga IMDB ID en TMDB), el placeholder se reemplaza por cadena vacía.
      ================================================================ */
   const DEFAULT_URL_FORMAT = {
     movie: "{urlBase}/play/movie/{tmdb_id}",
@@ -668,7 +820,8 @@ nombre: "Vimeus",
       .replaceAll("{urlBase}", base)
       .replaceAll("{tmdb_id}", mediaInfo.tmdbId)
       .replaceAll("{season}", mediaInfo.temporada ?? "")
-      .replaceAll("{episode}", mediaInfo.episodio ?? "");
+      .replaceAll("{episode}", mediaInfo.episodio ?? "")
+      .replaceAll(/\{imdb_id\}/gi, mediaInfo.imdbId ?? ""); // acepta {imdb_id} o {IMDB_ID}
   }
 
   function buildEmbedUrl(server, mediaInfo) {
@@ -702,20 +855,33 @@ nombre: "Vimeus",
   function showLoading(server) {
     byId("loaderOverlay").classList.remove("hidden");
     byId("errorOverlay").classList.add("hidden");
+    byId("loaderPrefixText").textContent = "Conectando con";
     byId("loaderServerName").textContent = server.nombre;
     byId("playerIframe").classList.add("loading");
+    byId("loaderSwitchServerBtn").classList.add("hidden"); // se muestra de nuevo solo si vuelve a tardar
   }
 
   function showReady() {
     byId("loaderOverlay").classList.add("hidden");
     byId("errorOverlay").classList.add("hidden");
     byId("playerIframe").classList.remove("loading");
+    clearTimeout(loadSlowHintTimeoutId);
   }
 
   function showError() {
     byId("loaderOverlay").classList.add("hidden");
     byId("errorOverlay").classList.remove("hidden");
     byId("playerIframe").classList.add("loading");
+    clearTimeout(loadSlowHintTimeoutId);
+  }
+
+  // Aviso breve de que se está probando otro servidor automáticamente
+  // (fallback), sin tapar toda la pantalla como el error final.
+  function showFallbackNotice(fromServer, toServer) {
+    byId("loaderOverlay").classList.remove("hidden");
+    byId("errorOverlay").classList.add("hidden");
+    byId("loaderPrefixText").textContent = `"${fromServer.nombre}" falló. Probando`;
+    byId("loaderServerName").textContent = toServer.nombre;
   }
 
   /* ================================================================
@@ -724,11 +890,21 @@ nombre: "Vimeus",
      Cambia únicamente el "src" del iframe existente: la página nunca
      se recarga. Se guarda el servidor elegido en localStorage y se
      arma un timeout de seguridad por si el iframe nunca dispara
-     "load" (servidor caído, bloqueado por CORS/X-Frame-Options, etc).
+     "load" (servidor caído, bloqueado por CORS/X-Frame-Options, error
+     de red/SSL como 404 o ERR_SSL_UNRECOGNIZED_NAME_ALERT, etc).
+
+     Si un servidor falla, se intenta automáticamente el siguiente
+     servidor disponible en el mismo idioma (fallback en cadena), y solo
+     se muestra el error final cuando ya se probaron todos sin éxito.
      ================================================================ */
-  function loadServer(index, { isRetry = false } = {}) {
+  let fallbackAttempted = new Set(); // índices de servidor ya probados en esta cadena de fallback
+
+  function loadServer(index, { isRetry = false, isFallback = false } = {}) {
     const server = servers[index];
     if (!server) return;
+
+    if (!isFallback) fallbackAttempted.clear(); // nueva elección manual: reinicia la cadena
+    fallbackAttempted.add(index);
 
     currentServerIndex = index;
     localStorage.setItem(LAST_SERVER_KEY, String(index));
@@ -737,23 +913,58 @@ nombre: "Vimeus",
     updateActiveServerUI();
 
     const iframe = byId("playerIframe");
-    const url = buildEmbedUrl(server, media);
 
     clearTimeout(loadTimeoutId);
+    clearTimeout(loadSlowHintTimeoutId);
 
     // Si es un reintento sobre la misma URL, forzamos recarga real
     // vaciando el src antes de volver a asignarlo.
     if (isRetry) iframe.src = "about:blank";
 
-    // Pequeño delay para que el navegador procese el "about:blank"
-    // antes de asignar la URL real (evita que el evento load se pierda).
-    requestAnimationFrame(() => {
-      iframe.src = url;
+    // Si este servidor usa {imdb_id} y todavía no lo tenemos, lo pedimos
+    // antes de construir la URL (evita mandar el placeholder vacío).
+    // Para el resto de los servidores esto no agrega ninguna espera.
+    const urlReady = serverNeedsImdbId(server) && !media.imdbId
+      ? fetchImdbId(media).then(() => buildEmbedUrl(server, media))
+      : Promise.resolve(buildEmbedUrl(server, media));
+
+    urlReady.then((url) => {
+      // Pequeño delay para que el navegador procese el "about:blank"
+      // antes de asignar la URL real (evita que el evento load se pierda).
+      requestAnimationFrame(() => {
+        iframe.src = url;
+      });
     });
 
+    // A los pocos segundos sin confirmar carga, sugerimos cambiar de
+    // servidor sin cancelar el intento actual (que sigue corriendo).
+    loadSlowHintTimeoutId = setTimeout(() => {
+      byId("loaderSwitchServerBtn").classList.remove("hidden");
+    }, LOAD_SLOW_HINT_MS);
+
     loadTimeoutId = setTimeout(() => {
-      showError();
+      handleServerFailure(index);
     }, LOAD_TIMEOUT_MS);
+  }
+
+  // Se llama cuando un servidor falla (timeout o evento "error" del
+  // iframe). Busca el siguiente servidor no probado en el mismo idioma
+  // y lo intenta automáticamente; si ya se probaron todos, muestra error.
+  function handleServerFailure(failedIndex) {
+    const failedServer = servers[failedIndex];
+    const candidates = getServersForCurrentLanguage()
+      .filter(({ index }) => !fallbackAttempted.has(index));
+
+    if (candidates.length) {
+      const next = candidates[0];
+      showFallbackNotice(failedServer, next.server);
+      loadServer(next.index, { isFallback: true });
+    } else {
+      // Ya se probaron todos los servidores disponibles en este idioma.
+      showError();
+      byId("errorTitle").textContent = "Ningún servidor respondió";
+      byId("errorDescription").textContent = `Se probaron todos los servidores disponibles en este idioma sin éxito. Intenta con otro idioma o vuelve a intentarlo más tarde.`;
+    }
   }
 
   /* ================================================================
@@ -771,7 +982,7 @@ nombre: "Vimeus",
 
     iframe.addEventListener("error", () => {
       clearTimeout(loadTimeoutId);
-      showError();
+      handleServerFailure(currentServerIndex);
     });
   }
 
@@ -823,51 +1034,12 @@ nombre: "Vimeus",
       btn.addEventListener("click", () => {
         if (index === currentServerIndex) return; // ya está activo
         loadServer(index);
-        closeDropdown();
       });
 
       grid.appendChild(btn);
     });
 
     updateActiveServerUI();
-  }
-
-  function renderServerDropdown() {
-    const list = byId("serverDropdownList");
-    list.innerHTML = "";
-
-    const filtered = getServersForCurrentLanguage();
-
-    if (!filtered.length) {
-      list.innerHTML = `<p class="text-center text-white/40 text-xs py-3 px-2">Sin servidores en este idioma.</p>`;
-      return;
-    }
-
-    filtered.forEach(({ server, index }) => {
-      const item = document.createElement("button");
-      item.className = "dropdown-item w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/10 transition-colors text-left";
-      item.dataset.index = index;
-
-      item.innerHTML = `
-        <span class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style="background:${hexToRgba(server.color, 0.18)}">
-          ${buildServerIconHtml(server, "w-4.5 h-4.5")}
-        </span>
-        <span class="flex-1 min-w-0">
-          <span class="block font-semibold text-sm truncate">${server.nombre}</span>
-        </span>
-        <span class="dropdown-check w-4 h-4 shrink-0 ${index === currentServerIndex ? '' : 'hidden'}">
-          <svg fill="none" stroke="#E50914" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
-        </span>
-      `;
-
-      item.addEventListener("click", () => {
-        if (index === currentServerIndex) { closeDropdown(); return; }
-        loadServer(index);
-        closeDropdown();
-      });
-
-      list.appendChild(item);
-    });
   }
 
   // Renderiza las pestañas de idioma (Español / Português / English) a
@@ -907,7 +1079,6 @@ nombre: "Vimeus",
     });
 
     renderServerGrid();
-    renderServerDropdown();
 
     const available = getServersForCurrentLanguage();
     if (available.length) {
@@ -922,7 +1093,7 @@ nombre: "Vimeus",
     }
   }
 
-  // Actualiza el estado visual (activo/inactivo) en grid, dropdown y label superior
+  // Actualiza el estado visual (activo/inactivo) en el grid y el label superior
   function updateActiveServerUI() {
     const server = servers[currentServerIndex];
     if (!server) return;
@@ -940,12 +1111,6 @@ nombre: "Vimeus",
       btn.style.borderColor = isActive ? server.color : "";
       btn.style.backgroundColor = isActive ? hexToRgba(server.color, 0.14) : "";
     });
-
-    // Dropdown: mueve el check al servidor activo
-    document.querySelectorAll("#serverDropdownList .dropdown-item").forEach((item) => {
-      const isActive = Number(item.dataset.index) === currentServerIndex;
-      item.querySelector(".dropdown-check").classList.toggle("hidden", !isActive);
-    });
   }
 
   function hexToRgba(hex, alpha) {
@@ -957,20 +1122,18 @@ nombre: "Vimeus",
   }
 
   /* ================================================================
-     10. DROPDOWN: abrir / cerrar
+     10. IR AL GRID DE SERVIDORES (reemplaza al dropdown eliminado)
+     ----------------------------------------------------------------
+     El grid de servidores ya está siempre visible, así que "cambiar de
+     servidor" ahora simplemente hace scroll hasta él y lo resalta un
+     instante, en vez de abrir un panel que duplicaba la misma lista.
      ================================================================ */
-  function toggleDropdown() {
-    const panel = byId("serverDropdownPanel");
-    const isClosed = panel.classList.contains("closed");
-    if (isClosed) openDropdown(); else closeDropdown();
-  }
-  function openDropdown() {
-    byId("serverDropdownPanel").classList.remove("closed");
-    byId("dropdownChevron").style.transform = "rotate(180deg)";
-  }
-  function closeDropdown() {
-    byId("serverDropdownPanel").classList.add("closed");
-    byId("dropdownChevron").style.transform = "rotate(0deg)";
+  function scrollToServerGrid() {
+    const grid = byId("serverGrid");
+    grid.scrollIntoView({ behavior: "smooth", block: "center" });
+    grid.classList.remove("server-grid-highlight");
+    void grid.offsetWidth; // fuerza reflow para poder reiniciar la animación
+    grid.classList.add("server-grid-highlight");
   }
 
   /* ================================================================
@@ -1021,14 +1184,21 @@ nombre: "Vimeus",
   }
 
   function buildCastCard(person) {
-    const card = document.createElement("div");
+    const card = document.createElement("button");
     card.className = "cast-card shrink-0 w-20 md:w-24 text-center";
+    card.setAttribute("aria-label", `Ver filmografía de ${person.name}`);
     card.innerHTML = `
       <img src="${tmdbProfileUrl(person.profile_path)}" alt="${person.name}" loading="lazy"
            class="w-20 h-20 md:w-24 md:h-24 rounded-full object-cover mx-auto mb-2 border-2 border-white/10" />
       <p class="text-xs font-bold leading-tight line-clamp-2">${person.name}</p>
       <p class="text-[10px] text-white/45 leading-tight line-clamp-2 mt-0.5">${person.character || ""}</p>
     `;
+    // La filmografía se muestra en index.html (reutiliza el overlay de
+    // búsqueda que ya existe ahí); aquí solo redirigimos con los datos.
+    card.addEventListener("click", () => {
+      const params = new URLSearchParams({ actorId: person.id, actorName: person.name });
+      window.location.href = `index.html?${params.toString()}`;
+    });
     return card;
   }
 
@@ -1040,7 +1210,13 @@ nombre: "Vimeus",
 
     try {
       const endpoint = media.tipo === "tv" ? `/tv/${media.tmdbId}` : `/movie/${media.tmdbId}`;
-      const data = await tmdbFetch(endpoint, { append_to_response: "credits" });
+      const data = await tmdbFetch(endpoint, { append_to_response: "credits,videos,external_ids" });
+
+      // Guarda el IMDB ID en "media" si no lo teníamos ya (por ejemplo,
+      // pedido antes por loadServer() para un servidor con {imdb_id}).
+      if (!media.imdbId && data.external_ids && data.external_ids.imdb_id) {
+        media.imdbId = data.external_ids.imdb_id;
+      }
 
       // --- Poster ---
       const posterEl = byId("detailsPoster");
@@ -1048,6 +1224,7 @@ nombre: "Vimeus",
         posterEl.src = tmdbPosterUrl(data.poster_path, "w300");
         posterEl.alt = data.title || data.name || "";
         posterEl.classList.remove("hidden");
+        updatePosterTheme(data.poster_path); // tema dinámico: color del poster como acento
       } else {
         posterEl.classList.add("hidden");
       }
@@ -1056,6 +1233,9 @@ nombre: "Vimeus",
       const titulo = media.titulo || data.title || data.name || "Sin título";
       byId("detailsTitle").textContent = titulo;
       if (!media.titulo) document.title = `${titulo} | Streamix`;
+
+      // --- Open Graph / redes sociales: refleja el título real que se está viendo ---
+      updateOpenGraphTags(titulo, data.overview, data.poster_path);
 
       // --- Metadatos (año, duración, rating) ---
       const anio = (data.release_date || data.first_air_date || "").slice(0, 4);
@@ -1111,6 +1291,36 @@ nombre: "Vimeus",
         byId("castWrap").classList.add("hidden");
       }
 
+      // --- Saga/colección (solo aplica a películas) ---
+      const collectionWrap = byId("collectionWrap");
+      if (media.tipo === "movie" && data.belongs_to_collection) {
+        const collection = data.belongs_to_collection;
+        byId("collectionName").textContent = collection.name;
+        byId("collectionPoster").src = tmdbPosterUrl(collection.poster_path, "w185");
+        byId("collectionPoster").alt = collection.name;
+        const params = new URLSearchParams({ collectionId: collection.id, collectionName: collection.name });
+        byId("collectionLink").href = `index.html?${params.toString()}`;
+        collectionWrap.classList.remove("hidden");
+      } else {
+        collectionWrap.classList.add("hidden");
+      }
+
+      // --- Tráiler ---
+      const videos = (data.videos && data.videos.results) ? data.videos.results : [];
+      const trailer =
+        videos.find(v => v.site === "YouTube" && v.type === "Trailer" && v.official) ||
+        videos.find(v => v.site === "YouTube" && v.type === "Trailer") ||
+        videos.find(v => v.site === "YouTube" && v.type === "Teaser");
+
+      const trailerBtn = byId("trailerBtn");
+      if (trailer) {
+        trailerBtn.dataset.youtubeKey = trailer.key;
+        trailerBtn.classList.remove("hidden");
+      } else {
+        trailerBtn.classList.add("hidden");
+        delete trailerBtn.dataset.youtubeKey;
+      }
+
       byId("detailsLoading").classList.add("hidden");
       byId("detailsSection").classList.remove("hidden");
 
@@ -1119,6 +1329,8 @@ nombre: "Vimeus",
       if (media.tipo === "tv" && Array.isArray(data.seasons)) {
         initEpisodesModule(data.seasons);
       }
+
+      initRatingButtons();
     } catch (err) {
       console.error("[Streamix Player] Error cargando detalles:", err);
       byId("detailsLoading").classList.add("hidden");
@@ -1141,6 +1353,7 @@ nombre: "Vimeus",
     const seasonList = realSeasons.length ? realSeasons : seasons;
     if (!seasonList.length) return;
 
+    allSeasons = seasonList;
     byId("episodesSection").classList.remove("hidden");
 
     const select = byId("seasonSelect");
@@ -1173,6 +1386,7 @@ nombre: "Vimeus",
     try {
       const data = await tmdbFetch(`/tv/${media.tmdbId}/season/${seasonNumber}`);
       const episodes = data.episodes || [];
+      currentSeasonEpisodes = episodes;
 
       byId("episodesLoading").classList.add("hidden");
 
@@ -1185,6 +1399,8 @@ nombre: "Vimeus",
       list.innerHTML = "";
       episodes.forEach(ep => list.appendChild(buildEpisodeCard(ep, seasonNumber)));
       list.classList.remove("hidden");
+
+      updateNextEpisodeButton();
     } catch (err) {
       console.error("[Streamix Player] Error cargando episodios:", err);
       byId("episodesLoading").classList.add("hidden");
@@ -1210,7 +1426,7 @@ nombre: "Vimeus",
             <svg class="w-3 h-3 text-black translate-x-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
           </span>
         </div>
-        ${isActive ? `<span class="absolute bottom-1 right-1 bg-brand text-[9px] font-bold px-1.5 py-0.5 rounded">EN CURSO</span>` : ""}
+        ${isActive ? `<span class="absolute bottom-1 right-1 dynamic-accent-bg text-[9px] font-bold px-1.5 py-0.5 rounded">EN CURSO</span>` : ""}
       </div>
       <div class="flex-1 min-w-0">
         <p class="text-xs md:text-sm font-bold leading-tight line-clamp-1">${ep.episode_number}. ${ep.name || "Sin título"}</p>
@@ -1223,20 +1439,68 @@ nombre: "Vimeus",
     return card;
   }
 
+  // Calcula cuál sería el "siguiente episodio": el consecutivo dentro de
+  // la temporada actual, o el episodio 1 de la siguiente temporada si el
+  // actual es el último. Devuelve null si no hay nada después.
+  function getNextEpisodeTarget() {
+    const currentEpNum = Number(media.episodio);
+    const nextInSameSeason = currentSeasonEpisodes.find(ep => ep.episode_number === currentEpNum + 1);
+    if (nextInSameSeason) {
+      return { season: media.temporada, episode: nextInSameSeason.episode_number };
+    }
+
+    // Último episodio de la temporada: buscar la siguiente temporada disponible
+    const currentSeasonNum = Number(media.temporada);
+    const nextSeason = allSeasons
+      .filter(s => s.season_number > currentSeasonNum)
+      .sort((a, b) => a.season_number - b.season_number)[0];
+
+    if (nextSeason) {
+      return { season: nextSeason.season_number, episode: 1 };
+    }
+
+    return null; // no hay más episodios: es el final de la serie
+  }
+
+  function updateNextEpisodeButton() {
+    const btn = byId("nextEpisodeBtn");
+    const target = getNextEpisodeTarget();
+    if (target) {
+      btn.classList.remove("hidden");
+      btn.dataset.season = target.season;
+      btn.dataset.episode = target.episode;
+    } else {
+      btn.classList.add("hidden");
+      delete btn.dataset.season;
+      delete btn.dataset.episode;
+    }
+  }
+
   // Cambia de episodio: actualiza el estado, recarga el iframe en el
   // MISMO servidor activo (conserva servidor e idioma), y refresca la
   // UI (header, badge y resaltado en la lista de episodios).
   function changeEpisode(seasonNumber, episodeNumber) {
+    const seasonChanged = String(seasonNumber) !== String(media.temporada);
+
     media.temporada = String(seasonNumber);
     media.episodio = String(episodeNumber);
 
     renderMediaHeader();
     loadServer(currentServerIndex, { isRetry: true });
 
-    document.querySelectorAll("#episodesList .episode-card").forEach(card => {
-      const isActive = card.dataset.season === String(seasonNumber) && card.dataset.episode === String(episodeNumber);
-      card.classList.toggle("active", isActive);
-    });
+    if (seasonChanged) {
+      // Saltamos a otra temporada (ej. vía "Siguiente episodio" en el
+      // último capítulo): sincroniza el select y recarga su lista completa.
+      const select = byId("seasonSelect");
+      if (select) select.value = seasonNumber;
+      loadEpisodesForSeason(seasonNumber); // esto ya llama a updateNextEpisodeButton() al terminar
+    } else {
+      document.querySelectorAll("#episodesList .episode-card").forEach(card => {
+        const isActive = card.dataset.season === String(seasonNumber) && card.dataset.episode === String(episodeNumber);
+        card.classList.toggle("active", isActive);
+      });
+      updateNextEpisodeButton();
+    }
   }
 
   /* ================================================================
@@ -1259,6 +1523,139 @@ nombre: "Vimeus",
     return path ? `${TMDB_IMG}/${size}${path}` : `https://placehold.co/300x450/1a1a1a/666?text=Sin+Imagen`;
   }
 
+  /* ================================================================
+     TEMA DINÁMICO POR POSTER
+     ----------------------------------------------------------------
+     Extrae el color dominante del poster del título actual (usando
+     Canvas) y lo aplica como acento visual en el reproductor (botón
+     de reproducir, badges, glow del thumbnail activo, etc), en vez del
+     rojo fijo de Streamix. Si la extracción falla (CORS, imagen rota),
+     cae de vuelta al rojo de marca sin romper nada.
+     ================================================================ */
+  const DEFAULT_ACCENT = "229, 9, 20"; // rojo Streamix, como valores r,g,b
+
+  function extractDominantColor(imageUrl) {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      img.onload = () => {
+        try {
+          const canvas = document.createElement("canvas");
+          // Downscale agresivo: no necesitamos precisión de píxel a
+          // píxel, solo una muestra representativa. Mucho más rápido
+          // en teléfonos de gama media/baja.
+          const size = 32;
+          canvas.width = size;
+          canvas.height = size;
+          const ctx = canvas.getContext("2d");
+          ctx.drawImage(img, 0, 0, size, size);
+          const { data } = ctx.getImageData(0, 0, size, size);
+
+          let r = 0, g = 0, b = 0, count = 0;
+          for (let i = 0; i < data.length; i += 4) {
+            const alpha = data[i + 3];
+            if (alpha < 200) continue; // ignora píxeles muy transparentes
+            const [pr, pg, pb] = [data[i], data[i + 1], data[i + 2]];
+            // Ignora casi-negro y casi-blanco puro: suelen ser bordes o
+            // letterboxing del poster, no el color "de la película".
+            const brightness = (pr + pg + pb) / 3;
+            if (brightness < 18 || brightness > 240) continue;
+            r += pr; g += pg; b += pb; count++;
+          }
+
+          if (count === 0) { resolve(DEFAULT_ACCENT); return; }
+
+          r = Math.round(r / count);
+          g = Math.round(g / count);
+          b = Math.round(b / count);
+
+          // Refuerza saturación/luminosidad mínimas para que el acento
+          // siga siendo legible como color de marca (evita grises apagados).
+          const [h, s, l] = rgbToHsl(r, g, b);
+          const boostedS = Math.max(s, 0.45);
+          const boostedL = Math.min(Math.max(l, 0.38), 0.62);
+          const [fr, fg, fb] = hslToRgb(h, boostedS, boostedL);
+
+          resolve(`${fr}, ${fg}, ${fb}`);
+        } catch (err) {
+          console.warn("[Streamix Player] No se pudo extraer color del poster (posible CORS):", err);
+          resolve(DEFAULT_ACCENT);
+        }
+      };
+      img.onerror = () => resolve(DEFAULT_ACCENT);
+      img.src = imageUrl;
+    });
+  }
+
+  function rgbToHsl(r, g, b) {
+    r /= 255; g /= 255; b /= 255;
+    const max = Math.max(r, g, b), min = Math.min(r, g, b);
+    let h, s, l = (max + min) / 2;
+    if (max === min) { h = s = 0; }
+    else {
+      const d = max - min;
+      s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+      switch (max) {
+        case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+        case g: h = (b - r) / d + 2; break;
+        default: h = (r - g) / d + 4;
+      }
+      h /= 6;
+    }
+    return [h, s, l];
+  }
+
+  function hslToRgb(h, s, l) {
+    let r, g, b;
+    if (s === 0) { r = g = b = l; }
+    else {
+      const hue2rgb = (p, q, t) => {
+        if (t < 0) t += 1;
+        if (t > 1) t -= 1;
+        if (t < 1 / 6) return p + (q - p) * 6 * t;
+        if (t < 1 / 2) return q;
+        if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
+        return p;
+      };
+      const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+      const p = 2 * l - q;
+      r = hue2rgb(p, q, h + 1 / 3);
+      g = hue2rgb(p, q, h);
+      b = hue2rgb(p, q, h - 1 / 3);
+    }
+    return [Math.round(r * 255), Math.round(g * 255), Math.round(b * 255)];
+  }
+
+  // Aplica el acento dinámico como variable CSS global. Todo lo que
+  // deba usar el color de marca dinámico referencia var(--accent-rgb)
+  // en vez del rojo fijo (ver clases .dynamic-accent-* en el <style>).
+  function applyDynamicAccent(rgbString) {
+    document.documentElement.style.setProperty("--accent-rgb", rgbString);
+  }
+
+  async function updatePosterTheme(posterPath) {
+    if (!posterPath) { applyDynamicAccent(DEFAULT_ACCENT); return; }
+    const url = tmdbPosterUrl(posterPath, "w185"); // tamaño chico: alcanza para el muestreo y pesa poco
+    const rgb = await extractDominantColor(url);
+    applyDynamicAccent(rgb);
+  }
+
+  // Actualiza los meta tags de Open Graph / Twitter Card con los datos
+  // reales del título que se está reproduciendo, para que al compartir
+  // el link (WhatsApp, Twitter, etc.) se vea una vista previa correcta.
+  function updateOpenGraphTags(titulo, overview, posterPath) {
+    const title = `${titulo} | Streamix`;
+    const description = overview ? overview.slice(0, 160) : "Reproductor de películas y series con múltiples servidores.";
+    const image = posterPath ? tmdbPosterUrl(posterPath, "w500") : "https://i.ibb.co/V0Sst1qh/20260203-025506.png";
+
+    byId("ogTitle").setAttribute("content", title);
+    byId("ogDescription").setAttribute("content", description);
+    byId("ogImage").setAttribute("content", image);
+    byId("twitterTitle").setAttribute("content", title);
+    byId("twitterDescription").setAttribute("content", description);
+    byId("twitterImage").setAttribute("content", image);
+  }
+
   async function tmdbFetch(path, params = {}) {
     const url = new URL(`${TMDB_BASE}${path}`);
     url.searchParams.set("api_key", TMDB_API_KEY);
@@ -1267,6 +1664,136 @@ nombre: "Vimeus",
     const res = await fetch(url.toString());
     if (!res.ok) throw new Error(`TMDB error ${res.status} en ${path}`);
     return res.json();
+  }
+
+  /* ================================================================
+     TRAKT.TV — VALORACIÓN (thumbs up/down)
+     ----------------------------------------------------------------
+     El login en sí ocurre en index.html (Device Code flow); aquí solo
+     leemos el token ya guardado en localStorage (mismo dominio) para
+     poder valorar el título actual. Si no hay sesión, los botones de
+     rating quedan ocultos — no se le pide iniciar sesión desde aquí
+     para no interrumpir la reproducción.
+
+     Convención de Trakt: un rating de 8-10 equivale a "like" (pulgar
+     arriba) y de 1-4 a "dislike" (pulgar abajo) en apps con UI de thumbs.
+     ================================================================ */
+  const TRAKT_API = "https://api.trakt.tv";
+  const TRAKT_CLIENT_ID = "3kJ_9DiHnITxuDb12cw_aE86isGYuZ352UyHTrxlmyQ";
+  const TRAKT_TOKEN_KEY = "streamix_trakt_token_v1";
+  const TRAKT_RATING_LIKE = 9;
+  const TRAKT_RATING_DISLIKE = 3;
+
+  function getTraktToken() {
+    try {
+      return JSON.parse(localStorage.getItem(TRAKT_TOKEN_KEY) || "null");
+    } catch {
+      return null;
+    }
+  }
+  function isTraktLoggedIn() {
+    const t = getTraktToken();
+    return !!(t && t.access_token);
+  }
+
+  async function traktFetch(path, { method = "GET", body } = {}) {
+    const token = getTraktToken();
+    const headers = {
+      "Content-Type": "application/json",
+      "trakt-api-version": "2",
+      "trakt-api-key": TRAKT_CLIENT_ID,
+    };
+    if (token && token.access_token) headers["Authorization"] = `Bearer ${token.access_token}`;
+    return fetch(`${TRAKT_API}${path}`, {
+      method,
+      headers,
+      body: body ? JSON.stringify(body) : undefined,
+    });
+  }
+
+  let currentUserRating = null; // null | "like" | "dislike", según lo que ya haya valorado en Trakt
+
+  function updateRatingButtonsUI() {
+    byId("thumbUpBtn").classList.toggle("active-like", currentUserRating === "like");
+    byId("thumbDownBtn").classList.toggle("active-dislike", currentUserRating === "dislike");
+  }
+
+  // Consulta si el usuario ya valoró este título en Trakt, para reflejar
+  // el estado correcto (thumb resaltado) en vez de arrancar siempre neutro.
+  async function loadExistingRating() {
+    if (!isTraktLoggedIn() || !media.tmdbId) return;
+
+    const type = media.tipo === "tv" ? "shows" : "movies";
+    try {
+      const res = await traktFetch(`/sync/ratings/${type}`);
+      if (!res.ok) return;
+      const ratings = await res.json();
+      const match = ratings.find(r => {
+        const item = r.movie || r.show;
+        return item && item.ids && String(item.ids.tmdb) === String(media.tmdbId);
+      });
+      if (match) {
+        currentUserRating = match.rating >= 7 ? "like" : "dislike";
+        updateRatingButtonsUI();
+      }
+    } catch (err) {
+      console.warn("[Streamix Player] No se pudo consultar rating existente en Trakt:", err);
+    }
+  }
+
+  // Envía (o quita, si se repite el mismo thumb) la valoración a Trakt.
+  async function submitRating(kind) {
+    if (!isTraktLoggedIn()) return;
+
+    const isRemoving = currentUserRating === kind;
+    const type = media.tipo === "tv" ? "shows" : "movies";
+    const idsPayload = { ids: { tmdb: Number(media.tmdbId) } };
+
+    try {
+      if (isRemoving) {
+        await traktFetch("/sync/ratings/remove", { method: "POST", body: { [type]: [idsPayload] } });
+        currentUserRating = null;
+        showButtonToast("Valoración eliminada");
+      } else {
+        const rating = kind === "like" ? TRAKT_RATING_LIKE : TRAKT_RATING_DISLIKE;
+        await traktFetch("/sync/ratings", { method: "POST", body: { [type]: [{ ...idsPayload, rating }] } });
+        currentUserRating = kind;
+        showButtonToast(kind === "like" ? "Te gusta este título" : "Marcado como no me gusta");
+      }
+      updateRatingButtonsUI();
+    } catch (err) {
+      console.error("[Streamix Player] Error enviando valoración a Trakt:", err);
+    }
+  }
+
+  // Pequeño toast reutilizando el mismo patrón visual que showFallbackNotice,
+  // pero como notificación efímera independiente del loader del reproductor.
+  function showButtonToast(msg) {
+    let toast = byId("ratingToast");
+    if (!toast) {
+      toast = document.createElement("div");
+      toast.id = "ratingToast";
+      toast.className = "fixed bottom-24 md:bottom-6 left-1/2 -translate-x-1/2 z-[70] glass-strong px-4 py-2.5 rounded-xl text-xs font-semibold shadow-2xl transition-all duration-300";
+      toast.style.opacity = "0";
+      toast.style.transform = "translate(-50%, 12px)";
+      document.body.appendChild(toast);
+    }
+    toast.textContent = msg;
+    requestAnimationFrame(() => {
+      toast.style.opacity = "1";
+      toast.style.transform = "translate(-50%, 0)";
+    });
+    clearTimeout(showButtonToast._t);
+    showButtonToast._t = setTimeout(() => {
+      toast.style.opacity = "0";
+      toast.style.transform = "translate(-50%, 12px)";
+    }, 2000);
+  }
+
+  function initRatingButtons() {
+    if (!isTraktLoggedIn()) return; // sin sesión: los botones quedan ocultos
+    byId("ratingButtons").classList.remove("hidden");
+    loadExistingRating();
   }
 
   // Construye la URL de este mismo reproductor para un título recomendado
@@ -1392,7 +1919,6 @@ nombre: "Vimeus",
     currentLanguage = resolveInitialLanguage();
     renderLanguageTabs();
     renderServerGrid();
-    renderServerDropdown();
     initIframeEvents();
 
     // Si no hay TMDB ID en la URL, no intentamos cargar ningún servidor.
@@ -1412,34 +1938,105 @@ nombre: "Vimeus",
     loadRecommendations();
   }
 
+  // Revisa si la plantilla de un servidor (por defecto o personalizada)
+  // usa el placeholder {imdb_id}, para saber si vale la pena esperar
+  // a tener ese dato antes de construir su URL por primera vez.
+  function serverNeedsImdbId(server) {
+    if (!server) return false;
+    const format = server.formatoUrl || DEFAULT_URL_FORMAT;
+    const template = media.tipo === "tv" ? format.tv : format.movie;
+    return /\{imdb_id\}/i.test(template);
+  }
+
+  // Pide a TMDB el IMDB ID del título actual (external_ids) y lo guarda
+  // en media.imdbId. Se cachea en sessionStorage igual que el resto del
+  // catálogo, para no volver a pedirlo si se cambia de servidor/idioma.
+  async function fetchImdbId(mediaInfo) {
+    if (mediaInfo.imdbId) return mediaInfo.imdbId; // ya lo teníamos
+    try {
+      const endpoint = mediaInfo.tipo === "tv" ? `/tv/${mediaInfo.tmdbId}/external_ids` : `/movie/${mediaInfo.tmdbId}/external_ids`;
+      const data = await tmdbFetch(endpoint);
+      mediaInfo.imdbId = data.imdb_id || "";
+      return mediaInfo.imdbId;
+    } catch (err) {
+      console.error("[Streamix Player] Error obteniendo IMDB ID:", err);
+      mediaInfo.imdbId = "";
+      return "";
+    }
+  }
+
   /* ================================================================
      16. LISTENERS GLOBALES
      ================================================================ */
-  byId("serverDropdownToggle").addEventListener("click", toggleDropdown);
-
-  document.addEventListener("click", (e) => {
-    const panel = byId("serverDropdownPanel");
-    const toggle = byId("serverDropdownToggle");
-    if (!panel.contains(e.target) && !toggle.contains(e.target)) {
-      closeDropdown();
-    }
-  });
-
-  document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape") closeDropdown();
-  });
-
   byId("retryBtn").addEventListener("click", () => {
     loadServer(currentServerIndex, { isRetry: true });
   });
 
   byId("errorServerToggleBtn").addEventListener("click", () => {
-    openDropdown();
+    scrollToServerGrid();
   });
 
-  byId("backBtn").addEventListener("click", () => {
-    if (window.history.length > 1) window.history.back();
-    else window.location.href = "index.html";
+  byId("nextEpisodeBtn").addEventListener("click", () => {
+    const btn = byId("nextEpisodeBtn");
+    const season = btn.dataset.season;
+    const episode = btn.dataset.episode;
+    if (season && episode) changeEpisode(season, episode);
+  });
+
+  byId("loaderSwitchServerBtn").addEventListener("click", () => {
+    scrollToServerGrid();
+  });
+
+  // "Inicio"/"Volver" en la bottom nav SIEMPRE va directo a index.html
+  // (usando la URL exacta guardada al llegar aquí, si existe, para
+  // conservar scroll/estado). Deliberadamente NO usa history.back():
+  // eso recorrería cada cambio de servidor/episodio/recomendación como
+  // si fueran páginas distintas, en vez de ir directo al catálogo.
+  function goToIndexDirectly() {
+    const returnUrl = sessionStorage.getItem("streamix_return_url");
+    window.location.href = returnUrl || "index.html";
+  }
+
+  byId("bottomNavBack").addEventListener("click", goToIndexDirectly);
+  byId("bottomNavHome").addEventListener("click", goToIndexDirectly);
+
+  // "Buscar" y "Guardados" no existen dentro del reproductor: llevan a
+  // index.html con una acción que abre directamente el buscador o hace
+  // scroll a "Mi Lista" apenas carga. Usan la URL de retorno guardada
+  // como base si existe, para no perder query params relevantes, y le
+  // suman/reemplazan el parámetro "action".
+  function goToIndexWithAction(action) {
+    const returnUrl = sessionStorage.getItem("streamix_return_url");
+    const base = returnUrl ? returnUrl.split("?")[0] : "index.html";
+    window.location.href = `${base}?action=${action}`;
+  }
+
+  byId("bottomNavSearch").addEventListener("click", () => goToIndexWithAction("search"));
+  byId("bottomNavSaved").addEventListener("click", () => goToIndexWithAction("saved"));
+
+  // --- Modal de tráiler ---
+  function openTrailerModal() {
+    const key = byId("trailerBtn").dataset.youtubeKey;
+    if (!key) return;
+    byId("trailerIframe").src = `https://www.youtube.com/embed/${key}?autoplay=1&rel=0`;
+    byId("trailerModal").classList.remove("hidden");
+    document.body.style.overflow = "hidden";
+  }
+  function closeTrailerModal() {
+    byId("trailerModal").classList.add("hidden");
+    byId("trailerIframe").src = ""; // detiene la reproducción al cerrar
+    document.body.style.overflow = "";
+  }
+
+  byId("trailerBtn").addEventListener("click", openTrailerModal);
+  byId("thumbUpBtn").addEventListener("click", () => submitRating("like"));
+  byId("thumbDownBtn").addEventListener("click", () => submitRating("dislike"));
+  byId("trailerCloseBtn").addEventListener("click", closeTrailerModal);
+  byId("trailerModal").addEventListener("click", (e) => {
+    if (e.target.id === "trailerModal") closeTrailerModal();
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") closeTrailerModal();
   });
 
   document.addEventListener("DOMContentLoaded", init);
