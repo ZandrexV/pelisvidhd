@@ -343,6 +343,12 @@
     border-color: rgba(var(--accent-rgb), 0.45);
     transition: background-color 0.6s ease, border-color 0.6s ease;
   }
+  .episode-card.is-watched:not(.active) {
+    opacity: 0.6;
+  }
+  .episode-card.is-watched:not(.active):hover {
+    opacity: 0.85;
+  }
   .episode-thumb-play {
     opacity: 0;
     transition: opacity 0.25s ease;
@@ -794,6 +800,7 @@
      ================================================================ */
   const LAST_SERVER_KEY = "streamix_last_server_v1";
   const LAST_LANGUAGE_KEY = "streamix_last_language_v1";
+  const WATCHED_EPISODES_KEY = "streamix_watched_episodes_v1";
   const LOAD_TIMEOUT_MS = 12000; // si el iframe no confirma carga en este tiempo, se asume error
   const LOAD_SLOW_HINT_MS = 6000; // a los 6s sin confirmar carga, se sugiere cambiar de servidor
 
@@ -1452,9 +1459,10 @@
 
   function buildEpisodeCard(ep, seasonNumber) {
     const isActive = String(seasonNumber) === String(media.temporada) && String(ep.episode_number) === String(media.episodio);
+    const isWatched = isEpisodeWatched(seasonNumber, ep.episode_number);
 
     const card = document.createElement("button");
-    card.className = `episode-card w-full flex items-center gap-3 p-2.5 rounded-xl border border-white/10 text-left ${isActive ? "active" : ""}`;
+    card.className = `episode-card w-full flex items-center gap-3 p-2.5 rounded-xl border border-white/10 text-left ${isActive ? "active" : ""} ${isWatched ? "is-watched" : ""}`;
     card.dataset.season = seasonNumber;
     card.dataset.episode = ep.episode_number;
 
@@ -1462,13 +1470,14 @@
 
     card.innerHTML = `
       <div class="relative shrink-0 w-24 md:w-28 aspect-video rounded-lg overflow-hidden bg-black">
-        <img src="${thumbUrl}" alt="" loading="lazy" class="w-full h-full object-cover" />
+        <img src="${thumbUrl}" alt="" loading="lazy" class="w-full h-full object-cover ${isWatched ? "opacity-60" : ""}" />
         <div class="episode-thumb-play absolute inset-0 bg-black/40 flex items-center justify-center">
           <span class="w-7 h-7 rounded-full bg-white/90 flex items-center justify-center">
             <svg class="w-3 h-3 text-black translate-x-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
           </span>
         </div>
         ${isActive ? `<span class="absolute bottom-1 right-1 dynamic-accent-bg text-[9px] font-bold px-1.5 py-0.5 rounded">EN CURSO</span>` : ""}
+        ${isWatched && !isActive ? `<span class="watched-check absolute top-1 left-1 w-4 h-4 rounded-full bg-black/70 flex items-center justify-center"><i class="fa-solid fa-check text-[8px] text-green-400"></i></span>` : ""}
       </div>
       <div class="flex-1 min-w-0">
         <p class="text-xs md:text-sm font-bold leading-tight line-clamp-1">${ep.episode_number}. ${ep.name || "Sin título"}</p>
@@ -1521,6 +1530,67 @@
   // Cambia de episodio: actualiza el estado, recarga el iframe en el
   // MISMO servidor activo (conserva servidor e idioma), y refresca la
   // UI (header, badge y resaltado en la lista de episodios).
+  /* ================================================================
+     EPISODIOS VISTOS (solo series)
+     ----------------------------------------------------------------
+     Registro local (localStorage, compartido con index.html vía mismo
+     dominio) de qué episodios ya se empezaron a reproducir, por serie.
+     Estructura: { "tv-1396": ["1-1", "1-2", "2-1"], ... }
+     Se marca automáticamente al cargar/cambiar de episodio — no hace
+     falta terminarlo, igual que el historial de "vistos" de index.html.
+     ================================================================ */
+  function getWatchedEpisodesStore() {
+    try {
+      return JSON.parse(localStorage.getItem(WATCHED_EPISODES_KEY) || "{}");
+    } catch {
+      return {};
+    }
+  }
+
+  function isEpisodeWatched(seasonNumber, episodeNumber) {
+    if (media.tipo !== "tv" || !media.tmdbId) return false;
+    const store = getWatchedEpisodesStore();
+    const key = `tv-${media.tmdbId}`;
+    const list = store[key] || [];
+    return list.includes(`${seasonNumber}-${episodeNumber}`);
+  }
+
+  function markEpisodeWatched(seasonNumber, episodeNumber) {
+    if (media.tipo !== "tv" || !media.tmdbId) return;
+    const store = getWatchedEpisodesStore();
+    const key = `tv-${media.tmdbId}`;
+    const list = store[key] || [];
+    const entry = `${seasonNumber}-${episodeNumber}`;
+    if (!list.includes(entry)) {
+      list.push(entry);
+      store[key] = list;
+      try {
+        localStorage.setItem(WATCHED_EPISODES_KEY, JSON.stringify(store));
+      } catch (err) {
+        console.warn("[Streamix Player] No se pudo guardar el episodio visto:", err);
+      }
+    }
+  }
+
+  // Actualiza los checks de "visto" ya renderizados en la lista de
+  // episodios, sin tener que reconstruir toda la lista.
+  function refreshWatchedChecksInList() {
+    document.querySelectorAll("#episodesList .episode-card").forEach(card => {
+      const isActiveCard = card.classList.contains("active");
+      const watched = isEpisodeWatched(card.dataset.season, card.dataset.episode);
+      card.classList.toggle("is-watched", watched);
+      let check = card.querySelector(".watched-check");
+      if (watched && !isActiveCard && !check) {
+        check = document.createElement("span");
+        check.className = "watched-check absolute top-1 left-1 w-4 h-4 rounded-full bg-black/70 flex items-center justify-center";
+        check.innerHTML = '<i class="fa-solid fa-check text-[8px] text-green-400"></i>';
+        card.querySelector(".relative").appendChild(check);
+      } else if ((!watched || isActiveCard) && check) {
+        check.remove();
+      }
+    });
+  }
+
   function changeEpisode(seasonNumber, episodeNumber) {
     const seasonChanged = String(seasonNumber) !== String(media.temporada);
 
@@ -1529,6 +1599,7 @@
 
     renderMediaHeader();
     loadServer(currentServerIndex, { isRetry: true });
+    markEpisodeWatched(seasonNumber, episodeNumber);
 
     if (seasonChanged) {
       // Saltamos a otra temporada (ej. vía "Siguiente episodio" en el
@@ -1542,6 +1613,7 @@
         card.classList.toggle("active", isActive);
       });
       updateNextEpisodeButton();
+      refreshWatchedChecksInList();
     }
   }
 
@@ -1978,6 +2050,10 @@
     loadServer(startIndex);
     loadDetails();
     loadRecommendations();
+
+    if (media.tipo === "tv") {
+      markEpisodeWatched(media.temporada, media.episodio);
+    }
   }
 
   // Revisa si la plantilla de un servidor (por defecto o personalizada)
