@@ -82,6 +82,51 @@
     transition: box-shadow 0.6s ease;
   }
 
+  /* ----------------------------------------------------------------
+     Overrides globales: todo lo que usaba el rojo fijo de Streamix
+     (clases de Tailwind bg-brand/text-brand/border-brand, y reglas CSS
+     con #E50914/rgba(229,9,20,...) escritas a mano) ahora sigue el
+     acento dinámico del poster, igual que el color de los servidores
+     (ver updateActiveServerUI). Solo queda fuera a propósito el ícono
+     de error (rojo fijo = alerta, con significado semántico que no
+     debería cambiar). */
+  .bg-brand { background-color: rgb(var(--accent-rgb)) !important; transition: background-color 0.6s ease; }
+  .text-brand { color: rgb(var(--accent-rgb)) !important; transition: color 0.6s ease; }
+  .border-brand,
+  .border-brand\/30,
+  .border-brand\/45,
+  .border-brand\/50 { border-color: rgba(var(--accent-rgb), 0.4) !important; transition: border-color 0.6s ease; }
+  .btn-primary,
+  #retryBtn { background-color: rgb(var(--accent-rgb)) !important; transition: background-color 0.6s ease, box-shadow 0.25s ease; }
+  .btn-primary:hover,
+  #retryBtn:hover { background-color: rgba(var(--accent-rgb), 0.85) !important; }
+  ::-webkit-scrollbar-thumb { background: rgb(var(--accent-rgb)); }
+  .lang-tab.active {
+    background: rgb(var(--accent-rgb)) !important;
+    box-shadow: 0 4px 14px -4px rgba(var(--accent-rgb), 0.6);
+    transition: background-color 0.6s ease, box-shadow 0.6s ease;
+  }
+  .bottom-nav-item.active {
+    color: rgb(var(--accent-rgb)) !important;
+    transition: color 0.6s ease;
+  }
+  .rating-btn.active-like {
+    background: rgba(34, 197, 94, 0.2); /* el "me gusta" se mantiene verde a propósito: no depende del acento */
+    color: rgb(74, 222, 128);
+  }
+  .rating-btn.active-dislike {
+    background: rgba(var(--accent-rgb), 0.2) !important;
+    color: rgb(var(--accent-rgb)) !important;
+  }
+
+  /* Ícono de alerta del error overlay: rojo fijo a propósito (alerta =
+     rojo semántico, no debería cambiar según el poster del título). */
+  .static-alert-icon {
+    background: rgba(229, 9, 20, 0.15);
+    border: 1px solid rgba(229, 9, 20, 0.3);
+    color: #E50914;
+  }
+
   /* ================================================================
      BASE
      ================================================================ */
@@ -98,24 +143,21 @@
 
   ::-webkit-scrollbar { width: 8px; height: 0; }
   ::-webkit-scrollbar-track { background: #0A0A0A; }
-  ::-webkit-scrollbar-thumb { background: #E50914; border-radius: 10px; }
+  /* scrollbar-thumb: ver override dinámico más arriba (sigue el acento del poster) */
 
   .no-scrollbar::-webkit-scrollbar { display: none; }
   .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
   /* ================================================================
-     GLASSMORPHISM
+     PANELES: fondo sólido (sin blur)
      ================================================================ */
   .glass {
-    background: rgba(20, 20, 20, 0.55);
-    backdrop-filter: blur(18px) saturate(150%);
-    -webkit-backdrop-filter: blur(18px) saturate(150%);
+    background: rgba(18, 18, 18, 0.97);
     border: 1px solid rgba(255, 255, 255, 0.06);
   }
   .glass-strong {
-    background: rgba(10, 10, 10, 0.75);
-    backdrop-filter: blur(24px) saturate(160%);
-    -webkit-backdrop-filter: blur(24px) saturate(160%);
+    background: #0d0d0d;
+    border: 1px solid rgba(255, 255, 255, 0.06);
   }
 
   /* ================================================================
@@ -138,9 +180,10 @@
      ================================================================ */
   .spinner {
     border: 3px solid rgba(255, 255, 255, 0.12);
-    border-top-color: #E50914;
+    border-top-color: rgb(var(--accent-rgb));
     border-radius: 999px;
     animation: spin 0.85s linear infinite;
+    transition: border-top-color 0.6s ease;
   }
   @keyframes spin { to { transform: rotate(360deg); } }
 
@@ -161,7 +204,8 @@
   .server-btn:hover { transform: translateY(-2px); }
   .server-btn:active { transform: translateY(0) scale(0.97); }
   .server-btn.active {
-    box-shadow: 0 8px 24px -6px var(--server-glow, rgba(229,9,20,0.5));
+    box-shadow: 0 8px 24px -6px rgba(var(--accent-rgb), 0.5);
+    transition: transform 0.2s ease, box-shadow 0.6s ease, border-color 0.25s ease, background-color 0.25s ease;
   }
 
   /* Highlight temporal en el grid al sugerir "cambiar de servidor" desde
@@ -201,7 +245,7 @@
      FOCUS STATES
      ================================================================ */
   a:focus-visible, button:focus-visible, select:focus-visible {
-    outline: 2px solid #E50914;
+    outline: 2px solid rgb(var(--accent-rgb));
     outline-offset: 2px;
   }
 
@@ -262,9 +306,8 @@
     transition: background-color 0.25s ease, color 0.25s ease, box-shadow 0.25s ease;
   }
   .lang-tab.active {
-    background: #E50914;
     color: #fff;
-    box-shadow: 0 4px 14px -4px rgba(229,9,20,0.6);
+    /* background y box-shadow: ver override dinámico más arriba (sigue el acento del poster) */
   }
   .lang-tab:not(.active) {
     color: rgba(255,255,255,0.55);
@@ -319,7 +362,7 @@
     transition: color 0.2s ease, transform 0.2s ease;
   }
   .bottom-nav-item.active {
-    color: #E50914;
+    /* color: ver override dinámico más arriba (sigue el acento del poster) */
   }
   .bottom-nav-item:active {
     transform: scale(0.92);
@@ -392,8 +435,8 @@
 
       <!-- Error overlay -->
       <div id="errorOverlay" class="hidden absolute inset-0 z-20 flex flex-col items-center justify-center gap-4 bg-bg px-6 text-center">
-        <div class="w-14 h-14 rounded-full bg-brand/15 border border-brand/30 flex items-center justify-center">
-          <svg class="w-7 h-7 text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/></svg>
+        <div class="static-alert-icon w-14 h-14 rounded-full flex items-center justify-center">
+          <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/></svg>
         </div>
         <div>
           <p id="errorTitle" class="font-bold text-base md:text-lg mb-1">No se pudo cargar este servidor</p>
@@ -633,7 +676,7 @@
 <!-- ============================================================ -->
 <!-- MODAL: TRÁILER (embed de YouTube) -->
 <!-- ============================================================ -->
-<div id="trailerModal" class="hidden fixed inset-0 z-[70] flex items-center justify-center bg-black/85 backdrop-blur-sm px-4">
+<div id="trailerModal" class="hidden fixed inset-0 z-[70] flex items-center justify-center bg-black/95 px-4">
   <div class="relative w-full max-w-3xl">
     <button id="trailerCloseBtn" class="absolute -top-11 right-0 md:-right-2 w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors" aria-label="Cerrar tráiler">
       <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
@@ -663,7 +706,10 @@
        nombre    → texto visible
        icono     → URL de una imagen (favicon/logo). Si falla o se
                    deja vacío, se muestra un ícono genérico de reserva.
-       color     → color de acento (hex) para resaltar el servidor activo
+       color     → (sin efecto visual actualmente) todos los servidores
+                   comparten el acento dinámico del poster del título en
+                   reproducción. Se mantiene el campo por si en el futuro
+                   se quiere volver a un esquema de color por servidor.
        urlBase   → dominio/base del servidor
        idioma    → código de idioma fijo de este servidor (ver LANGUAGES
                    más abajo). Determina en qué pestaña de idioma aparece.
@@ -1022,7 +1068,6 @@
     filtered.forEach(({ server, index }) => {
       const btn = document.createElement("button");
       btn.className = "server-btn btn-ripple flex flex-col items-center justify-center gap-1.5 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 py-3 px-2 text-center";
-      btn.style.setProperty("--server-glow", hexToRgba(server.color, 0.45));
       btn.dataset.index = index;
       btn.setAttribute("aria-pressed", index === currentServerIndex ? "true" : "false");
 
@@ -1098,27 +1143,24 @@
     const server = servers[currentServerIndex];
     if (!server) return;
 
+    // El color ya no es el propio de cada servidor: todos siguen el
+    // acento dinámico del poster del título actual, para que la UI se
+    // sienta unificada con el resto del reproductor.
+    const accentRgb = getComputedStyle(document.documentElement).getPropertyValue("--accent-rgb").trim();
+
     // Label principal
     byId("activeServerLabel").textContent = server.nombre;
-    byId("activeStatusDot").style.backgroundColor = server.color;
-    byId("activeStatusDot").style.color = server.color;
+    byId("activeStatusDot").style.backgroundColor = `rgb(${accentRgb})`;
+    byId("activeStatusDot").style.color = `rgb(${accentRgb})`;
 
     // Grid: resalta el botón activo
     document.querySelectorAll("#serverGrid .server-btn").forEach((btn) => {
       const isActive = Number(btn.dataset.index) === currentServerIndex;
       btn.classList.toggle("active", isActive);
       btn.setAttribute("aria-pressed", isActive ? "true" : "false");
-      btn.style.borderColor = isActive ? server.color : "";
-      btn.style.backgroundColor = isActive ? hexToRgba(server.color, 0.14) : "";
+      btn.style.borderColor = isActive ? `rgb(${accentRgb})` : "";
+      btn.style.backgroundColor = isActive ? `rgba(${accentRgb}, 0.14)` : "";
     });
-  }
-
-  function hexToRgba(hex, alpha) {
-    const clean = hex.replace("#", "");
-    const r = parseInt(clean.substring(0, 2), 16);
-    const g = parseInt(clean.substring(2, 4), 16);
-    const b = parseInt(clean.substring(4, 6), 16);
-    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
   }
 
   /* ================================================================

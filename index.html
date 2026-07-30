@@ -77,45 +77,21 @@
   .no-scrollbar::-webkit-scrollbar { display: none; }
   .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-  /* ========== GLASSMORPHISM ========== */
+  /* ========== PANELES: fondo sólido (sin blur) ========== */
   .glass {
-    background: rgba(20, 20, 20, 0.55);
-    backdrop-filter: blur(18px) saturate(150%);
-    -webkit-backdrop-filter: blur(18px) saturate(150%);
+    background: rgba(18, 18, 18, 0.97);
     border: 1px solid rgba(255,255,255,0.06);
   }
   .glass-strong {
-    background: rgba(10, 10, 10, 0.75);
-    backdrop-filter: blur(24px) saturate(160%);
-    -webkit-backdrop-filter: blur(24px) saturate(160%);
+    background: #0d0d0d;
+    border: 1px solid rgba(255,255,255,0.06);
   }
 
-  /* Variante para elementos "fixed" que están SIEMPRE visibles mientras
-     se navega (navbar, bottom nav). El blur en un elemento fijo es el
-     patrón más costoso de glassmorphism: el navegador debe recalcularlo
-     en cada frame de scroll, no solo al abrirse. En pantallas pequeñas
-     (mayoría gama media/baja) se reduce agresivamente para aliviar la
-     carga de composición sin perder el efecto visual por completo. */
+  /* Navbar y bottom nav: mismo fondo sólido, siempre visibles. */
   .glass-nav {
-    background: rgba(10, 10, 10, 0.82);
-    backdrop-filter: blur(10px) saturate(140%);
-    -webkit-backdrop-filter: blur(10px) saturate(140%);
+    background: rgba(8, 8, 8, 0.97);
     border: 1px solid rgba(255,255,255,0.06);
     contain: layout style; /* aísla su repintado del resto del documento */
-  }
-  @media (max-width: 767px) {
-    .glass-nav {
-      background: rgba(8, 8, 8, 0.92); /* más opaco: compensa el blur reducido */
-      backdrop-filter: blur(4px);
-      -webkit-backdrop-filter: blur(4px);
-    }
-  }
-  @media (prefers-reduced-motion: reduce), (max-width: 480px) {
-    .glass-nav {
-      background: rgba(6, 6, 6, 0.96);
-      backdrop-filter: none;
-      -webkit-backdrop-filter: none;
-    }
   }
 
   /* ========== NAVBAR HIDE/SHOW ========== */
@@ -269,10 +245,7 @@
   .clamp-3 { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
 
   /* ========== BADGE ========== */
-  .badge {
-    backdrop-filter: blur(6px);
-    -webkit-backdrop-filter: blur(6px);
-  }
+  /* .badge ya no aplica blur; el fondo semi-transparente de Tailwind (ej. bg-black/70) es suficiente */
 
   /* ========== TOAST ========== */
   #toast {
@@ -331,6 +304,69 @@
     transform: scale(0.92);
   }
 
+  /* ================================================================
+     TEMA DE COLOR (selector de acento en Ajustes)
+     ----------------------------------------------------------------
+     Tailwind CDN compila bg-brand/text-brand/etc a valores CSS fijos,
+     así que para poder cambiar el acento en tiempo real usamos
+     variables CSS + overrides sobre esas mismas clases. Se activa
+     agregando data-theme="nombre" al <html>; "red" (por defecto) no
+     necesita overrides porque ya coincide con los colores de Tailwind.
+     ================================================================ */
+  :root {
+    --theme-accent: #E50914;
+    --theme-accent-light: #FF1A25;
+    --theme-accent-dark: #B00610;
+  }
+  html[data-theme="blue"] { --theme-accent: #3B82F6; --theme-accent-light: #60A5FA; --theme-accent-dark: #1D4ED8; }
+  html[data-theme="green"] { --theme-accent: #22C55E; --theme-accent-light: #4ADE80; --theme-accent-dark: #15803D; }
+  html[data-theme="violet"] { --theme-accent: #A855F7; --theme-accent-light: #C084FC; --theme-accent-dark: #7E22CE; }
+  html[data-theme="orange"] { --theme-accent: #F97316; --theme-accent-light: #FB923C; --theme-accent-dark: #C2410C; }
+  html[data-theme="pink"] { --theme-accent: #EC4899; --theme-accent-light: #F472B6; --theme-accent-dark: #BE185D; }
+
+  html:not([data-theme="red"]) .bg-brand { background-color: var(--theme-accent) !important; }
+  html:not([data-theme="red"]) .text-brand { color: var(--theme-accent) !important; }
+  html:not([data-theme="red"]) .border-brand,
+  html:not([data-theme="red"]) .border-brand\/30,
+  html:not([data-theme="red"]) .border-brand\/45,
+  html:not([data-theme="red"]) .border-brand\/50 { border-color: var(--theme-accent) !important; }
+  html:not([data-theme="red"]) .btn-primary { background-color: var(--theme-accent) !important; }
+  html:not([data-theme="red"]) .btn-primary:hover { background-color: var(--theme-accent-light) !important; }
+  html:not([data-theme="red"]) .from-brand { --tw-gradient-from: var(--theme-accent) !important; }
+  html:not([data-theme="red"]) .to-brandDark { --tw-gradient-to: var(--theme-accent-dark) !important; }
+  html:not([data-theme="red"]) ::-webkit-scrollbar-thumb { background: var(--theme-accent) !important; }
+
+  /* Swatches del selector de tema */
+  .theme-swatch {
+    width: 28px; height: 28px; border-radius: 999px;
+    border: 2px solid transparent;
+    transition: transform 0.2s ease, border-color 0.2s ease;
+    cursor: pointer;
+  }
+  .theme-swatch:hover { transform: scale(1.12); }
+  .theme-swatch.active { border-color: #fff; transform: scale(1.12); }
+
+  /* Toggle de densidad */
+  .density-btn { color: rgba(255,255,255,0.55); }
+  .density-btn.active { background: var(--theme-accent); color: #fff; }
+
+  /* ================================================================
+     DENSIDAD DE TARJETAS (Cómodo / Denso)
+     ----------------------------------------------------------------
+     Se activa con .compact-density en <body>. En vez de reconstruir
+     las cards con clases distintas, se sobreescribe su ancho por CSS:
+     más liviano y funciona igual para cards ya renderizadas.
+     ================================================================ */
+  body.compact-density .card {
+    width: 32vw !important;
+  }
+  @media (min-width: 640px) {
+    body.compact-density .card { width: 160px !important; }
+  }
+  @media (min-width: 768px) {
+    body.compact-density .card { width: 175px !important; }
+  }
+
 </style>
 </head>
 <body class="bg-bg text-white antialiased">
@@ -356,6 +392,10 @@
         <a href="#series" class="nav-link hover:text-white transition-colors" data-cat="Serie">Series</a>
         <a href="#" class="nav-link hover:text-white transition-colors" data-cat="anime">Anime</a>
         <a href="#mi-lista" class="nav-link hover:text-white transition-colors" data-cat="mylist">Mi Lista</a>
+        <button id="surpriseMeBtn" type="button" class="btn-ripple flex items-center gap-1.5 hover:text-white transition-colors">
+          <i class="fa-solid fa-shuffle text-xs"></i>
+          Sorpréndeme
+        </button>
       </nav>
     </div>
 
@@ -372,6 +412,32 @@
       <button id="searchToggleBtn" aria-label="Buscar" class="md:hidden w-9 h-9 flex items-center justify-center rounded-full hover:bg-white/10 transition-colors">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35m0 0A7.5 7.5 0 104.5 4.5a7.5 7.5 0 0012.15 12.15z"/></svg>
       </button>
+
+      <!-- Ajustes: tema de color + densidad de tarjetas -->
+      <div class="relative shrink-0">
+        <button id="settingsBtn" aria-label="Ajustes" class="w-9 h-9 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors">
+          <i class="fa-solid fa-sliders text-sm"></i>
+        </button>
+
+        <div id="settingsPanel" class="server-dropdown-panel closed absolute right-0 mt-2 w-72 glass-strong rounded-2xl p-4 z-30 border border-white/10 shadow-2xl">
+          <p class="font-bold text-sm mb-3 flex items-center gap-2"><i class="fa-solid fa-sliders text-white/50 text-xs"></i> Ajustes</p>
+
+          <!-- Tema de color -->
+          <div class="mb-4">
+            <p class="text-white/40 text-xs font-semibold uppercase tracking-wide mb-2">Color de acento</p>
+            <div id="colorThemeSwatches" class="flex items-center gap-2"></div>
+          </div>
+
+          <!-- Densidad de tarjetas -->
+          <div>
+            <p class="text-white/40 text-xs font-semibold uppercase tracking-wide mb-2">Tamaño de tarjetas</p>
+            <div class="flex items-center bg-white/5 rounded-xl p-1 gap-1">
+              <button id="densityComfortableBtn" data-density="comfortable" class="density-btn flex-1 py-2 rounded-lg text-xs font-semibold transition-colors">Cómodo</button>
+              <button id="densityCompactBtn" data-density="compact" class="density-btn flex-1 py-2 rounded-lg text-xs font-semibold transition-colors">Denso</button>
+            </div>
+          </div>
+        </div>
+      </div>
 
       <!-- Cuenta / Trakt -->
       <div class="relative shrink-0">
@@ -464,7 +530,7 @@
 </header>
 
 <!-- Search results overlay -->
-<div id="searchResultsOverlay" class="hidden fixed inset-0 z-40 bg-bg/98 backdrop-blur-xl overflow-y-auto pt-24 md:pt-28 pb-20 px-4 md:px-8">
+<div id="searchResultsOverlay" class="hidden fixed inset-0 z-40 bg-bg overflow-y-auto pt-24 md:pt-28 pb-20 px-4 md:px-8">
   <div class="max-w-[1600px] mx-auto">
     <div class="flex items-center justify-between mb-6">
       <h2 id="searchResultsTitle" class="text-xl md:text-2xl font-bold">Resultados de búsqueda</h2>
@@ -688,7 +754,7 @@
 <!-- ============================================================ -->
 <!-- MODAL -->
 <!-- ============================================================ -->
-<div id="modalBackdrop" class="fixed inset-0 z-[60] flex items-end md:items-center justify-center bg-black/80 backdrop-blur-sm">
+<div id="modalBackdrop" class="fixed inset-0 z-[60] flex items-end md:items-center justify-center bg-black/90">
   <div id="modalPanel" class="glass-strong w-full md:max-w-2xl lg:max-w-3xl max-h-[92vh] md:max-h-[88vh] overflow-y-auto rounded-t-3xl md:rounded-2xl relative no-scrollbar">
 
     <!-- Close -->
@@ -769,6 +835,11 @@
   <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 15l7-7 7 7"/></svg>
 </button>
 
+<!-- Sorpréndeme (FAB, solo móvil: en desktop vive en el navbar) -->
+<button id="surpriseMeFab" aria-label="Sorpréndeme" class="md:hidden fixed bottom-24 left-5 z-40 w-11 h-11 rounded-full bg-[#1a1a1a] border border-white/15 shadow-xl flex items-center justify-center transition-transform active:scale-90">
+  <i class="fa-solid fa-shuffle text-sm"></i>
+</button>
+
 <!-- ============================================================ -->
 <!-- BOTTOM NAV (solo móvil): Inicio · Películas · Series · Anime · API -->
 <!-- ============================================================ -->
@@ -786,14 +857,14 @@
       <i class="fa-solid fa-tv text-sm"></i>
       <span class="text-[9px] font-semibold">Series</span>
     </a>
-    <a href="?tipo=anime" data-nav-filter="anime" class="bottom-nav-item flex flex-col items-center justify-center gap-0.5 text-white/55 rounded-full" aria-label="Anime">
-      <i class="fa-solid fa-dragon text-sm"></i>
-      <span class="text-[9px] font-semibold">Anime</span>
-    </a>
-    <a href="https://tonplayer.space" target="_blank" rel="noopener noreferrer" class="bottom-nav-item flex flex-col items-center justify-center gap-0.5 text-white/55 rounded-full" aria-label="API">
-      <i class="fa-solid fa-code text-sm"></i>
-      <span class="text-[9px] font-semibold">API</span>
-    </a>
+    <button id="bottomNavSearch" type="button" class="bottom-nav-item flex flex-col items-center justify-center gap-0.5 text-white/55 rounded-full" aria-label="Buscar">
+      <i class="fa-solid fa-magnifying-glass text-sm"></i>
+      <span class="text-[9px] font-semibold">Buscar</span>
+    </button>
+    <button id="bottomNavSaved" type="button" class="bottom-nav-item flex flex-col items-center justify-center gap-0.5 text-white/55 rounded-full" aria-label="Guardados">
+      <i class="fa-solid fa-bookmark text-sm"></i>
+      <span class="text-[9px] font-semibold">Guardados</span>
+    </button>
   </div>
 </nav>
 <script>
@@ -1416,6 +1487,25 @@ async function loadAllRows() {
     sessionStorage.setItem('streamix_return_url', window.location.href);
     window.location.href = `player.html?${params.toString()}`;
   }
+
+  // Elige un título al azar del catálogo ya cargado y navega directo al
+  // reproductor. Si hay un filtro de tag activo (Películas/Series/Anime),
+  // el sorteo respeta ese filtro; con "Todo" activo, sortea entre todos.
+  function surpriseMe() {
+    if (!TITLES.length) return;
+
+    let pool = TITLES;
+    if (activeTypeFilter === 'anime') {
+      pool = TITLES.filter(t => t.esAnime);
+    } else if (activeTypeFilter !== 'all') {
+      pool = TITLES.filter(t => t.tipo === activeTypeFilter);
+    }
+    if (!pool.length) pool = TITLES; // red de seguridad si el filtro no tiene nada
+
+    const pick = pool[Math.floor(Math.random() * pool.length)];
+    showToast(`Vamos con "${pick.titulo}"...`);
+    setTimeout(() => goToPlayer(pick), 550); // pequeña pausa para que se alcance a leer el toast
+  }
   function ripple(e, btn) {
     const circle = document.createElement('span');
     const rect = btn.getBoundingClientRect();
@@ -1826,10 +1916,33 @@ async function loadAllRows() {
       syncFavUI();
       renderMyList();
     };
-    byId('modalShareBtn').onclick = () => {
+    byId('modalShareBtn').onclick = async () => {
       const url = `${location.href.split('#')[0]}#title-${t.id}`;
+      const shareText = `${t.titulo} (${t.anio}) · ${t.rating}★ en Streamix`;
+
+      // Intenta compartir CON el poster como imagen adjunta (requiere que
+      // el navegador soporte Web Share API nivel 2 con archivos). Si algo
+      // falla en el camino, cae al comportamiento simple de texto+link.
+      if (navigator.share && navigator.canShare) {
+        try {
+          const posterResponse = await fetch(posterUrl(t.posterPath, 'w500'));
+          const posterBlob = await posterResponse.blob();
+          const posterFile = new File([posterBlob], `${t.titulo}.jpg`, { type: posterBlob.type || 'image/jpeg' });
+
+          if (navigator.canShare({ files: [posterFile] })) {
+            await navigator.share({ title: t.titulo, text: shareText, url, files: [posterFile] });
+            return;
+          }
+        } catch (err) {
+          // Usuario canceló el share, o el navegador rechazó el archivo:
+          // seguimos con el fallback de texto, sin mostrar error.
+          if (err.name === 'AbortError') return; // canceló a propósito: no insistir con el fallback
+          console.warn('[Streamix] No se pudo compartir con imagen, usando fallback de texto:', err);
+        }
+      }
+
       if (navigator.share) {
-        navigator.share({ title: t.titulo, text: t.descripcion, url }).catch(() => {});
+        navigator.share({ title: t.titulo, text: shareText, url }).catch(() => {});
       } else if (navigator.clipboard) {
         navigator.clipboard.writeText(url).then(() => showToast('Enlace copiado al portapapeles'));
       } else {
@@ -1956,6 +2069,9 @@ async function loadAllRows() {
 
   byId('backToTop').addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
 
+  byId('surpriseMeBtn').addEventListener('click', surpriseMe);
+  byId('surpriseMeFab').addEventListener('click', surpriseMe);
+
   // "Inicio" en la bottom nav: si ya estamos en index.html, solo hace
   // scroll arriba y resetea filtros, en vez de recargar la página.
   byId('bottomNavHome').addEventListener('click', (e) => {
@@ -1983,6 +2099,21 @@ async function loadAllRows() {
     });
   });
 
+  // "Buscar" en la bottom nav: abre el mismo buscador que el ícono de
+  // lupa del navbar superior (se conecta más abajo, junto a mobileSearchWrap).
+
+  // "Guardados" en la bottom nav: resetea filtros y hace scroll directo
+  // a la fila de "Mi Lista", igual que el link "Mi Lista" del navbar.
+  byId('bottomNavSaved').addEventListener('click', () => {
+    document.querySelectorAll('.filter-chip')[0].click(); // reset a "Todo"
+    filterGenreSel.value = ''; filterYearSel.value = '';
+    applyFilters();
+    setTimeout(() => {
+      const target = byId('myListSection');
+      if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 50);
+  });
+
   /* ---------- MOBILE MENU ---------- */
   const menuBtn = byId('menuToggleBtn');
   const mobileMenu = byId('mobileMenu');
@@ -1999,6 +2130,18 @@ async function loadAllRows() {
     const isOpen = mobileSearchWrap.style.maxHeight && mobileSearchWrap.style.maxHeight !== '0px';
     mobileSearchWrap.style.maxHeight = isOpen ? '0px' : '80px';
     if (!isOpen) byId('searchInputMobile').focus();
+  });
+
+  // "Buscar" en la bottom nav: mismo comportamiento que el ícono de
+  // lupa del navbar, pero además hace scroll arriba para que el input
+  // expandido quede visible sin importar dónde estaba el usuario.
+  byId('bottomNavSearch').addEventListener('click', () => {
+    const isOpen = mobileSearchWrap.style.maxHeight && mobileSearchWrap.style.maxHeight !== '0px';
+    if (!isOpen) {
+      mobileSearchWrap.style.maxHeight = '80px';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+    byId('searchInputMobile').focus();
   });
 
   /* ---------- SEARCH ---------- */
@@ -2412,6 +2555,28 @@ async function loadAllRows() {
   function applyFilterFromUrl() {
     const params = new URLSearchParams(window.location.search);
 
+    // Si venimos del reproductor pidiendo abrir el buscador o "Guardados"
+    // directamente (bottom nav del player), lo resolvemos antes que
+    // cualquier otro filtro.
+    const action = params.get('action');
+    if (action === 'search') {
+      const isDesktop = window.matchMedia('(min-width: 768px)').matches;
+      if (isDesktop) {
+        byId('searchInputDesktop').focus();
+      } else {
+        byId('mobileSearchWrap').style.maxHeight = '80px';
+        byId('searchInputMobile').focus();
+      }
+      return;
+    }
+    if (action === 'saved') {
+      setTimeout(() => {
+        const target = byId('myListSection');
+        if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 50);
+      return;
+    }
+
     // Si venimos de un clic en un actor (desde el reproductor o el propio
     // index), abrimos directamente su filmografía y no aplicamos filtros.
     const actorId = params.get('actorId');
@@ -2447,6 +2612,85 @@ async function loadAllRows() {
     }
   }
 
+  /* ---------- PANEL DE AJUSTES: tema de color + densidad ---------- */
+  const COLOR_THEMES = [
+    { id: 'red', label: 'Rojo (por defecto)', color: '#E50914' },
+    { id: 'blue', label: 'Azul', color: '#3B82F6' },
+    { id: 'green', label: 'Verde', color: '#22C55E' },
+    { id: 'violet', label: 'Violeta', color: '#A855F7' },
+    { id: 'orange', label: 'Naranja', color: '#F97316' },
+    { id: 'pink', label: 'Rosa', color: '#EC4899' },
+  ];
+  const THEME_KEY = 'streamix_color_theme_v1';
+  const DENSITY_KEY = 'streamix_density_v1';
+
+  function applyColorTheme(themeId) {
+    document.documentElement.setAttribute('data-theme', themeId);
+    localStorage.setItem(THEME_KEY, themeId);
+    document.querySelectorAll('.theme-swatch').forEach(sw => {
+      sw.classList.toggle('active', sw.dataset.themeId === themeId);
+    });
+  }
+
+  function renderColorSwatches() {
+    const wrap = byId('colorThemeSwatches');
+    const saved = localStorage.getItem(THEME_KEY) || 'red';
+
+    COLOR_THEMES.forEach(theme => {
+      const swatch = document.createElement('button');
+      swatch.className = `theme-swatch${theme.id === saved ? ' active' : ''}`;
+      swatch.style.backgroundColor = theme.color;
+      swatch.dataset.themeId = theme.id;
+      swatch.setAttribute('aria-label', theme.label);
+      swatch.addEventListener('click', () => applyColorTheme(theme.id));
+      wrap.appendChild(swatch);
+    });
+
+    applyColorTheme(saved);
+  }
+
+  function applyDensity(density) {
+    document.body.classList.toggle('compact-density', density === 'compact');
+    localStorage.setItem(DENSITY_KEY, density);
+    byId('densityComfortableBtn').classList.toggle('active', density === 'comfortable');
+    byId('densityCompactBtn').classList.toggle('active', density === 'compact');
+  }
+
+  function initDensityToggle() {
+    const saved = localStorage.getItem(DENSITY_KEY) || 'comfortable';
+    applyDensity(saved);
+    byId('densityComfortableBtn').addEventListener('click', () => applyDensity('comfortable'));
+    byId('densityCompactBtn').addEventListener('click', () => applyDensity('compact'));
+  }
+
+  renderColorSwatches();
+  initDensityToggle();
+
+  const settingsBtn = byId('settingsBtn');
+  const settingsPanel = byId('settingsPanel');
+
+  function toggleSettingsPanel() {
+    settingsPanel.classList.toggle('closed');
+  }
+  function closeSettingsPanel() {
+    settingsPanel.classList.add('closed');
+  }
+
+  settingsBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    closeTraktPanel();
+    toggleSettingsPanel();
+  });
+
+  document.addEventListener('click', (e) => {
+    if (!settingsPanel.contains(e.target) && !settingsBtn.contains(e.target)) {
+      closeSettingsPanel();
+    }
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeSettingsPanel();
+  });
+
   /* ---------- PANEL DE CUENTA TRAKT: apertura/cierre + acciones ---------- */
   const traktAccountBtn = byId('traktAccountBtn');
   const traktPanel = byId('traktPanel');
@@ -2460,6 +2704,7 @@ async function loadAllRows() {
 
   traktAccountBtn.addEventListener('click', (e) => {
     e.stopPropagation();
+    closeSettingsPanel();
     toggleTraktPanel();
   });
 
