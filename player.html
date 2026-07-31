@@ -458,13 +458,23 @@
           </button>
         </div>
       </div>
+    </div>
+  </section>
 
-      <!-- Badge de temporada/episodio (solo series) -->
-      <div id="episodeBadge" class="hidden absolute top-3 left-3 md:top-4 md:left-4 z-10 glass px-3 py-1.5 rounded-full text-xs md:text-sm font-bold"></div>
+  <!-- ============================================================ -->
+  <!-- NAVEGACIÓN DE EPISODIO: Anterior / info / Siguiente (solo series) -->
+  <!-- ============================================================ -->
+  <section id="episodeNavSection" class="hidden px-4 md:px-0 mt-4">
+    <div class="glass rounded-2xl p-3 md:p-4 flex items-center justify-between gap-3">
+      <button id="prevEpisodeBtn" class="btn-ripple flex items-center gap-1.5 bg-white/10 hover:bg-white/20 disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-white/10 transition-colors px-3 md:px-4 py-2 rounded-xl text-xs md:text-sm font-bold shrink-0">
+        <i class="fa-solid fa-backward-step"></i>
+        <span class="hidden sm:inline">Anterior</span>
+      </button>
 
-      <!-- Botón flotante: siguiente episodio (solo series, si hay uno disponible) -->
-      <button id="nextEpisodeBtn" class="hidden btn-ripple absolute top-3 right-3 md:top-4 md:right-4 z-10 glass-strong hover:bg-white/15 px-3 md:px-4 py-1.5 md:py-2 rounded-full text-xs md:text-sm font-bold flex items-center gap-1.5 transition-colors">
-        <span>Siguiente</span>
+      <p id="episodeNavLabel" class="text-xs md:text-sm text-white/60 font-medium text-center truncate flex-1"></p>
+
+      <button id="nextEpisodeBtn" class="btn-ripple flex items-center gap-1.5 dynamic-accent-bg hover:opacity-90 disabled:opacity-30 disabled:cursor-not-allowed transition-colors px-3 md:px-4 py-2 rounded-xl text-xs md:text-sm font-bold shrink-0">
+        <span class="hidden sm:inline">Siguiente</span>
         <i class="fa-solid fa-forward-step"></i>
       </button>
     </div>
@@ -739,8 +749,7 @@
     { code: "pt", label: "Português", flag: "🇧🇷" },
     { code: "en", label: "English", flag: "🇺🇸" },
   ];
-
-  const servers = [
+const servers = [
     {
       nombre: "TONPlayer",
       icono: "https://tonplayer.space/favicon.ico",
@@ -1191,7 +1200,6 @@
   function renderMediaHeader() {
     const titleEl = byId("mediaTitle");
     const subtitleEl = byId("mediaSubtitle");
-    const badge = byId("episodeBadge");
 
     if (!media.tmdbId) {
       titleEl.textContent = "Sin contenido seleccionado";
@@ -1203,11 +1211,11 @@
 
     if (media.tipo === "tv") {
       subtitleEl.textContent = `Temporada ${media.temporada} · Episodio ${media.episodio}`;
-      badge.textContent = `T${media.temporada} · E${media.episodio}`;
-      badge.classList.remove("hidden");
+      byId("episodeNavSection").classList.remove("hidden");
+      updateEpisodeNavLabel();
     } else {
       subtitleEl.textContent = "Película";
-      badge.classList.add("hidden");
+      byId("episodeNavSection").classList.add("hidden");
     }
   }
 
@@ -1449,7 +1457,8 @@
       episodes.forEach(ep => list.appendChild(buildEpisodeCard(ep, seasonNumber)));
       list.classList.remove("hidden");
 
-      updateNextEpisodeButton();
+      updateEpisodeNavControls();
+      updateEpisodeNavLabel();
     } catch (err) {
       console.error("[Streamix Player] Error cargando episodios:", err);
       byId("episodesLoading").classList.add("hidden");
@@ -1513,18 +1522,78 @@
     return null; // no hay más episodios: es el final de la serie
   }
 
-  function updateNextEpisodeButton() {
-    const btn = byId("nextEpisodeBtn");
-    const target = getNextEpisodeTarget();
-    if (target) {
-      btn.classList.remove("hidden");
-      btn.dataset.season = target.season;
-      btn.dataset.episode = target.episode;
-    } else {
-      btn.classList.add("hidden");
-      delete btn.dataset.season;
-      delete btn.dataset.episode;
+  // Simétrico a getNextEpisodeTarget: busca el episodio anterior dentro
+  // de la temporada actual, o el último episodio de la temporada previa
+  // si el actual es el primero. Como no sabemos cuántos episodios tiene
+  // la temporada anterior sin pedirla, se resuelve de forma perezosa
+  // (se pide su lista completa solo si el usuario realmente retrocede
+  // hasta ahí, ver goToPrevEpisode).
+  function getPrevEpisodeTarget() {
+    const currentEpNum = Number(media.episodio);
+    const prevInSameSeason = currentSeasonEpisodes.find(ep => ep.episode_number === currentEpNum - 1);
+    if (prevInSameSeason) {
+      return { season: media.temporada, episode: prevInSameSeason.episode_number };
     }
+
+    const currentSeasonNum = Number(media.temporada);
+    const prevSeason = allSeasons
+      .filter(s => s.season_number < currentSeasonNum)
+      .sort((a, b) => b.season_number - a.season_number)[0];
+
+    if (prevSeason) {
+      return { season: prevSeason.season_number, episode: "last" }; // "last" se resuelve al hacer clic
+    }
+
+    return null; // ya estamos en el primer episodio de la serie
+  }
+
+  async function goToPrevEpisode() {
+    const target = getPrevEpisodeTarget();
+    if (!target) return;
+
+    if (target.episode === "last") {
+      // Necesitamos saber cuántos episodios tiene la temporada anterior
+      // antes de poder saltar a su último capítulo.
+      try {
+        const data = await tmdbFetch(`/tv/${media.tmdbId}/season/${target.season}`);
+        const episodes = data.episodes || [];
+        if (!episodes.length) return;
+        const lastEp = episodes[episodes.length - 1].episode_number;
+        changeEpisode(target.season, lastEp);
+      } catch (err) {
+        console.error("[Streamix Player] Error obteniendo la temporada anterior:", err);
+      }
+      return;
+    }
+
+    changeEpisode(target.season, target.episode);
+  }
+
+  // Actualiza ambos botones (Anterior/Siguiente) y el label central de
+  // la barra de navegación de episodios, según el episodio actual.
+  function updateEpisodeNavControls() {
+    const prevTarget = getPrevEpisodeTarget();
+    const nextTarget = getNextEpisodeTarget();
+
+    byId("prevEpisodeBtn").disabled = !prevTarget;
+    byId("nextEpisodeBtn").disabled = !nextTarget;
+
+    if (nextTarget) {
+      byId("nextEpisodeBtn").dataset.season = nextTarget.season;
+      byId("nextEpisodeBtn").dataset.episode = nextTarget.episode;
+    } else {
+      delete byId("nextEpisodeBtn").dataset.season;
+      delete byId("nextEpisodeBtn").dataset.episode;
+    }
+  }
+
+  function updateEpisodeNavLabel() {
+    const label = byId("episodeNavLabel");
+    if (!label) return;
+    const currentEp = currentSeasonEpisodes.find(ep => String(ep.episode_number) === String(media.episodio));
+    label.textContent = currentEp
+      ? `T${media.temporada}E${media.episodio} · ${currentEp.name || "Sin título"}`
+      : `Temporada ${media.temporada} · Episodio ${media.episodio}`;
   }
 
   // Cambia de episodio: actualiza el estado, recarga el iframe en el
@@ -1534,8 +1603,14 @@
      EPISODIOS VISTOS (solo series)
      ----------------------------------------------------------------
      Registro local (localStorage, compartido con index.html vía mismo
-     dominio) de qué episodios ya se empezaron a reproducir, por serie.
-     Estructura: { "tv-1396": ["1-1", "1-2", "2-1"], ... }
+     dominio) de qué episodios ya se empezaron a reproducir, por serie,
+     y cuál fue el último (para poder retomarlo al volver a esa serie).
+     Estructura: {
+       "tv-1396": {
+         "watched": ["1-1", "1-2", "2-1"],
+         "last": { "season": 2, "episode": 1, "at": 1730000000000 }
+       }
+     }
      Se marca automáticamente al cargar/cambiar de episodio — no hace
      falta terminarlo, igual que el historial de "vistos" de index.html.
      ================================================================ */
@@ -1547,28 +1622,42 @@
     }
   }
 
+  function getSeriesWatchedEntry(store, tmdbId) {
+    const key = `tv-${tmdbId}`;
+    if (!store[key]) return null;
+    // Compatibilidad con el formato anterior (array plano de episodios,
+    // sin "last"): lo migramos a la nueva forma la próxima vez que se
+    // guarde algo, sin perder los checks ya registrados.
+    if (Array.isArray(store[key])) {
+      return { watched: store[key], last: null };
+    }
+    return store[key];
+  }
+
   function isEpisodeWatched(seasonNumber, episodeNumber) {
     if (media.tipo !== "tv" || !media.tmdbId) return false;
-    const store = getWatchedEpisodesStore();
-    const key = `tv-${media.tmdbId}`;
-    const list = store[key] || [];
-    return list.includes(`${seasonNumber}-${episodeNumber}`);
+    const entry = getSeriesWatchedEntry(getWatchedEpisodesStore(), media.tmdbId);
+    if (!entry) return false;
+    return entry.watched.includes(`${seasonNumber}-${episodeNumber}`);
   }
 
   function markEpisodeWatched(seasonNumber, episodeNumber) {
     if (media.tipo !== "tv" || !media.tmdbId) return;
     const store = getWatchedEpisodesStore();
     const key = `tv-${media.tmdbId}`;
-    const list = store[key] || [];
-    const entry = `${seasonNumber}-${episodeNumber}`;
-    if (!list.includes(entry)) {
-      list.push(entry);
-      store[key] = list;
-      try {
-        localStorage.setItem(WATCHED_EPISODES_KEY, JSON.stringify(store));
-      } catch (err) {
-        console.warn("[Streamix Player] No se pudo guardar el episodio visto:", err);
-      }
+    const entry = getSeriesWatchedEntry(store, media.tmdbId) || { watched: [], last: null };
+    const episodeEntry = `${seasonNumber}-${episodeNumber}`;
+
+    if (!entry.watched.includes(episodeEntry)) {
+      entry.watched.push(episodeEntry);
+    }
+    entry.last = { season: Number(seasonNumber), episode: Number(episodeNumber), at: Date.now() };
+
+    store[key] = entry;
+    try {
+      localStorage.setItem(WATCHED_EPISODES_KEY, JSON.stringify(store));
+    } catch (err) {
+      console.warn("[Streamix Player] No se pudo guardar el episodio visto:", err);
     }
   }
 
@@ -1606,13 +1695,13 @@
       // último capítulo): sincroniza el select y recarga su lista completa.
       const select = byId("seasonSelect");
       if (select) select.value = seasonNumber;
-      loadEpisodesForSeason(seasonNumber); // esto ya llama a updateNextEpisodeButton() al terminar
+      loadEpisodesForSeason(seasonNumber); // esto ya llama a updateEpisodeNavControls() al terminar
     } else {
       document.querySelectorAll("#episodesList .episode-card").forEach(card => {
         const isActive = card.dataset.season === String(seasonNumber) && card.dataset.episode === String(episodeNumber);
         card.classList.toggle("active", isActive);
       });
-      updateNextEpisodeButton();
+      updateEpisodeNavControls();
       refreshWatchedChecksInList();
     }
   }
@@ -2100,6 +2189,8 @@
     const episode = btn.dataset.episode;
     if (season && episode) changeEpisode(season, episode);
   });
+
+  byId("prevEpisodeBtn").addEventListener("click", goToPrevEpisode);
 
   byId("loaderSwitchServerBtn").addEventListener("click", () => {
     scrollToServerGrid();

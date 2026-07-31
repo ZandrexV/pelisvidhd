@@ -1470,6 +1470,23 @@ async function loadAllRows() {
   // Series:     player.html?tipo=tv&id={tmdbId}&temporada=1&episodio=1
   // (se abre siempre en temporada 1 / episodio 1; el propio reproductor
   // permite cambiar temporada/episodio más adelante si se agrega esa UI)
+  const WATCHED_EPISODES_KEY = 'streamix_watched_episodes_v1'; // misma key que usa player.html
+
+  // Si ya se vio algún episodio de esta serie, devuelve { season, episode }
+  // del último visto; si no hay registro, devuelve null (se usará T1E1).
+  function getLastWatchedEpisode(tmdbId) {
+    try {
+      const store = JSON.parse(localStorage.getItem(WATCHED_EPISODES_KEY) || '{}');
+      const entry = store[`tv-${tmdbId}`];
+      if (!entry) return null;
+      // Compatibilidad con el formato anterior (array plano sin "last")
+      if (Array.isArray(entry) || !entry.last) return null;
+      return { season: entry.last.season, episode: entry.last.episode };
+    } catch {
+      return null;
+    }
+  }
+
   function goToPlayer(title) {
     addToHistory(title);
     traktMarkAsWatched(title); // falla en silencio si no hay sesión de Trakt
@@ -1477,8 +1494,9 @@ async function loadAllRows() {
     const tipoParam = title.tipo === 'Serie' ? 'tv' : 'movie';
     const params = new URLSearchParams({ tipo: tipoParam, id: title.tmdbId, titulo: title.titulo });
     if (tipoParam === 'tv') {
-      params.set('temporada', '1');
-      params.set('episodio', '1');
+      const lastWatched = getLastWatchedEpisode(title.tmdbId);
+      params.set('temporada', String(lastWatched ? lastWatched.season : 1));
+      params.set('episodio', String(lastWatched ? lastWatched.episode : 1));
     }
     // Guarda la URL exacta del index (con su query/hash actual) para que
     // el botón "volver" del reproductor pueda regresar aquí de forma
