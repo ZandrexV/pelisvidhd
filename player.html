@@ -455,6 +455,29 @@
         title="Reproductor de video"
       ></iframe>
 
+      <!-- Preroll VAST: se muestra ANTES de asignar la URL del servidor al
+           iframe. Si el VAST falla o no hay tags configurados, este bloque
+           nunca aparece y se pasa directo al servidor. -->
+      <div id="vastAdOverlay" class="hidden absolute inset-0 z-30 bg-black">
+        <video id="vastAdVideo" class="absolute inset-0 w-full h-full object-contain bg-black" playsinline></video>
+
+        <!-- Overlay clicable para el tracker de "click" del VAST. Va primero
+             en el DOM (fondo) para que los controles de abajo queden encima. -->
+        <button id="vastClickThroughBtn" class="absolute inset-0" aria-label="Ir al anunciante"></button>
+
+        <!-- Barra superior: etiqueta "Anuncio" + contador -->
+        <div class="absolute top-3 left-3 right-3 flex items-center justify-between pointer-events-none">
+          <span class="glass px-2.5 py-1 rounded text-[10px] md:text-xs font-bold text-white/80 uppercase tracking-wide">Anuncio</span>
+          <span id="vastAdCountdown" class="glass px-2.5 py-1 rounded text-[10px] md:text-xs font-bold text-white/80"></span>
+        </div>
+
+        <!-- Botón de saltar (aparece tras el tiempo configurado) -->
+        <button id="vastSkipBtn" class="hidden absolute bottom-3 right-3 btn-ripple glass-strong hover:bg-white/15 px-3 md:px-4 py-1.5 md:py-2 rounded-lg text-xs md:text-sm font-bold flex items-center gap-1.5 transition-colors">
+          Saltar anuncio
+          <i class="fa-solid fa-forward text-xs"></i>
+        </button>
+      </div>
+
       <!-- Loader overlay -->
       <div id="loaderOverlay" class="absolute inset-0 z-20 flex flex-col items-center justify-center gap-4 bg-bg">
         <div class="spinner w-12 h-12 md:w-14 md:h-14"></div>
@@ -781,11 +804,12 @@
   // aquí y asignarlo a algún servidor es suficiente: la pestaña aparece
   // sola en el selector.
   const LANGUAGES = [
-    { code: "es", label: "Español", flag: "🇪🇸" }, // español neutro/universal (no latino específico)
+    { code: "es", label: "Español", flag: "🌐" }, // español neutro/universal (no latino específico)
     { code: "pt", label: "Português", flag: "🇧🇷" },
     { code: "en", label: "English", flag: "🇺🇸" },
   ];
 
+  
   const servers = [
     {
       nombre: "TONPlayer",
@@ -834,12 +858,33 @@
       },
     },
   ];
-
   // Ícono de reserva (SVG en base64) usado cuando un servidor no define
   // "icono", o cuando la URL de su favicon falla al cargar.
   const FALLBACK_ICON =
     "data:image/svg+xml;base64," +
     btoa(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="4"/><path d="M9 8v8l7-4z" fill="white" stroke="none"/></svg>`);
+
+  /* ================================================================
+     PREROLL VAST (anuncio antes del servidor)
+     ----------------------------------------------------------------
+     Se muestra una sola vez por sesión de reproducción, ANTES de
+     asignar la URL del servidor elegido al iframe. Para agregar un
+     nuevo ad tag, solo hace falta añadir su URL al arreglo — se elige
+     uno al azar en cada carga. Dejar el arreglo vacío ([]) desactiva
+     el preroll por completo (se pasa directo al servidor).
+
+     Si el VAST falla por cualquier motivo (red caída, XML inválido,
+     sin MediaFile utilizable, CORS), el preroll se salta en silencio
+     y se carga el servidor con normalidad: un anuncio roto nunca debe
+     bloquear el acceso al contenido.
+     ================================================================ */
+  const vastAdTags = [
+    // "hhttps://youradexchange.com/video/select.php?r=11785534",
+    // "https://youradexchange.com/video/select.php?r=11785534",
+  ];
+  const VAST_SKIP_AFTER_SECONDS = 5; // el botón "Saltar anuncio" aparece a los X segundos
+  const VAST_FETCH_TIMEOUT_MS = 6000; // si el ad server no responde en este tiempo, se salta el preroll
+  const VAST_SESSION_KEY = "streamix_preroll_shown_v1"; // evita repetir el preroll si el usuario cambia de servidor/episodio en la misma visita
 
   /* ================================================================
      2. ESTADO Y CONSTANTES
@@ -981,6 +1026,196 @@
     byId("errorOverlay").classList.add("hidden");
     byId("loaderPrefixText").textContent = `"${fromServer.nombre}" falló. Probando`;
     byId("loaderServerName").textContent = toServer.nombre;
+  }
+
+  /* ================================================================
+     6.5. PREROLL VAST: parser + reproducción + trackers
+     ================================================================ */
+
+  // Pide y parsea un XML de VAST, devolviendo solo lo que necesitamos:
+  // la URL del MediaFile de video más adecuado y los trackers relevantes.
+  // Soporta VAST simple (InLine) y un nivel de Wrapper (redirección a
+  // otro VAST, común en cadenas de ad servers); no sigue más de un
+  // wrapper para evitar cadenas infinitas o demasiado lentas.
+  async function fetchAndParseVast(tagUrl, depth = 0) {
+    if (depth > 1) return null; // máximo un salto de Wrapper
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), VAST_FETCH_TIMEOUT_MS);
+
+    let xmlText;
+    try {
+      const res = await fetch(tagUrl, { signal: controller.signal });
+      if (!res.ok) throw new Error(`VAST HTTP ${res.status}`);
+      xmlText = await res.text();
+    } catch (err) {
+      console.warn("[Streamix Player] No se pudo obtener el VAST:", err);
+      return null;
+    } finally {
+      clearTimeout(timeoutId);
+    }
+
+    let doc;
+    try {
+      doc = new DOMParser().parseFromString(xmlText, "text/xml");
+      if (doc.querySelector("parsererror")) throw new Error("XML de VAST inválido");
+    } catch (err) {
+      console.warn("[Streamix Player] Error parseando VAST:", err);
+      return null;
+    }
+
+    const ad = doc.querySelector("Ad");
+    if (!ad) return null;
+
+    // Wrapper: el VAST solo redirige a otro ad tag real.
+    const wrapperUri = ad.querySelector("Wrapper > VASTAdTagURI")?.textContent?.trim();
+    if (wrapperUri) {
+      return fetchAndParseVast(wrapperUri, depth + 1);
+    }
+
+    const inline = ad.querySelector("InLine");
+    if (!inline) return null;
+
+    // Elige el MediaFile progresivo (mp4) de mejor calidad disponible;
+    // evitamos HLS/DASH (requieren un player de streaming aparte).
+    const mediaFiles = [...inline.querySelectorAll("MediaFile")]
+      .filter(mf => (mf.getAttribute("delivery") || "").toLowerCase() !== "streaming")
+      .map(mf => ({
+        url: mf.textContent.trim(),
+        type: mf.getAttribute("type") || "",
+        width: Number(mf.getAttribute("width")) || 0,
+        bitrate: Number(mf.getAttribute("bitrate")) || 0,
+      }))
+      .filter(mf => mf.url && /^https?:\/\//i.test(mf.url));
+
+    if (!mediaFiles.length) return null;
+
+    // Preferimos mp4 con buena resolución, sin pasarnos de tamaño (mejor
+    // carga rápida en móvil que máxima calidad para un preroll de segundos).
+    mediaFiles.sort((a, b) => {
+      const aIsMp4 = a.type.includes("mp4") ? 1 : 0;
+      const bIsMp4 = b.type.includes("mp4") ? 1 : 0;
+      if (aIsMp4 !== bIsMp4) return bIsMp4 - aIsMp4;
+      return Math.abs(a.width - 640) - Math.abs(b.width - 640);
+    });
+
+    const getTrackerUrls = (selector) =>
+      [...inline.querySelectorAll(selector)].map(el => el.textContent.trim()).filter(Boolean);
+
+    return {
+      mediaUrl: mediaFiles[0].url,
+      clickThroughUrl: inline.querySelector("VideoClicks > ClickThrough")?.textContent?.trim() || null,
+      trackers: {
+        impression: getTrackerUrls("Impression"),
+        start: getTrackerUrls('Tracking[event="start"]'),
+        firstQuartile: getTrackerUrls('Tracking[event="firstQuartile"]'),
+        midpoint: getTrackerUrls('Tracking[event="midpoint"]'),
+        thirdQuartile: getTrackerUrls('Tracking[event="thirdQuartile"]'),
+        complete: getTrackerUrls('Tracking[event="complete"]'),
+        skip: getTrackerUrls('Tracking[event="skip"]'),
+        clickTracking: getTrackerUrls("VideoClicks > ClickTracking"),
+      },
+    };
+  }
+
+  // Dispara pixels de tracking sin bloquear ni esperar respuesta: los
+  // ad servers esperan un GET simple, no importa el resultado.
+  function fireTrackers(urls) {
+    (urls || []).forEach(url => {
+      try {
+        fetch(url, { mode: "no-cors", keepalive: true }).catch(() => {});
+      } catch {
+        // Fallback silencioso: un pixel de tracking que falla no debe romper nada.
+      }
+    });
+  }
+
+  // Reproduce un anuncio VAST completo en el overlay. Devuelve una
+  // promesa que se resuelve cuando el preroll termina (visto completo,
+  // saltado, o cualquier error) — nunca se rechaza, para que quien la
+  // llame simplemente continúe con la carga del servidor después.
+  function playVastPreroll() {
+    return new Promise(async (resolve) => {
+      if (!vastAdTags.length) { resolve(); return; }
+
+      // Ya se mostró un preroll en esta sesión de navegación (evita
+      // repetirlo si el usuario solo cambia de servidor o de episodio).
+      if (sessionStorage.getItem(VAST_SESSION_KEY)) { resolve(); return; }
+
+      const tag = vastAdTags[Math.floor(Math.random() * vastAdTags.length)];
+      const vast = await fetchAndParseVast(tag);
+
+      if (!vast) { resolve(); return; } // sin anuncio válido: seguimos directo al servidor
+
+      const overlay = byId("vastAdOverlay");
+      const video = byId("vastAdVideo");
+      const skipBtn = byId("vastSkipBtn");
+      const countdown = byId("vastAdCountdown");
+      const clickThroughBtn = byId("vastClickThroughBtn");
+
+      let finished = false;
+      let firedQuartiles = new Set();
+
+      function finish() {
+        if (finished) return;
+        finished = true;
+        overlay.classList.add("hidden");
+        video.pause();
+        video.src = "";
+        sessionStorage.setItem(VAST_SESSION_KEY, "1");
+        resolve();
+      }
+
+      clickThroughBtn.onclick = () => {
+        fireTrackers(vast.trackers.clickTracking);
+        if (vast.clickThroughUrl) window.open(vast.clickThroughUrl, "_blank", "noopener");
+      };
+
+      skipBtn.classList.add("hidden");
+      skipBtn.onclick = () => {
+        fireTrackers(vast.trackers.skip);
+        finish();
+      };
+
+      video.onloadedmetadata = () => {
+        overlay.classList.remove("hidden");
+        video.play().catch(() => finish()); // autoplay bloqueado por el navegador: no insistimos, pasamos al servidor
+        fireTrackers(vast.trackers.impression);
+        fireTrackers(vast.trackers.start);
+
+        setTimeout(() => skipBtn.classList.remove("hidden"), VAST_SKIP_AFTER_SECONDS * 1000);
+      };
+
+      video.ontimeupdate = () => {
+        if (!video.duration) return;
+        const remaining = Math.max(0, Math.ceil(video.duration - video.currentTime));
+        countdown.textContent = `${remaining}s`;
+
+        const progress = video.currentTime / video.duration;
+        if (progress >= 0.25 && !firedQuartiles.has("firstQuartile")) {
+          firedQuartiles.add("firstQuartile");
+          fireTrackers(vast.trackers.firstQuartile);
+        }
+        if (progress >= 0.5 && !firedQuartiles.has("midpoint")) {
+          firedQuartiles.add("midpoint");
+          fireTrackers(vast.trackers.midpoint);
+        }
+        if (progress >= 0.75 && !firedQuartiles.has("thirdQuartile")) {
+          firedQuartiles.add("thirdQuartile");
+          fireTrackers(vast.trackers.thirdQuartile);
+        }
+      };
+
+      video.onended = () => {
+        fireTrackers(vast.trackers.complete);
+        finish();
+      };
+
+      video.onerror = () => finish(); // video roto/inaccesible: seguimos al servidor sin bloquear
+
+      video.src = vast.mediaUrl;
+      video.load();
+    });
   }
 
   /* ================================================================
@@ -2198,9 +2433,16 @@
     }
 
     const startIndex = resolveInitialServerIndex();
-    loadServer(startIndex);
+
+    // El preroll VAST (si hay ad tags configurados) se muestra una sola
+    // vez, antes de la primera carga del servidor. loadDetails() y
+    // loadRecommendations() no dependen del video, así que corren en
+    // paralelo mientras se decide/reproduce el anuncio.
     loadDetails();
     loadRecommendations();
+    playVastPreroll().then(() => {
+      loadServer(startIndex);
+    });
 
     if (media.tipo === "tv") {
       markEpisodeWatched(media.temporada, media.episodio);
