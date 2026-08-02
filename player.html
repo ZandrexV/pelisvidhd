@@ -804,12 +804,11 @@
   // aquí y asignarlo a algún servidor es suficiente: la pestaña aparece
   // sola en el selector.
   const LANGUAGES = [
-    { code: "es", label: "Español", flag: "🌐" }, // español neutro/universal (no latino específico)
+    { code: "es", label: "Español", flag: "🇪🇸" }, // español neutro/universal (no latino específico)
     { code: "pt", label: "Português", flag: "🇧🇷" },
     { code: "en", label: "English", flag: "🇺🇸" },
   ];
 
-  
   const servers = [
     {
       nombre: "TONPlayer",
@@ -858,6 +857,7 @@
       },
     },
   ];
+
   // Ícono de reserva (SVG en base64) usado cuando un servidor no define
   // "icono", o cuando la URL de su favicon falla al cargar.
   const FALLBACK_ICON =
@@ -879,8 +879,8 @@
      bloquear el acceso al contenido.
      ================================================================ */
   const vastAdTags = [
-    // "hhttps://youradexchange.com/video/select.php?r=11785534",
-    // "https://youradexchange.com/video/select.php?r=11785534",
+    // "https://tu-ad-server.com/vast?tag=streamix-preroll-a",
+    // "https://tu-ad-server.com/vast?tag=streamix-preroll-b",
   ];
   const VAST_SKIP_AFTER_SECONDS = 5; // el botón "Saltar anuncio" aparece a los X segundos
   const VAST_FETCH_TIMEOUT_MS = 6000; // si el ad server no responde en este tiempo, se salta el preroll
@@ -1963,6 +1963,7 @@
     renderMediaHeader();
     loadServer(currentServerIndex, { isRetry: true });
     markEpisodeWatched(seasonNumber, episodeNumber);
+    updateUrlWithCurrentEpisode();
 
     if (seasonChanged) {
       // Saltamos a otra temporada (ej. vía "Siguiente episodio" en el
@@ -1978,6 +1979,21 @@
       updateEpisodeNavControls();
       refreshWatchedChecksInList();
     }
+  }
+
+  // Actualiza los parámetros temporada/episodio en la URL de la barra de
+  // direcciones para que reflejen el episodio actual — así el link se
+  // puede compartir o recargar sin perder el punto exacto. Usa
+  // replaceState (no pushState) para no llenar el historial del
+  // navegador con una entrada por cada cambio de episodio: el botón
+  // "atrás" del navegador debe seguir llevando al index, no episodio
+  // por episodio.
+  function updateUrlWithCurrentEpisode() {
+    if (media.tipo !== "tv") return;
+    const url = new URL(window.location.href);
+    url.searchParams.set("temporada", media.temporada);
+    url.searchParams.set("episodio", media.episodio);
+    window.history.replaceState(null, "", url.toString());
   }
 
   /* ================================================================

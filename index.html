@@ -681,7 +681,7 @@
         <svg class="w-3.5 h-3.5 fav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
       </button>
 
-      <!-- Title area: logo real de TMDB (si existe) + nombre en texto, ambos a la izquierda -->
+      <!-- Title area: logo real de TMDB si existe (reemplaza al texto); si no hay logo, o falla, se ve el nombre en texto -->
       <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent pt-10 pb-3 px-3 flex flex-col items-start gap-1.5 min-h-[30%]">
         <img class="title-logo-img max-h-8 md:max-h-10 max-w-[70%] object-contain object-left hidden" alt="" loading="lazy" />
         <p class="card-title-fallback font-extrabold text-sm md:text-base leading-tight text-left drop-shadow-lg"></p>
@@ -1560,12 +1560,20 @@ async function loadAllRows() {
     if (btn) ripple(e, btn);
   });
 
-  // Muestra el logo real de TMDB por encima del nombre en texto, si hay path disponible.
-  function applyTitleLogo(path, imgEl) {
+  // Muestra el logo real de TMDB en lugar del nombre en texto, si hay
+  // path disponible y la imagen carga bien. Si no hay logo, o falla al
+  // cargar, se mantiene visible el texto (fallback).
+  function applyTitleLogo(path, imgEl, fallbackEl) {
     if (!path) return; // sin logo disponible: se queda solo el texto
     const url = logoUrl(path);
-    imgEl.onload = () => imgEl.classList.remove('hidden');
-    imgEl.onerror = () => imgEl.classList.add('hidden');
+    imgEl.onload = () => {
+      imgEl.classList.remove('hidden');
+      if (fallbackEl) fallbackEl.classList.add('hidden');
+    };
+    imgEl.onerror = () => {
+      imgEl.classList.add('hidden');
+      if (fallbackEl) fallbackEl.classList.remove('hidden');
+    };
     imgEl.src = url;
   }
 
@@ -1588,12 +1596,25 @@ async function loadAllRows() {
       if (!title || title.logoPath !== undefined) return; // ya resuelto o sin datos
 
       const logoImg = node.querySelector('.title-logo-img');
+      const fallbackEl = node.querySelector('.card-title-fallback');
       fetchLogo(title).then(path => {
         title.logoPath = path;
-        applyTitleLogo(path, logoImg);
+        applyTitleLogo(path, logoImg, fallbackEl);
       });
     });
   }, { rootMargin: '200px' });
+
+  // IntersectionObserver no detecta nodos que todavía no están insertados
+  // en el documento: buildCard() los marca con .pending-logo-observe
+  // porque en ese momento aún viven solo en memoria (antes del
+  // appendChild de la fila). Esta función se llama después de insertar
+  // las filas al DOM real, y recién ahí conecta el observer.
+  function observePendingLogos(scope = document) {
+    scope.querySelectorAll('.pending-logo-observe').forEach(node => {
+      node.classList.remove('pending-logo-observe');
+      logoLoadObserver.observe(node);
+    });
+  }
 
   /* ---------- CARD BUILDER ---------- */
   const cardTpl = byId('cardTemplate');
@@ -1623,20 +1644,19 @@ async function loadAllRows() {
     node.querySelector('.card-meta').innerHTML =
       `<span>${title.anio}</span><span>&middot;</span><span>${title.duracion}</span><span>&middot;</span><span class="text-brand font-bold"><i class="fa-solid fa-star text-[10px]"></i> ${title.rating}</span>`;
 
-    // Nombre en texto: siempre visible. Logo de TMDB: se agrega encima
-    // del texto si existe, pero se pide de forma diferida (solo cuando
-    // la card está cerca de entrar en pantalla) para no disparar
-    // decenas de peticiones de red al cargar filas que el usuario
-    // todavía no vio — importante en conexiones móviles más lentas.
+    // Nombre en texto: fallback visible por defecto. Logo de TMDB: si
+    // existe, REEMPLAZA al texto (se pide de forma diferida, solo cuando
+    // la card está cerca de entrar en pantalla, para no disparar decenas
+    // de peticiones de red al cargar filas que el usuario ni vio).
     const logoImg = node.querySelector('.title-logo-img');
     const titleFallback = node.querySelector('.card-title-fallback');
     titleFallback.textContent = title.titulo;
 
     if (title.logoPath !== undefined) {
-      applyTitleLogo(title.logoPath, logoImg);
+      applyTitleLogo(title.logoPath, logoImg, titleFallback);
     } else {
       cardTitleMap.set(node, title);
-      logoLoadObserver.observe(node);
+      node.classList.add('pending-logo-observe'); // se observa recién cuando el nodo ya esté en el DOM (ver observePendingLogos)
     }
 
     const favIcon = node.querySelector('.fav-icon');
@@ -1715,6 +1735,7 @@ async function loadAllRows() {
     renderMyList();
     renderHistoryRow();
     initScrollReveal();
+    observePendingLogos();
   }
 
   /* ---------- MI LISTA ---------- */
@@ -1740,6 +1761,7 @@ async function loadAllRows() {
     // Insert right after filters/filtered section, before other rows, anchored near #mi-lista
     const anchor = document.getElementById('mi-lista');
     rowsContainer.prepend(section);
+    observePendingLogos(section);
   }
 
   /* ---------- HISTORIAL: "Visto recientemente" ---------- */
@@ -1764,6 +1786,7 @@ async function loadAllRows() {
 
     // Se ubica primero (antes que Mi Lista) porque cambia con más frecuencia.
     rowsContainer.prepend(section);
+    observePendingLogos(section);
   }
 
   /* ---------- HERO ---------- */
@@ -2063,6 +2086,7 @@ async function loadAllRows() {
 
       searchGrid.innerHTML = '';
       results.forEach(t => searchGrid.appendChild(buildCard(t)));
+      observePendingLogos(searchGrid);
       searchEmptyMsg.textContent = `No se encontraron películas de esta saga.`;
       searchEmptyMsg.classList.toggle('hidden', results.length > 0);
     } catch (err) {
@@ -2219,6 +2243,7 @@ async function loadAllRows() {
         searchGrid.innerHTML = '';
         results.forEach(t => searchGrid.appendChild(buildCard(t)));
         personResults.forEach(p => searchGrid.appendChild(buildPersonCard(p)));
+        observePendingLogos(searchGrid);
         searchEmptyMsg.classList.toggle('hidden', (results.length + personResults.length) > 0);
       } catch (err) {
         if (thisRequestId !== searchRequestId) return;
@@ -2282,6 +2307,7 @@ async function loadAllRows() {
 
       searchGrid.innerHTML = '';
       results.forEach(t => searchGrid.appendChild(buildCard(t)));
+      observePendingLogos(searchGrid);
       searchEmptyMsg.textContent = `No se encontraron títulos para ${personName}.`;
       searchEmptyMsg.classList.toggle('hidden', results.length > 0);
     } catch (err) {
@@ -2413,6 +2439,7 @@ async function loadAllRows() {
 
     filteredGrid.innerHTML = '';
     results.forEach(t => filteredGrid.appendChild(buildCard(t)));
+    observePendingLogos(filteredGrid);
     filteredEmpty.classList.toggle('hidden', results.length > 0);
   }
 
