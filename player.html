@@ -923,7 +923,7 @@
       // de streaming reales). El placeholder {imdb_id} se resuelve
       // automáticamente pidiendo external_ids a TMDB antes de cargar.
       formatoUrl: {
-        movie: "{urlBase}/movie/{imdb_id}/",
+        movie: "{urlBase}/movie/{imdb_id}",
         tv: "{urlBase}/tv/{imdb_id}-{season}x{episode}",
       },
 },
@@ -951,7 +951,7 @@
 },
 {
       nombre: "Pomfy",
-      icono: "https://www.google.com/s2/favicons?domain=api.pomfy.stream&sz=64",
+      icono: "https://api.pomfy.stream/favicon.ico",
       color: "#E50914", // rojo Streamix
       urlBase: "https://api.pomfy.stream",
       idioma: "pt",
@@ -973,7 +973,7 @@
 },
 {
       nombre: "Betterflix",
-      icono: "https://www.google.com/s2/favicons?domain=megaembed.com&sz=64",
+      icono: "https://www.google.com/s2/favicons?domain=betterflix.lat&sz=64",
       color: "#E50914", // rojo Streamix
       urlBase: "https://betterflix.lat",
       idioma: "pt",
@@ -982,6 +982,62 @@
         tv: "{urlBase}/https://betterflix.lat/api/player?id={tmdb_id}&type=tv&season={season}&episode={episode}",
     },
 },
+{
+      nombre: "Primesrc",
+      icono: "https://www.google.com/s2/favicons?domain=primesrc.me&sz=64",
+      color: "#E50914", // rojo Streamix
+      urlBase: "https://primesrc.me",
+      idioma: "en",
+      formatoUrl: {
+        movie: "{urlBase}/embed/movie?tmdb={tmdb_id}/",
+        tv: "{urlBase}/embed/tv?tmdb={tmdb_id}&season={season}&episode={episode}",
+    },
+},
+{
+      nombre: "Vidcore",
+      icono: "https://www.google.com/s2/favicons?domain=vidcore.org&sz=64",
+      color: "#E50914", // rojo Streamix
+      urlBase: "https://vidcore.org",
+      idioma: "en",
+      formatoUrl: {
+        movie: "{urlBase}/embed/movie/{tmdb_id}/",
+        tv: "{urlBase}/embed/tv/{tmdb_id}/{season}/{episode}",
+    },
+},
+{
+      nombre: "Vaplayer",
+      icono: "https://www.google.com/s2/favicons?domain=vaplayer.ru&sz=64",
+      color: "#E50914", // rojo Streamix
+      urlBase: "https://vaplayer.ru",
+      idioma: "en",
+      formatoUrl: {
+        movie: "{urlBase}/embed/movie/{tmdb_id}/",
+        tv: "{urlBase}/embed/tv/{tmdb_id}/{season}/{episode}",
+},
+},
+{
+      nombre: "Viduki",
+      icono: "https://www.google.com/s2/favicons?domain=www.viduki.net&sz=64",
+      color: "#E50914", // rojo Streamix
+      urlBase: "https://www.viduki.net",
+      idioma: "en",
+      formatoUrl: {
+        movie: "{urlBase}/1/movie/{tmdb_id}/",
+        tv: "{urlBase}/1/tv/{tmdb_id}/{season}/{episode}",
+    },
+},
+{
+      nombre: "2embed",
+      icono: "https://www.google.com/s2/favicons?domain=2embed.online&sz=64",
+      color: "#E50914", // rojo Streamix
+      urlBase: "https://www.2embed.online",
+      idioma: "en",
+      formatoUrl: {
+        movie: "{urlBase}/embed/movie/{imdb_id}",
+        tv: "{urlBase}/embed/tv/{tmdb_id}/{season}/{episode}",
+    },
+},
+  ];
   ];
 
   // Ícono de reserva (SVG en base64) usado cuando un servidor no define
@@ -2988,4 +3044,9 @@
 </script>
 </body>
 </html>
-/html>
+html>
+ript>
+</body>
+</html>
+html>
+
