@@ -3,19 +3,19 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>STREAMIX | Streaming Premium</title>
+<title>PELISVIDHD | Streaming Premium</title>
 <meta name="description" content="Plataforma de streaming premium. Películas y series ilimitadas.">
 
 <!-- Open Graph / redes sociales -->
 <meta property="og:type" content="website">
-<meta property="og:site_name" content="Streamix">
-<meta property="og:title" content="Streamix | Streaming Premium">
+<meta property="og:site_name" content="PelisVidHD">
+<meta property="og:title" content="PelisVidHD | Streaming Premium">
 <meta property="og:description" content="Miles de películas y series, en cualquier lugar. Descubre, guarda tu lista y reproduce al instante.">
 <meta property="og:image" content="https://i.ibb.co/V0Sst1qh/20260203-025506.png">
 
 <!-- Twitter Card -->
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Streamix | Streaming Premium">
+<meta name="twitter:title" content="PelisVidHD | Streaming Premium">
 <meta name="twitter:description" content="Miles de películas y series, en cualquier lugar.">
 <meta name="twitter:image" content="https://i.ibb.co/V0Sst1qh/20260203-025506.png">
 
@@ -378,11 +378,11 @@
   <div class="max-w-[1600px] mx-auto px-4 md:px-8 h-16 md:h-20 flex items-center justify-between gap-4">
 
     <!-- Logo -->
-    <a href="#" class="flex items-center gap-2 shrink-0" aria-label="Streamix inicio">
+    <a href="#" class="flex items-center gap-2 shrink-0" aria-label="PelisVidHD inicio">
       <span class="logo-mark w-9 h-9 rounded-lg overflow-hidden flex items-center justify-center shrink-0">
-        <img src="https://i.ibb.co/V0Sst1qh/20260203-025506.png" alt="Streamix" class="w-full h-full object-cover" />
+        <img src="https://i.ibb.co/V0Sst1qh/20260203-025506.png" alt="PelisVidHD" class="w-full h-full object-cover" />
       </span>
-      <span class="hidden sm:block font-extrabold text-xl tracking-tight">STREAM<span class="text-brand">IX</span></span>
+      <span class="hidden sm:block font-extrabold text-xl tracking-tight">PELISVID<span class="text-brand">HD</span></span>
     </a>
 
     <!-- Nav links: ocultos por defecto (navbar minimalista), quedan accesibles
@@ -714,9 +714,9 @@
       <div class="col-span-2 md:col-span-1">
         <div class="flex items-center gap-2 mb-4">
           <span class="w-8 h-8 rounded-lg overflow-hidden flex items-center justify-center shrink-0">
-            <img src="https://i.ibb.co/V0Sst1qh/20260203-025506.png" alt="Streamix" class="w-full h-full object-cover" />
+            <img src="https://i.ibb.co/V0Sst1qh/20260203-025506.png" alt="PelisVidHD" class="w-full h-full object-cover" />
           </span>
-          <span class="font-extrabold text-lg">STREAM<span class="text-brand">IX</span></span>
+          <span class="font-extrabold text-lg">PELISVID<span class="text-brand">HD</span></span>
         </div>
         <p class="text-white/50 text-sm leading-relaxed max-w-xs">Tu plataforma de streaming premium. Miles de películas y series, en cualquier lugar.</p>
         <div class="flex items-center gap-3 mt-5">
@@ -765,7 +765,7 @@
     </div>
 
     <div class="pt-6 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-white/40">
-      <p>&copy; <span id="footerYear"></span> Streamix. Todos los derechos reservados.</p>
+      <p>&copy; <span id="footerYear"></span> PelisVidHD. Todos los derechos reservados.</p>
       <p>Diseño original inspirado en experiencias de streaming premium.</p>
     </div>
   </div>
@@ -889,7 +889,7 @@
 </nav>
 <script>
 /* ================================================================
-   STREAMIX — MOTOR DE DATOS (TMDB API en vivo)
+   PELISVIDHD — MOTOR DE DATOS (TMDB API en vivo)
    Fuente: The Movie Database (https://www.themoviedb.org)
    Todo el catálogo, géneros, posters, banners, elenco y sinopsis
    provienen de TMDB. No hay datos ficticios.
@@ -1014,18 +1014,18 @@ async function fetchLogo(item) {
   try {
     const data = await tmdbFetch(endpoint, { include_image_language: "en,es,null" }, true);
     const logos = data.logos || [];
-    console.log(`[Streamix] Logos para "${item.titulo}" (${endpoint}):`, logos.length, logos);
+    console.log(`[PelisVidHD] Logos para "${item.titulo}" (${endpoint}):`, logos.length, logos);
     const pick =
       logos.find(l => l.iso_639_1 === null) ||
       logos.find(l => l.iso_639_1 === "es") ||
       logos.find(l => l.iso_639_1 === "en") ||
       logos[0];
     const path = pick ? pick.file_path : null;
-    if (!path) console.warn(`[Streamix] Sin logo disponible para "${item.titulo}"`);
+    if (!path) console.warn(`[PelisVidHD] Sin logo disponible para "${item.titulo}"`);
     logoCache.set(cacheKey, path);
     return path;
   } catch (err) {
-    console.error(`[Streamix] Error pidiendo logo de "${item.titulo}":`, err);
+    console.error(`[PelisVidHD] Error pidiendo logo de "${item.titulo}":`, err);
     logoCache.set(cacheKey, null);
     return null;
   }
@@ -1037,7 +1037,7 @@ let TITLES = [];
 // Definiciones de filas: cada una sabe cómo pedirle datos a TMDB
 const ROW_DEFINITIONS = [
   { title: "Tendencias Ahora", endpoint: "/trending/all/week", tipo: "mixed" },
-  { title: "Top 10 en Streamix", endpoint: "/movie/top_rated", tipo: "Película", limit: 10, ranked: true },
+  { title: "Top 10 en PelisVidHD", endpoint: "/movie/top_rated", tipo: "Película", limit: 10, ranked: true },
   { title: "Recomendadas para Ti", endpoint: "/discover/movie", tipo: "Película", params: { with_genres: "878,18", sort_by: "popularity.desc" } },
   { title: "Películas Populares", endpoint: "/movie/popular", tipo: "Película" },
   { title: "Series del Momento", endpoint: "/tv/popular", tipo: "Serie" },
@@ -1091,7 +1091,7 @@ async function loadAllRows() {
 </script>
 <script>
 /* ================================================================
-   STREAMIX — LÓGICA DE APLICACIÓN
+   PELISVIDHD — LÓGICA DE APLICACIÓN
    ================================================================ */
 (function () {
   'use strict';
@@ -1230,7 +1230,7 @@ async function loadAllRows() {
 
       traktPollForToken(data.device_code, data.interval || 5, data.expires_in || 600);
     } catch (err) {
-      console.error('[Streamix] Error iniciando login de Trakt:', err);
+      console.error('[PelisVidHD] Error iniciando login de Trakt:', err);
       showToast('No se pudo conectar con Trakt. Intenta de nuevo.');
       byId('traktLoadingView').classList.add('hidden');
       byId('traktLoggedOutView').classList.remove('hidden');
@@ -1309,11 +1309,11 @@ async function loadAllRows() {
           // viene, o directamente duplicamos el intervalo actual.
           const retryAfter = Number(res.headers.get('Retry-After'));
           traktCurrentPollDelay = retryAfter > 0 ? retryAfter * 1000 : traktCurrentPollDelay * 2;
-          console.warn(`[Streamix] Trakt pidió bajar la frecuencia de polling. Nuevo intervalo: ${traktCurrentPollDelay}ms`);
+          console.warn(`[PelisVidHD] Trakt pidió bajar la frecuencia de polling. Nuevo intervalo: ${traktCurrentPollDelay}ms`);
           scheduleNextPoll();
         }
       } catch (err) {
-        console.error('[Streamix] Error en polling de Trakt:', err);
+        console.error('[PelisVidHD] Error en polling de Trakt:', err);
       }
     }
 
@@ -1384,7 +1384,7 @@ async function loadAllRows() {
         : null;
 
       if (!avatarUrl) {
-        console.warn('[Streamix] Trakt no devolvió avatar para este usuario. user.images:', user.images);
+        console.warn('[PelisVidHD] Trakt no devolvió avatar para este usuario. user.images:', user.images);
       }
 
       if (avatarUrl) {
@@ -1399,14 +1399,14 @@ async function loadAllRows() {
       }
     } catch (err) {
       if (err.message === 'UNAUTHORIZED') {
-        console.error('[Streamix] Token de Trakt inválido o expirado, cerrando sesión.');
+        console.error('[PelisVidHD] Token de Trakt inválido o expirado, cerrando sesión.');
         clearTraktToken();
         traktResetPanelToLoggedOut();
         byId('traktAccountIcon').classList.remove('hidden');
         byId('traktAvatarImg').classList.add('hidden');
         showToast('Tu sesión de Trakt expiró. Vuelve a iniciar sesión.');
       } else if (err.message === 'RETRY_ONCE') {
-        console.warn('[Streamix] Trakt devolvió un error temporal (5xx), reintentando en 2s...');
+        console.warn('[PelisVidHD] Trakt devolvió un error temporal (5xx), reintentando en 2s...');
         setTimeout(() => traktRefreshAccountUI(true), 2000);
       } else {
         // Error de red/CORS/timeout tras el reintento: NO borramos el
@@ -1414,7 +1414,7 @@ async function loadAllRows() {
         // — probablemente es un problema temporal de Trakt o de conexión.
         // Dejamos la vista "conectado" con datos genéricos en vez de desloguear,
         // y ofrecemos un botón para reintentar manualmente más tarde.
-        console.error('[Streamix] No se pudo cargar el perfil de Trakt (posible error de red o falla temporal de Trakt):', err);
+        console.error('[PelisVidHD] No se pudo cargar el perfil de Trakt (posible error de red o falla temporal de Trakt):', err);
         byId('traktUsername').textContent = 'Conectado (perfil no disponible)';
         byId('traktAccountIcon').classList.remove('hidden');
         byId('traktAvatarImg').classList.add('hidden');
@@ -1446,7 +1446,7 @@ async function loadAllRows() {
       const res = await traktFetch('/sync/history', { method: 'POST', body: payload });
       if (!res.ok) throw new Error(`Trakt /sync/history error ${res.status}`);
     } catch (err) {
-      console.error('[Streamix] Error marcando como visto en Trakt:', err);
+      console.error('[PelisVidHD] Error marcando como visto en Trakt:', err);
     }
   }
 
@@ -1979,7 +1979,7 @@ async function loadAllRows() {
     };
     byId('modalShareBtn').onclick = async () => {
       const url = `${location.href.split('#')[0]}#title-${t.id}`;
-      const shareText = `${t.titulo} (${t.anio}) · ${t.rating}★ en Streamix`;
+      const shareText = `${t.titulo} (${t.anio}) · ${t.rating}★ en PelisVidHD`;
 
       // Intenta compartir CON el poster como imagen adjunta (requiere que
       // el navegador soporte Web Share API nivel 2 con archivos). Si algo
@@ -1998,7 +1998,7 @@ async function loadAllRows() {
           // Usuario canceló el share, o el navegador rechazó el archivo:
           // seguimos con el fallback de texto, sin mostrar error.
           if (err.name === 'AbortError') return; // canceló a propósito: no insistir con el fallback
-          console.warn('[Streamix] No se pudo compartir con imagen, usando fallback de texto:', err);
+          console.warn('[PelisVidHD] No se pudo compartir con imagen, usando fallback de texto:', err);
         }
       }
 
@@ -2037,7 +2037,7 @@ async function loadAllRows() {
       t.collectionInfo = data.belongs_to_collection || null;
       renderCollectionBlock(t.collectionInfo);
     } catch (err) {
-      console.error('[Streamix] Error consultando colección:', err);
+      console.error('[PelisVidHD] Error consultando colección:', err);
       t.collectionChecked = true;
       t.collectionInfo = null;
     }
@@ -2090,7 +2090,7 @@ async function loadAllRows() {
       searchEmptyMsg.textContent = `No se encontraron películas de esta saga.`;
       searchEmptyMsg.classList.toggle('hidden', results.length > 0);
     } catch (err) {
-      console.error('[Streamix] Error cargando colección:', err);
+      console.error('[PelisVidHD] Error cargando colección:', err);
       searchGrid.innerHTML = '';
       searchEmptyMsg.textContent = 'No se pudo cargar la saga. Intenta de nuevo.';
       searchEmptyMsg.classList.remove('hidden');
@@ -2247,7 +2247,7 @@ async function loadAllRows() {
         searchEmptyMsg.classList.toggle('hidden', (results.length + personResults.length) > 0);
       } catch (err) {
         if (thisRequestId !== searchRequestId) return;
-        console.error('[Streamix] Error en búsqueda TMDB:', err);
+        console.error('[PelisVidHD] Error en búsqueda TMDB:', err);
         searchGrid.innerHTML = '';
         searchEmptyMsg.textContent = 'No se pudo completar la búsqueda. Intenta de nuevo.';
         searchEmptyMsg.classList.remove('hidden');
@@ -2311,7 +2311,7 @@ async function loadAllRows() {
       searchEmptyMsg.textContent = `No se encontraron títulos para ${personName}.`;
       searchEmptyMsg.classList.toggle('hidden', results.length > 0);
     } catch (err) {
-      console.error('[Streamix] Error cargando filmografía:', err);
+      console.error('[PelisVidHD] Error cargando filmografía:', err);
       searchGrid.innerHTML = '';
       searchEmptyMsg.textContent = 'No se pudo cargar la filmografía. Intenta de nuevo.';
       searchEmptyMsg.classList.remove('hidden');
@@ -2516,7 +2516,7 @@ async function loadAllRows() {
   }
 
   function showErrorState(err) {
-    console.error('Error inicializando Streamix con TMDB:', err);
+    console.error('Error inicializando PelisVidHD con TMDB:', err);
     rowsContainer.innerHTML = `
       <div class="flex flex-col items-center justify-center py-24 gap-3 text-center px-4">
         <svg class="w-10 h-10 text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" /></svg>
@@ -2551,7 +2551,7 @@ async function loadAllRows() {
         genreMapTv: GENRE_MAP_TV,
       }));
     } catch (err) {
-      console.warn('[Streamix] No se pudo guardar la caché del catálogo (sessionStorage lleno o no disponible):', err);
+      console.warn('[PelisVidHD] No se pudo guardar la caché del catálogo (sessionStorage lleno o no disponible):', err);
     }
   }
 

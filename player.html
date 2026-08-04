@@ -3,19 +3,19 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title id="pageTitle">Reproductor | Streamix</title>
+<title id="pageTitle">Reproductor | PelisVidHD</title>
 <meta name="description" content="Reproductor de películas y series con múltiples servidores.">
 
 <!-- Open Graph / redes sociales (se actualizan por JS con los datos del título real al cargar) -->
 <meta property="og:type" content="video.other">
-<meta property="og:site_name" content="Streamix">
-<meta id="ogTitle" property="og:title" content="Streamix | Reproductor">
+<meta property="og:site_name" content="PelisVidHD">
+<meta id="ogTitle" property="og:title" content="PelisVidHD | Reproductor">
 <meta id="ogDescription" property="og:description" content="Reproductor de películas y series con múltiples servidores.">
 <meta id="ogImage" property="og:image" content="https://i.ibb.co/V0Sst1qh/20260203-025506.png">
 
 <!-- Twitter Card -->
 <meta name="twitter:card" content="summary_large_image">
-<meta id="twitterTitle" name="twitter:title" content="Streamix | Reproductor">
+<meta id="twitterTitle" name="twitter:title" content="PelisVidHD | Reproductor">
 <meta id="twitterDescription" name="twitter:description" content="Reproductor de películas y series con múltiples servidores.">
 <meta id="twitterImage" name="twitter:image" content="https://i.ibb.co/V0Sst1qh/20260203-025506.png">
 
@@ -59,11 +59,11 @@
      ----------------------------------------------------------------
      --accent-rgb se actualiza por JS (updatePosterTheme) con el color
      dominante del poster del título actual. Por defecto es el rojo de
-     marca de Streamix. Todo lo que deba adaptarse al color dinámico
+     marca de PelisVidHD. Todo lo que deba adaptarse al color dinámico
      usa estas clases en vez del rojo/brand fijo de Tailwind.
      ================================================================ */
   :root {
-    --accent-rgb: 229, 9, 20; /* rojo Streamix por defecto */
+    --accent-rgb: 229, 9, 20; /* rojo PelisVidHD por defecto */
   }
   .dynamic-accent-bg {
     background-color: rgb(var(--accent-rgb));
@@ -83,7 +83,7 @@
   }
 
   /* ----------------------------------------------------------------
-     Overrides globales: todo lo que usaba el rojo fijo de Streamix
+     Overrides globales: todo lo que usaba el rojo fijo de PelisVidHD
      (clases de Tailwind bg-brand/text-brand/border-brand, y reglas CSS
      con #E50914/rgba(229,9,20,...) escritas a mano) ahora sigue el
      acento dinámico del poster, igual que el color de los servidores
@@ -398,9 +398,9 @@
 <header class="glass sticky top-0 z-30 border-b border-white/5">
   <div class="max-w-6xl mx-auto px-4 md:px-6 h-14 md:h-16 flex items-center justify-between gap-3">
     <div class="flex items-center gap-2 min-w-0">
-      <a href="index.html" class="shrink-0" aria-label="Streamix inicio">
+      <a href="index.html" class="shrink-0" aria-label="PelisVidHD inicio">
         <span class="w-8 h-8 rounded-lg overflow-hidden flex items-center justify-center block">
-          <img src="https://i.ibb.co/V0Sst1qh/20260203-025506.png" alt="Streamix" class="w-full h-full object-cover" />
+          <img src="https://i.ibb.co/V0Sst1qh/20260203-025506.png" alt="PelisVidHD" class="w-full h-full object-cover" />
         </span>
       </a>
       <div class="min-w-0">
@@ -860,7 +860,7 @@
   // aquí y asignarlo a algún servidor es suficiente: la pestaña aparece
   // sola en el selector.
   const LANGUAGES = [
-    { code: "es", label: "Español", flag: "🇪🇸" }, // español neutro/universal (no latino específico)
+    { code: "es", label: "Español", flag: "🇲🇽" }, // español neutro/universal (no latino específico)
     { code: "pt", label: "Português", flag: "🇧🇷" },
     { code: "en", label: "English", flag: "🇺🇸" },
   ];
@@ -913,6 +913,7 @@
       },
     },
   ];
+
 
   // Ícono de reserva (SVG en base64) usado cuando un servidor no define
   // "icono", o cuando la URL de su favicon falla al cargar.
@@ -1105,7 +1106,7 @@
       if (!res.ok) throw new Error(`VAST HTTP ${res.status}`);
       xmlText = await res.text();
     } catch (err) {
-      console.warn("[Streamix Player] No se pudo obtener el VAST:", err);
+      console.warn("[PelisVidHD Player] No se pudo obtener el VAST:", err);
       return null;
     } finally {
       clearTimeout(timeoutId);
@@ -1116,7 +1117,7 @@
       doc = new DOMParser().parseFromString(xmlText, "text/xml");
       if (doc.querySelector("parsererror")) throw new Error("XML de VAST inválido");
     } catch (err) {
-      console.warn("[Streamix Player] Error parseando VAST:", err);
+      console.warn("[PelisVidHD Player] Error parseando VAST:", err);
       return null;
     }
 
@@ -1411,13 +1412,13 @@
 
     filtered.forEach(({ server, index }) => {
       const btn = document.createElement("button");
-      btn.className = "server-btn btn-ripple flex flex-col items-center justify-center gap-1.5 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 py-3 px-2 text-center";
+      btn.className = "server-btn btn-ripple flex flex-row items-center gap-2.5 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 py-2.5 px-3 text-left";
       btn.dataset.index = index;
       btn.setAttribute("aria-pressed", index === currentServerIndex ? "true" : "false");
 
       btn.innerHTML = `
-        ${buildServerIconHtml(server, "w-6 h-6")}
-        <span class="text-xs font-semibold leading-tight truncate w-full">${server.nombre}</span>
+        ${buildServerIconHtml(server, "w-5 h-5 shrink-0")}
+        <span class="text-xs font-semibold leading-tight truncate">${server.nombre}</span>
       `;
 
       btn.addEventListener("click", () => {
@@ -1617,7 +1618,7 @@
       // --- Título (usa el que trae TMDB si no vino uno explícito por la URL) ---
       const titulo = media.titulo || data.title || data.name || "Sin título";
       byId("detailsTitle").textContent = titulo;
-      if (!media.titulo) document.title = `${titulo} | Streamix`;
+      if (!media.titulo) document.title = `${titulo} | PelisVidHD`;
 
       // --- Open Graph / redes sociales: refleja el título real que se está viendo ---
       updateOpenGraphTags(titulo, data.overview, data.poster_path);
@@ -1717,7 +1718,7 @@
 
       initRatingButtons();
     } catch (err) {
-      console.error("[Streamix Player] Error cargando detalles:", err);
+      console.error("[PelisVidHD Player] Error cargando detalles:", err);
       byId("detailsLoading").classList.add("hidden");
       // Falla silenciosa: sin detalles visibles, pero el reproductor sigue intacto.
     }
@@ -1790,7 +1791,7 @@
       updateEpisodeNavControls();
       updateEpisodeNavLabel();
     } catch (err) {
-      console.error("[Streamix Player] Error cargando episodios:", err);
+      console.error("[PelisVidHD Player] Error cargando episodios:", err);
       byId("episodesLoading").classList.add("hidden");
       byId("episodesEmpty").classList.remove("hidden");
     }
@@ -1891,7 +1892,7 @@
         const lastEp = episodes[episodes.length - 1].episode_number;
         changeEpisode(target.season, lastEp);
       } catch (err) {
-        console.error("[Streamix Player] Error obteniendo la temporada anterior:", err);
+        console.error("[PelisVidHD Player] Error obteniendo la temporada anterior:", err);
       }
       return;
     }
@@ -1987,7 +1988,7 @@
     try {
       localStorage.setItem(WATCHED_EPISODES_KEY, JSON.stringify(store));
     } catch (err) {
-      console.warn("[Streamix Player] No se pudo guardar el episodio visto:", err);
+      console.warn("[PelisVidHD Player] No se pudo guardar el episodio visto:", err);
     }
   }
 
@@ -2078,10 +2079,10 @@
      Extrae el color dominante del poster del título actual (usando
      Canvas) y lo aplica como acento visual en el reproductor (botón
      de reproducir, badges, glow del thumbnail activo, etc), en vez del
-     rojo fijo de Streamix. Si la extracción falla (CORS, imagen rota),
+     rojo fijo de PelisVidHD. Si la extracción falla (CORS, imagen rota),
      cae de vuelta al rojo de marca sin romper nada.
      ================================================================ */
-  const DEFAULT_ACCENT = "229, 9, 20"; // rojo Streamix, como valores r,g,b
+  const DEFAULT_ACCENT = "229, 9, 20"; // rojo PelisVidHD, como valores r,g,b
 
   function extractDominantColor(imageUrl) {
     return new Promise((resolve) => {
@@ -2127,7 +2128,7 @@
 
           resolve(`${fr}, ${fg}, ${fb}`);
         } catch (err) {
-          console.warn("[Streamix Player] No se pudo extraer color del poster (posible CORS):", err);
+          console.warn("[PelisVidHD Player] No se pudo extraer color del poster (posible CORS):", err);
           resolve(DEFAULT_ACCENT);
         }
       };
@@ -2193,7 +2194,7 @@
   // reales del título que se está reproduciendo, para que al compartir
   // el link (WhatsApp, Twitter, etc.) se vea una vista previa correcta.
   function updateOpenGraphTags(titulo, overview, posterPath) {
-    const title = `${titulo} | Streamix`;
+    const title = `${titulo} | PelisVidHD`;
     const description = overview ? overview.slice(0, 160) : "Reproductor de películas y series con múltiples servidores.";
     const image = posterPath ? tmdbPosterUrl(posterPath, "w500") : "https://i.ibb.co/V0Sst1qh/20260203-025506.png";
 
@@ -2302,7 +2303,7 @@
 
       traktPollForToken(data.device_code, data.interval || 5, data.expires_in || 600);
     } catch (err) {
-      console.error("[Streamix Player] Error iniciando login de Trakt:", err);
+      console.error("[PelisVidHD Player] Error iniciando login de Trakt:", err);
       showButtonToast("No se pudo conectar con Trakt. Intenta de nuevo.");
       byId("traktLoadingView").classList.add("hidden");
       byId("traktLoggedOutView").classList.remove("hidden");
@@ -2370,11 +2371,11 @@
         } else if (res.status === 429) {
           const retryAfter = Number(res.headers.get("Retry-After"));
           traktCurrentPollDelay = retryAfter > 0 ? retryAfter * 1000 : traktCurrentPollDelay * 2;
-          console.warn(`[Streamix Player] Trakt pidió bajar la frecuencia de polling. Nuevo intervalo: ${traktCurrentPollDelay}ms`);
+          console.warn(`[PelisVidHD Player] Trakt pidió bajar la frecuencia de polling. Nuevo intervalo: ${traktCurrentPollDelay}ms`);
           scheduleNextPoll();
         }
       } catch (err) {
-        console.error("[Streamix Player] Error en polling de Trakt:", err);
+        console.error("[PelisVidHD Player] Error en polling de Trakt:", err);
       }
     }
 
@@ -2448,17 +2449,17 @@
       initRatingButtons(); // ahora que hay sesión, muestra/actualiza los thumbs del título actual
     } catch (err) {
       if (err.message === "UNAUTHORIZED") {
-        console.error("[Streamix Player] Token de Trakt inválido o expirado, cerrando sesión.");
+        console.error("[PelisVidHD Player] Token de Trakt inválido o expirado, cerrando sesión.");
         clearTraktToken();
         traktResetPanelToLoggedOut();
         byId("traktAccountIcon").classList.remove("hidden");
         byId("traktAvatarImg").classList.add("hidden");
         showButtonToast("Tu sesión de Trakt expiró. Vuelve a iniciar sesión.");
       } else if (err.message === "RETRY_ONCE") {
-        console.warn("[Streamix Player] Trakt devolvió un error temporal (5xx), reintentando en 2s...");
+        console.warn("[PelisVidHD Player] Trakt devolvió un error temporal (5xx), reintentando en 2s...");
         setTimeout(() => traktRefreshAccountUI(true), 2000);
       } else {
-        console.error("[Streamix Player] No se pudo cargar el perfil de Trakt:", err);
+        console.error("[PelisVidHD Player] No se pudo cargar el perfil de Trakt:", err);
         byId("traktUsername").textContent = "Conectado (perfil no disponible)";
         byId("traktAccountIcon").classList.remove("hidden");
         byId("traktAvatarImg").classList.add("hidden");
@@ -2500,7 +2501,7 @@
         updateRatingButtonsUI();
       }
     } catch (err) {
-      console.warn("[Streamix Player] No se pudo consultar rating existente en Trakt:", err);
+      console.warn("[PelisVidHD Player] No se pudo consultar rating existente en Trakt:", err);
     }
   }
 
@@ -2525,7 +2526,7 @@
       }
       updateRatingButtonsUI();
     } catch (err) {
-      console.error("[Streamix Player] Error enviando valoración a Trakt:", err);
+      console.error("[PelisVidHD Player] Error enviando valoración a Trakt:", err);
     }
   }
 
@@ -2660,7 +2661,7 @@
 
       byId("recommendationsSection").classList.remove("hidden");
     } catch (err) {
-      console.error("[Streamix Player] Error cargando recomendaciones:", err);
+      console.error("[PelisVidHD Player] Error cargando recomendaciones:", err);
       byId("recommendationsLoading").classList.add("hidden");
       // Falla silenciosa: no mostramos error, simplemente no hay sección de recomendaciones.
     }
@@ -2699,7 +2700,7 @@
     media = parseMediaFromUrl();
     renderMediaHeader();
 
-    if (media.titulo) document.title = `${media.titulo} | Streamix`;
+    if (media.titulo) document.title = `${media.titulo} | PelisVidHD`;
 
     currentLanguage = resolveInitialLanguage();
     renderLanguageTabs();
@@ -2755,7 +2756,7 @@
       mediaInfo.imdbId = data.imdb_id || "";
       return mediaInfo.imdbId;
     } catch (err) {
-      console.error("[Streamix Player] Error obteniendo IMDB ID:", err);
+      console.error("[PelisVidHD Player] Error obteniendo IMDB ID:", err);
       mediaInfo.imdbId = "";
       return "";
     }
