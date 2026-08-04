@@ -912,8 +912,78 @@
         tv: "{urlBase}/f/{imdb_id}-{season}x{episode}",
       },
     },
+{
+      nombre: "VerHDLink",
+      icono: "https://www.google.com/s2/favicons?domain=verhdlink.cam&sz=64",
+      color: "#3B82F6", // azul
+      urlBase: "https://verhdlink.cam/",
+      idioma: "es",
+      // Ejemplo de fórmula personalizada: este servidor identifica el
+      // contenido por IMDB ID en vez de TMDB ID (común en varias APIs
+      // de streaming reales). El placeholder {imdb_id} se resuelve
+      // automáticamente pidiendo external_ids a TMDB antes de cargar.
+      formatoUrl: {
+        movie: "{urlBase}/movie/{imdb_id}/",
+        tv: "{urlBase}/tv/{imdb_id}-{season}x{episode}",
+      },
+    },
+{
+      nombre: "Warezcdn",
+      icono: "https://www.google.com/s2/favicons?domain=warezcdn.lat&sz=64",
+      color: "#E50914", // rojo Streamix
+      urlBase: "https://warezcdn.lat"
+      idioma: "pt",
+      formatoUrl: {
+        movie: "{urlBase}/filme/{tmdb_id}/",
+        tv: "{urlBase}/serie/{tmdb_id}/{season}/{episode}",
+    },
+},
+{
+      nombre: "Superflixapi",
+      icono: "https://www.google.com/s2/favicons?domain=superflixapi.pro&sz=64",
+      color: "#E50914", // rojo Streamix
+      urlBase: "https://superflixapi.pro"
+      idioma: "pt",
+      formatoUrl: {
+        movie: "{urlBase}/filme/{tmdb_id}/",
+        tv: "{urlBase}/serie/{tmdb_id}/{season}/{episode}",
+    },
+},
+{
+      nombre: "Pomfy",
+      icono: "https://www.google.com/s2/favicons?domain=api.pomfy.stream&sz=64",
+      color: "#E50914", // rojo Streamix
+      urlBase: "https://api.pomfy.stream"
+      idioma: "pt",
+      formatoUrl: {
+        movie: "{urlBase}/filme/{tmdb_id}/",
+        tv: "{urlBase}/serie/{tmdb_id}/{season}/{episode}",
+    },
+},
+{
+      nombre: "Megaembed",
+      icono: "https://www.google.com/s2/favicons?domain=megaembed.com&sz=64",
+      color: "#E50914", // rojo Streamix
+      urlBase: "https://mgeb.top/"
+      idioma: "pt",
+      formatoUrl: {
+        movie: "{urlBase}/embed/{tmdb_id}/",
+        tv: "{urlBase}/embed/{tmdb_id}/{season}/{episode}",
+    },
+},
+},
+{
+      nombre: "Betterflix",
+      icono: "https://www.google.com/s2/favicons?domain=megaembed.com&sz=64",
+      color: "#E50914", // rojo Streamix
+      urlBase: "https://betterflix.lat"
+      idioma: "pt",
+      formatoUrl: {
+        movie: "{urlBase}/api/player?id={tmdb_id}&type=movie",
+        tv: "{urlBase}/https://betterflix.lat/api/player?id={tmdb_id}&type=tv&season={season}&episode={episode}",
+    },
+},
   ];
-
 
   // Ícono de reserva (SVG en base64) usado cuando un servidor no define
   // "icono", o cuando la URL de su favicon falla al cargar.
