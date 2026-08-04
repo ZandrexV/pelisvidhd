@@ -863,6 +863,7 @@
     { code: "es", label: "Español", flag: "🇲🇽" }, // español neutro/universal (no latino específico)
     { code: "pt", label: "Português", flag: "🇧🇷" },
     { code: "en", label: "English", flag: "🇺🇸" },
+    { code: "fr", label: "Français", flag: "🇫🇷" },
   ];
 
   const servers = [
@@ -1035,6 +1036,17 @@
       formatoUrl: {
         movie: "{urlBase}/embed/movie/{imdb_id}",
         tv: "{urlBase}/embed/tv/{tmdb_id}/{season}/{episode}",
+    },
+},
+{
+      nombre: "Frembed",
+      icono: "https://www.google.com/s2/favicons?domain=frembed.casa&sz=64",
+      color: "#E50914", // rojo Streamix
+      urlBase: "https://frembed.casa",
+      idioma: "fr",
+      formatoUrl: {
+        movie: "{urlBase}/embed/movie/{tmdb_id}",
+        tv: "{urlBase}/embed/serie/{tmdb_id}?sa={season}&epi={episode}",
     },
 },
   ];
