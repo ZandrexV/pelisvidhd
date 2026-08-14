@@ -511,6 +511,21 @@
         title="Reproductor de video"
       ></iframe>
 
+      <!-- Cover inicial: backdrop del título + botón de play. Solo se ve
+           la primera vez que se entra al reproductor; al hacer clic en
+           play se dispara el preroll VAST (si hay ads configurados) y
+           luego se carga el servidor. Cambiar de servidor manualmente
+           después NO vuelve a mostrar este cover. -->
+      <div id="playCoverOverlay" class="absolute inset-0 z-40 bg-bg">
+        <img id="playCoverBackdrop" src="" alt="" class="absolute inset-0 w-full h-full object-cover opacity-0 transition-opacity duration-500" />
+        <div class="absolute inset-0 bg-gradient-to-t from-bg via-bg/40 to-bg/70"></div>
+        <button id="playCoverBtn" class="absolute inset-0 flex items-center justify-center group" aria-label="Reproducir">
+          <span class="btn-ripple dynamic-accent-bg w-16 h-16 md:w-20 md:h-20 rounded-full flex items-center justify-center shadow-2xl transition-transform group-hover:scale-110 group-active:scale-95">
+            <i class="fa-solid fa-play text-2xl md:text-3xl translate-x-0.5"></i>
+          </span>
+        </button>
+      </div>
+
       <!-- Preroll VAST: se muestra ANTES de asignar la URL del servidor al
            iframe. Si el VAST falla o no hay tags configurados, este bloque
            nunca aparece y se pasa directo al servidor. -->
@@ -860,10 +875,9 @@
   // aquí y asignarlo a algún servidor es suficiente: la pestaña aparece
   // sola en el selector.
   const LANGUAGES = [
-    { code: "es", label: "Español", flag: "🇲🇽" }, // español neutro/universal (no latino específico)
+    { code: "es", label: "Español", flag: "🌐" }, // español neutro/universal (no latino específico)
     { code: "pt", label: "Português", flag: "🇧🇷" },
     { code: "en", label: "English", flag: "🇺🇸" },
-    { code: "fr", label: "Français", flag: "🇫🇷" },
   ];
 
   const servers = [
@@ -1672,7 +1686,8 @@
       return;
     }
 
-    titleEl.textContent = media.titulo || (media.tipo === "tv" ? `Serie · TMDB #${media.tmdbId}` : `Película · TMDB #${media.tmdbId}`);
+    const displayTitle = media.titulo || (media.tipo === "tv" ? `Serie · TMDB #${media.tmdbId}` : `Película · TMDB #${media.tmdbId}`);
+    titleEl.textContent = displayTitle;
 
     if (media.tipo === "tv") {
       subtitleEl.textContent = `Temporada ${media.temporada} · Episodio ${media.episodio}`;
@@ -1682,9 +1697,21 @@
       subtitleEl.textContent = "Película";
       byId("episodeNavSection").classList.add("hidden");
     }
+
+    updatePageTitle(displayTitle);
   }
 
-  /* ================================================================
+  // Arma el título de la pestaña del navegador: para series incluye
+  // temporada y episodio (ej. "The Owl House T1 E23 - PelisVidHD"), y se
+  // vuelve a llamar cada vez que cambia el episodio, no solo al cargar.
+  function updatePageTitle(displayTitle) {
+    if (media.tipo === "tv" && media.temporada && media.episodio) {
+      document.title = `${displayTitle} T${media.temporada} E${media.episodio} - PelisVidHD`;
+    } else {
+      document.title = `${displayTitle} - PelisVidHD`;
+    }
+  }
+
   /* ================================================================
      12. DETALLES: SINOPSIS + REPARTO
      ----------------------------------------------------------------
@@ -1751,10 +1778,18 @@
         posterEl.classList.add("hidden");
       }
 
+      // --- Backdrop del cover inicial (botón de play) ---
+      const coverBackdropUrl = tmdbBackdropUrl(data.backdrop_path) || tmdbBackdropUrl(data.poster_path);
+      if (coverBackdropUrl) {
+        const coverBackdropImg = byId("playCoverBackdrop");
+        coverBackdropImg.onload = () => coverBackdropImg.classList.remove("opacity-0");
+        coverBackdropImg.src = coverBackdropUrl;
+      }
+
       // --- Título (usa el que trae TMDB si no vino uno explícito por la URL) ---
       const titulo = media.titulo || data.title || data.name || "Sin título";
       byId("detailsTitle").textContent = titulo;
-      if (!media.titulo) document.title = `${titulo} | PelisVidHD`;
+      if (!media.titulo) updatePageTitle(titulo);
 
       // --- Open Graph / redes sociales: refleja el título real que se está viendo ---
       updateOpenGraphTags(titulo, data.overview, data.poster_path);
@@ -2207,6 +2242,9 @@
 
   function tmdbPosterUrl(path, size = "w342") {
     return path ? `${TMDB_IMG}/${size}${path}` : `https://placehold.co/300x450/1a1a1a/666?text=Sin+Imagen`;
+  }
+  function tmdbBackdropUrl(path, size = "w1280") {
+    return path ? `${TMDB_IMG}/${size}${path}` : null;
   }
 
   /* ================================================================
@@ -2834,9 +2872,7 @@
 
   function init() {
     media = parseMediaFromUrl();
-    renderMediaHeader();
-
-    if (media.titulo) document.title = `${media.titulo} | PelisVidHD`;
+    renderMediaHeader(); // ya actualiza document.title (con T/E si es serie)
 
     currentLanguage = resolveInitialLanguage();
     renderLanguageTabs();
@@ -2845,6 +2881,7 @@
 
     // Si no hay TMDB ID en la URL, no intentamos cargar ningún servidor.
     if (!media.tmdbId) {
+      byId("playCoverOverlay").classList.add("hidden"); // el cover no debe tapar el mensaje de error
       showError();
       byId("errorTitle").textContent = "Falta el contenido a reproducir";
       byId("errorDescription").textContent =
@@ -2856,19 +2893,39 @@
 
     const startIndex = resolveInitialServerIndex();
 
-    // El preroll VAST (si hay ad tags configurados) se muestra una sola
-    // vez, antes de la primera carga del servidor. loadDetails() y
-    // loadRecommendations() no dependen del video, así que corren en
-    // paralelo mientras se decide/reproduce el anuncio.
+    // Ya no se carga el servidor (ni se dispara el VAST) automáticamente:
+    // se muestra el cover con el backdrop del título, y todo el flujo
+    // (VAST si aplica, luego el servidor) arranca recién al hacer clic
+    // en el botón de play. loadDetails()/loadRecommendations() sí corren
+    // ya mismo, en paralelo, ya que no dependen de esa interacción.
     loadDetails();
     loadRecommendations();
-    playVastPreroll().then(() => {
-      loadServer(startIndex);
-    });
+    showPlayCover(startIndex);
 
     if (media.tipo === "tv") {
       markEpisodeWatched(media.temporada, media.episodio);
     }
+  }
+
+  // Muestra el cover inicial (backdrop + botón de play) y conecta el
+  // clic para arrancar recién ahí el preroll VAST (si aplica) y luego
+  // la carga del servidor elegido.
+  function showPlayCover(startIndex) {
+    const cover = byId("playCoverOverlay");
+    const backdropImg = byId("playCoverBackdrop");
+
+    // El backdrop llega vía loadDetails() (puede tardar un poco más que
+    // el resto del cover); mientras tanto se ve solo el fondo oscuro con
+    // el botón de play, sin parpadeos raros.
+    backdropImg.classList.add("opacity-0");
+    backdropImg.src = "";
+
+    byId("playCoverBtn").onclick = () => {
+      cover.classList.add("hidden");
+      playVastPreroll().then(() => {
+        loadServer(startIndex);
+      });
+    };
   }
 
   // Revisa si la plantilla de un servidor (por defecto o personalizada)
@@ -3055,10 +3112,3 @@
 </script>
 </body>
 </html>
-html>
-ript>
-</body>
-</html>
-html>
-tml>
-
