@@ -329,7 +329,7 @@
   }
 
   /* ================================================================
-     RATING BUTTONS (Trakt)
+     RATING BUTTONS (me gusta / no me gusta, valoración local)
      ================================================================ */
   .rating-btn.active-like {
     background: rgba(34, 197, 94, 0.2);
@@ -427,65 +427,6 @@
         </div>
       </div>
 
-      <!-- Cuenta / Trakt -->
-      <div class="relative shrink-0">
-        <button id="traktAccountBtn" aria-label="Cuenta" class="w-9 h-9 rounded-full bg-gradient-to-br from-brand to-brandDark flex items-center justify-center font-bold text-sm hover:ring-2 hover:ring-white/40 transition-all overflow-hidden">
-          <i id="traktAccountIcon" class="fa-solid fa-user text-xs"></i>
-          <img id="traktAvatarImg" src="" alt="" class="hidden w-full h-full object-cover" />
-        </button>
-
-        <!-- Panel de cuenta (login / estado conectado) -->
-        <div id="traktPanel" class="server-dropdown-panel closed absolute right-0 mt-2 w-72 glass-strong rounded-2xl p-4 z-30 border border-white/10 shadow-2xl">
-
-          <!-- Estado: desconectado -->
-          <div id="traktLoggedOutView">
-            <div class="flex items-center gap-2 mb-3">
-              <i class="fa-solid fa-clapperboard text-brand"></i>
-              <p class="font-bold text-sm">Conectar con Trakt</p>
-            </div>
-            <p class="text-white/50 text-xs leading-relaxed mb-4">Sincroniza tu lista de vistos con tu cuenta de Trakt.tv, accesible desde cualquier dispositivo.</p>
-            <button id="traktLoginBtn" class="btn-ripple w-full bg-brand hover:bg-brandlight transition-colors py-2.5 rounded-lg font-bold text-sm">
-              Iniciar sesión
-            </button>
-          </div>
-
-          <!-- Estado: cargando código -->
-          <div id="traktLoadingView" class="hidden flex flex-col items-center py-4 gap-3">
-            <div class="w-6 h-6 border-2 border-white/20 border-t-brand rounded-full animate-spin"></div>
-            <p class="text-white/50 text-xs">Generando código…</p>
-          </div>
-
-          <!-- Estado: esperando confirmación (código PIN) -->
-          <div id="traktPendingView" class="hidden text-center">
-            <p class="text-white/50 text-xs mb-2">Ingresa este código en</p>
-            <a id="traktActivateLink" href="https://trakt.tv/activate" target="_blank" rel="noopener noreferrer" class="text-brand text-xs font-bold hover:underline mb-3 inline-block">trakt.tv/activate</a>
-            <div id="traktUserCode" class="text-2xl font-black tracking-[0.2em] bg-white/5 border border-white/10 rounded-xl py-3 mb-3 select-all"></div>
-            <div class="flex items-center justify-center gap-2 text-white/40 text-xs">
-              <div class="w-3 h-3 border-2 border-white/20 border-t-brand rounded-full animate-spin"></div>
-              Esperando confirmación…
-            </div>
-            <button id="traktCancelBtn" class="mt-3 text-white/40 hover:text-white text-xs underline transition-colors">Cancelar</button>
-          </div>
-
-          <!-- Estado: conectado -->
-          <div id="traktLoggedInView" class="hidden">
-            <div class="flex items-center gap-3 mb-4">
-              <img id="traktPanelAvatar" src="" alt="" class="w-10 h-10 rounded-full object-cover bg-white/10" />
-              <div class="min-w-0">
-                <p id="traktUsername" class="font-bold text-sm truncate"></p>
-                <p class="text-white/40 text-xs">Conectado a Trakt</p>
-              </div>
-            </div>
-            <p class="text-white/50 text-xs leading-relaxed mb-3">Los títulos que reproduzcas se marcan automáticamente como vistos en tu cuenta de Trakt.</p>
-            <button id="traktRetryProfileBtn" class="hidden btn-ripple w-full inline-flex items-center justify-center gap-1.5 bg-white/10 hover:bg-white/20 transition-colors py-2 rounded-lg font-semibold text-xs mb-2">
-              <i class="fa-solid fa-rotate-right"></i> Reintentar cargar perfil
-            </button>
-            <button id="traktLogoutBtn" class="btn-ripple w-full bg-white/10 hover:bg-white/20 transition-colors py-2.5 rounded-lg font-bold text-sm">
-              Cerrar sesión
-            </button>
-          </div>
-        </div>
-      </div>
     </div>
   </div>
 </header>
@@ -705,8 +646,8 @@
               Ver Tráiler
             </button>
 
-            <!-- Valoración con Trakt: solo visible si hay sesión activa -->
-            <div id="ratingButtons" class="hidden flex items-center gap-1.5">
+            <!-- Valoración local: me gusta / no me gusta -->
+            <div id="ratingButtons" class="flex items-center gap-1.5">
               <button id="thumbUpBtn" class="rating-btn btn-ripple w-10 h-10 rounded-lg bg-white/10 hover:bg-white/20 transition-colors flex items-center justify-center" aria-label="Me gusta">
                 <i class="fa-solid fa-thumbs-up text-sm"></i>
               </button>
@@ -1064,6 +1005,31 @@
     },
 },
   ];
+
+  /* ================================================================
+     LISTA NEGRA DE SERVIDORES
+     ----------------------------------------------------------------
+     Los servidores cuyo "nombre" (normalizado: minúsculas, sin
+     espacios extra) coincida con alguno de esta lista quedan
+     completamente excluidos: no aparecen en el grid, no se pueden
+     seleccionar, no se cargan nunca (ni siquiera como último servidor
+     recordado) y el sistema de fallback automático los salta solos.
+     ================================================================ */
+  const BLOCKED_SERVER_NAMES = [
+    "Servidortrinity",
+    "Servidormahoutokoro",
+    "Servidordeathstar",
+    "Servidorgoldmember",
+  ];
+
+  function normalizeServerName(name) {
+    return (name || "").toString().trim().toLowerCase().replace(/\s+/g, "");
+  }
+  const BLOCKED_SERVER_SET = new Set(BLOCKED_SERVER_NAMES.map(normalizeServerName));
+
+  function isServerBlocked(server) {
+    return BLOCKED_SERVER_SET.has(normalizeServerName(server.nombre));
+  }
 
   // Ícono de reserva (SVG en base64) usado cuando un servidor no define
   // "icono", o cuando la URL de su favicon falla al cargar.
@@ -1542,11 +1508,12 @@
   }
 
   // Devuelve los servidores (con su índice ORIGINAL en "servers") que
-  // pertenecen al idioma actualmente seleccionado.
+  // pertenecen al idioma actualmente seleccionado, excluyendo los
+  // servidores de la lista negra (ver BLOCKED_SERVER_NAMES).
   function getServersForCurrentLanguage() {
     return servers
       .map((server, index) => ({ server, index }))
-      .filter(({ server }) => server.idioma === currentLanguage);
+      .filter(({ server }) => server.idioma === currentLanguage && !isServerBlocked(server));
   }
 
   function renderServerGrid() {
@@ -2391,317 +2358,66 @@
   }
 
   /* ================================================================
-     TRAKT.TV — LOGIN (Device Code Flow) + VALORACIÓN (thumbs up/down)
+     VALORACIÓN LOCAL (me gusta / no me gusta)
      ----------------------------------------------------------------
-     El login completo vive también aquí (mismo flujo que index.html,
-     mismo token compartido vía localStorage) — no hace falta volver
-     al catálogo para conectar la cuenta desde el reproductor.
-
-     Convención de Trakt: un rating de 8-10 equivale a "like" (pulgar
-     arriba) y de 1-4 a "dislike" (pulgar abajo) en apps con UI de thumbs.
+     Sin backend ni cuenta externa: la valoración de cada título se
+     guarda en localStorage, igual que el resto del estado de la app
+     (historial, lista, episodios vistos). Los botones están siempre
+     visibles y disponibles, sin depender de ningún login.
      ================================================================ */
-  const TRAKT_API = "https://api.trakt.tv";
-  const TRAKT_CLIENT_ID = "3kJ_9DiHnITxuDb12cw_aE86isGYuZ352UyHTrxlmyQ";
-  const TRAKT_CLIENT_SECRET = "zO5A2c5FFghpf3JeKKlTfyMXPsQ-wOPdSeNRNGTbAvA";
-  const TRAKT_TOKEN_KEY = "streamix_trakt_token_v1";
-  const TRAKT_RATING_LIKE = 9;
-  const TRAKT_RATING_DISLIKE = 3;
+  const RATINGS_KEY = "streamix_ratings_v1"; // { "movie-550": "like", "tv-1396": "dislike", ... }
 
-  let traktPollInterval = null;
-  let traktPollTimeout = null;
-  let traktLoginInProgress = false; // evita que dos clics/llamadas dupliquen el polling
-  let traktCurrentPollDelay = 5000; // se ajusta dinámicamente si Trakt pide más espacio
-
-  function traktIsConfigured() {
-    return !!(TRAKT_CLIENT_ID && TRAKT_CLIENT_SECRET);
-  }
-
-  function getTraktToken() {
+  function getRatingsStore() {
     try {
-      return JSON.parse(localStorage.getItem(TRAKT_TOKEN_KEY) || "null");
+      return JSON.parse(localStorage.getItem(RATINGS_KEY) || "{}");
     } catch {
-      return null;
+      return {};
     }
   }
-  function saveTraktToken(tokenData) {
-    localStorage.setItem(TRAKT_TOKEN_KEY, JSON.stringify(tokenData));
-  }
-  function clearTraktToken() {
-    localStorage.removeItem(TRAKT_TOKEN_KEY);
-  }
-  function isTraktLoggedIn() {
-    const t = getTraktToken();
-    return !!(t && t.access_token);
-  }
-
-  async function traktFetch(path, { method = "GET", body } = {}) {
-    const token = getTraktToken();
-    const headers = {
-      "Content-Type": "application/json",
-      "trakt-api-version": "2",
-      "trakt-api-key": TRAKT_CLIENT_ID,
-    };
-    if (token && token.access_token) headers["Authorization"] = `Bearer ${token.access_token}`;
-    return fetch(`${TRAKT_API}${path}`, {
-      method,
-      headers,
-      body: body ? JSON.stringify(body) : undefined,
-    });
-  }
-
-  // Paso 1: pide un código de dispositivo (el usuario lo escribe en trakt.tv/activate)
-  async function traktStartDeviceLogin() {
-    if (!traktIsConfigured()) {
-      showButtonToast("Trakt no está configurado todavía (falta Client ID/Secret)");
-      return;
-    }
-    if (traktLoginInProgress) return; // ya hay un login en curso, no dupliques el polling
-    traktLoginInProgress = true;
-
-    byId("traktLoggedOutView").classList.add("hidden");
-    byId("traktLoadingView").classList.remove("hidden");
-
+  function saveRatingsStore(store) {
     try {
-      const res = await fetch(`${TRAKT_API}/oauth/device/code`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ client_id: TRAKT_CLIENT_ID }),
-      });
-      if (!res.ok) throw new Error(`Trakt device/code error ${res.status}`);
-      const data = await res.json();
-
-      byId("traktLoadingView").classList.add("hidden");
-      byId("traktPendingView").classList.remove("hidden");
-      byId("traktUserCode").textContent = data.user_code;
-      byId("traktActivateLink").href = data.verification_url || "https://trakt.tv/activate";
-
-      traktPollForToken(data.device_code, data.interval || 5, data.expires_in || 600);
+      localStorage.setItem(RATINGS_KEY, JSON.stringify(store));
     } catch (err) {
-      console.error("[PelisVidHD Player] Error iniciando login de Trakt:", err);
-      showButtonToast("No se pudo conectar con Trakt. Intenta de nuevo.");
-      byId("traktLoadingView").classList.add("hidden");
-      byId("traktLoggedOutView").classList.remove("hidden");
-      traktLoginInProgress = false;
+      console.warn("[PelisVidHD Player] No se pudo guardar la valoración localmente:", err);
     }
   }
-
-  // Paso 2: hace polling a Trakt cada "interval" segundos hasta que el
-  // usuario confirma el código, o hasta que expira.
-  //   200 = confirmado; 400 = authorization_pending (normal, seguimos
-  //   esperando); 404/409/410/418 = errores que cortan el intento;
-  //   429 = bajar la frecuencia (respeta Retry-After o duplica el delay).
-  function traktPollForToken(deviceCode, interval, expiresIn) {
-    clearInterval(traktPollInterval);
-    clearTimeout(traktPollTimeout);
-    traktCurrentPollDelay = Math.max(interval, 5) * 1000;
-
-    function scheduleNextPoll() {
-      clearInterval(traktPollInterval);
-      traktPollInterval = setInterval(pollOnce, traktCurrentPollDelay);
-    }
-
-    async function pollOnce() {
-      try {
-        const res = await fetch(`${TRAKT_API}/oauth/device/token`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            code: deviceCode,
-            client_id: TRAKT_CLIENT_ID,
-            client_secret: TRAKT_CLIENT_SECRET,
-          }),
-        });
-
-        if (res.status === 200) {
-          const tokenData = await res.json();
-          clearInterval(traktPollInterval);
-          clearTimeout(traktPollTimeout);
-          traktLoginInProgress = false;
-          saveTraktToken(tokenData);
-          await traktRefreshAccountUI();
-          showButtonToast("Conectado a Trakt correctamente");
-        } else if (res.status === 400) {
-          // authorization_pending: comportamiento normal, seguimos esperando tal cual.
-        } else if (res.status === 404) {
-          clearInterval(traktPollInterval);
-          traktLoginInProgress = false;
-          showButtonToast("Código inválido. Intenta de nuevo.");
-          traktResetPanelToLoggedOut();
-        } else if (res.status === 409) {
-          clearInterval(traktPollInterval);
-          traktLoginInProgress = false;
-          showButtonToast("Este código ya fue usado. Intenta de nuevo.");
-          traktResetPanelToLoggedOut();
-        } else if (res.status === 410) {
-          clearInterval(traktPollInterval);
-          traktLoginInProgress = false;
-          showButtonToast("El código expiró. Intenta de nuevo.");
-          traktResetPanelToLoggedOut();
-        } else if (res.status === 418) {
-          clearInterval(traktPollInterval);
-          traktLoginInProgress = false;
-          showButtonToast("Solicitud rechazada en Trakt.");
-          traktResetPanelToLoggedOut();
-        } else if (res.status === 429) {
-          const retryAfter = Number(res.headers.get("Retry-After"));
-          traktCurrentPollDelay = retryAfter > 0 ? retryAfter * 1000 : traktCurrentPollDelay * 2;
-          console.warn(`[PelisVidHD Player] Trakt pidió bajar la frecuencia de polling. Nuevo intervalo: ${traktCurrentPollDelay}ms`);
-          scheduleNextPoll();
-        }
-      } catch (err) {
-        console.error("[PelisVidHD Player] Error en polling de Trakt:", err);
-      }
-    }
-
-    scheduleNextPoll();
-
-    traktPollTimeout = setTimeout(() => {
-      clearInterval(traktPollInterval);
-      traktLoginInProgress = false;
-      showButtonToast("El código de Trakt expiró.");
-      traktResetPanelToLoggedOut();
-    }, expiresIn * 1000);
+  function ratingKeyFor(mediaInfo) {
+    return `${mediaInfo.tipo}-${mediaInfo.tmdbId}`;
   }
 
-  function traktCancelLogin() {
-    clearInterval(traktPollInterval);
-    clearTimeout(traktPollTimeout);
-    traktLoginInProgress = false;
-    traktResetPanelToLoggedOut();
-  }
-
-  function traktResetPanelToLoggedOut() {
-    byId("traktPendingView").classList.add("hidden");
-    byId("traktLoadingView").classList.add("hidden");
-    byId("traktLoggedInView").classList.add("hidden");
-    byId("traktLoggedOutView").classList.remove("hidden");
-  }
-
-  // Refresca el ícono/avatar del header y el panel según el estado real
-  // de sesión, y reactiva los botones de valoración si corresponde.
-  async function traktRefreshAccountUI(isRetry = false) {
-    if (!isTraktLoggedIn()) {
-      byId("traktAccountIcon").classList.remove("hidden");
-      byId("traktAvatarImg").classList.add("hidden");
-      traktResetPanelToLoggedOut();
-      byId("ratingButtons").classList.add("hidden");
-      return;
-    }
-
-    byId("traktLoggedOutView").classList.add("hidden");
-    byId("traktLoadingView").classList.add("hidden");
-    byId("traktPendingView").classList.add("hidden");
-    byId("traktLoggedInView").classList.remove("hidden");
-
-    try {
-      const res = await traktFetch("/users/me?extended=full");
-
-      if (res.status === 401) throw new Error("UNAUTHORIZED");
-      if (res.status >= 500 && !isRetry) throw new Error("RETRY_ONCE");
-      if (!res.ok) throw new Error(`Trakt /users/me error ${res.status}`);
-
-      const user = await res.json();
-
-      byId("traktUsername").textContent = user.username || "Usuario de Trakt";
-      byId("traktRetryProfileBtn").classList.add("hidden");
-
-      const avatarUrl = user.images && user.images.avatar
-        ? (user.images.avatar.full || user.images.avatar.medium || user.images.avatar)
-        : null;
-
-      if (avatarUrl) {
-        byId("traktAvatarImg").src = avatarUrl;
-        byId("traktAvatarImg").classList.remove("hidden");
-        byId("traktAccountIcon").classList.add("hidden");
-        byId("traktPanelAvatar").src = avatarUrl;
-      } else {
-        byId("traktAccountIcon").classList.remove("hidden");
-        byId("traktAvatarImg").classList.add("hidden");
-        byId("traktPanelAvatar").src = "https://placehold.co/100x100/1a1a1a/666?text=%3F";
-      }
-
-      initRatingButtons(); // ahora que hay sesión, muestra/actualiza los thumbs del título actual
-    } catch (err) {
-      if (err.message === "UNAUTHORIZED") {
-        console.error("[PelisVidHD Player] Token de Trakt inválido o expirado, cerrando sesión.");
-        clearTraktToken();
-        traktResetPanelToLoggedOut();
-        byId("traktAccountIcon").classList.remove("hidden");
-        byId("traktAvatarImg").classList.add("hidden");
-        showButtonToast("Tu sesión de Trakt expiró. Vuelve a iniciar sesión.");
-      } else if (err.message === "RETRY_ONCE") {
-        console.warn("[PelisVidHD Player] Trakt devolvió un error temporal (5xx), reintentando en 2s...");
-        setTimeout(() => traktRefreshAccountUI(true), 2000);
-      } else {
-        console.error("[PelisVidHD Player] No se pudo cargar el perfil de Trakt:", err);
-        byId("traktUsername").textContent = "Conectado (perfil no disponible)";
-        byId("traktAccountIcon").classList.remove("hidden");
-        byId("traktAvatarImg").classList.add("hidden");
-        byId("traktPanelAvatar").src = "https://placehold.co/100x100/1a1a1a/666?text=%3F";
-        byId("traktRetryProfileBtn").classList.remove("hidden");
-      }
-    }
-  }
-
-  function traktLogout() {
-    clearTraktToken();
-    traktRefreshAccountUI();
-    showButtonToast("Sesión de Trakt cerrada");
-  }
-
-  let currentUserRating = null; // null | "like" | "dislike", según lo que ya haya valorado en Trakt
+  let currentUserRating = null; // null | "like" | "dislike"
 
   function updateRatingButtonsUI() {
     byId("thumbUpBtn").classList.toggle("active-like", currentUserRating === "like");
     byId("thumbDownBtn").classList.toggle("active-dislike", currentUserRating === "dislike");
   }
 
-  // Consulta si el usuario ya valoró este título en Trakt, para reflejar
-  // el estado correcto (thumb resaltado) en vez de arrancar siempre neutro.
-  async function loadExistingRating() {
-    if (!isTraktLoggedIn() || !media.tmdbId) return;
-
-    const type = media.tipo === "tv" ? "shows" : "movies";
-    try {
-      const res = await traktFetch(`/sync/ratings/${type}`);
-      if (!res.ok) return;
-      const ratings = await res.json();
-      const match = ratings.find(r => {
-        const item = r.movie || r.show;
-        return item && item.ids && String(item.ids.tmdb) === String(media.tmdbId);
-      });
-      if (match) {
-        currentUserRating = match.rating >= 7 ? "like" : "dislike";
-        updateRatingButtonsUI();
-      }
-    } catch (err) {
-      console.warn("[PelisVidHD Player] No se pudo consultar rating existente en Trakt:", err);
-    }
+  // Carga la valoración ya guardada (si existe) para el título actual.
+  function loadExistingRating() {
+    if (!media.tmdbId) return;
+    const store = getRatingsStore();
+    currentUserRating = store[ratingKeyFor(media)] || null;
+    updateRatingButtonsUI();
   }
 
-  // Envía (o quita, si se repite el mismo thumb) la valoración a Trakt.
-  async function submitRating(kind) {
-    if (!isTraktLoggedIn()) return;
-
+  // Guarda (o quita, si se repite el mismo thumb) la valoración local.
+  function submitRating(kind) {
+    if (!media.tmdbId) return;
+    const store = getRatingsStore();
+    const key = ratingKeyFor(media);
     const isRemoving = currentUserRating === kind;
-    const type = media.tipo === "tv" ? "shows" : "movies";
-    const idsPayload = { ids: { tmdb: Number(media.tmdbId) } };
 
-    try {
-      if (isRemoving) {
-        await traktFetch("/sync/ratings/remove", { method: "POST", body: { [type]: [idsPayload] } });
-        currentUserRating = null;
-        showButtonToast("Valoración eliminada");
-      } else {
-        const rating = kind === "like" ? TRAKT_RATING_LIKE : TRAKT_RATING_DISLIKE;
-        await traktFetch("/sync/ratings", { method: "POST", body: { [type]: [{ ...idsPayload, rating }] } });
-        currentUserRating = kind;
-        showButtonToast(kind === "like" ? "Te gusta este título" : "Marcado como no me gusta");
-      }
-      updateRatingButtonsUI();
-    } catch (err) {
-      console.error("[PelisVidHD Player] Error enviando valoración a Trakt:", err);
+    if (isRemoving) {
+      delete store[key];
+      currentUserRating = null;
+      showButtonToast("Valoración eliminada");
+    } else {
+      store[key] = kind;
+      currentUserRating = kind;
+      showButtonToast(kind === "like" ? "Te gusta este título" : "Marcado como no me gusta");
     }
+    saveRatingsStore(store);
+    updateRatingButtonsUI();
   }
 
   // Pequeño toast reutilizando el mismo patrón visual que showFallbackNotice,
@@ -2729,8 +2445,6 @@
   }
 
   function initRatingButtons() {
-    if (!isTraktLoggedIn()) return; // sin sesión: los botones quedan ocultos
-    byId("ratingButtons").classList.remove("hidden");
     loadExistingRating();
   }
 
@@ -2858,12 +2572,17 @@
   }
 
   // Resuelve el servidor inicial DENTRO del idioma ya elegido:
-  // preferencia guardada (si sigue perteneciendo a ese idioma) >
-  // primer servidor disponible en ese idioma.
+  // preferencia guardada (si sigue perteneciendo a ese idioma y no está
+  // en la lista negra) > primer servidor disponible en ese idioma.
   function resolveInitialServerIndex() {
     const saved = localStorage.getItem(LAST_SERVER_KEY);
     const savedIndex = saved !== null ? Number(saved) : NaN;
-    if (!Number.isNaN(savedIndex) && servers[savedIndex] && servers[savedIndex].idioma === currentLanguage) {
+    if (
+      !Number.isNaN(savedIndex) &&
+      servers[savedIndex] &&
+      servers[savedIndex].idioma === currentLanguage &&
+      !isServerBlocked(servers[savedIndex])
+    ) {
       return savedIndex;
     }
     const available = getServersForCurrentLanguage();
@@ -3062,7 +2781,6 @@
 
   notificationsBtn.addEventListener("click", (e) => {
     e.stopPropagation();
-    closeTraktPanel();
     notificationsPanel.classList.toggle("closed");
   });
   document.addEventListener("click", (e) => {
@@ -3074,38 +2792,6 @@
     if (e.key === "Escape") notificationsPanel.classList.add("closed");
   });
   renderNotifications();
-
-  // --- Panel de cuenta Trakt: apertura/cierre + acciones ---
-  const traktAccountBtn = byId("traktAccountBtn");
-  const traktPanel = byId("traktPanel");
-
-  function toggleTraktPanel() {
-    traktPanel.classList.toggle("closed");
-  }
-  function closeTraktPanel() {
-    traktPanel.classList.add("closed");
-  }
-
-  traktAccountBtn.addEventListener("click", (e) => {
-    e.stopPropagation();
-    notificationsPanel.classList.add("closed");
-    toggleTraktPanel();
-  });
-  document.addEventListener("click", (e) => {
-    if (!traktPanel.contains(e.target) && !traktAccountBtn.contains(e.target)) {
-      closeTraktPanel();
-    }
-  });
-  document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape") closeTraktPanel();
-  });
-
-  byId("traktLoginBtn").addEventListener("click", traktStartDeviceLogin);
-  byId("traktCancelBtn").addEventListener("click", traktCancelLogin);
-  byId("traktLogoutBtn").addEventListener("click", traktLogout);
-  byId("traktRetryProfileBtn").addEventListener("click", () => traktRefreshAccountUI(false));
-
-  traktRefreshAccountUI(); // refleja si ya había una sesión guardada (desde index.html u otra visita)
 
   document.addEventListener("DOMContentLoaded", init);
 })();

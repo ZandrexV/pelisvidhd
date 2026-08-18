@@ -64,7 +64,10 @@
   html { scroll-behavior: smooth; }
   body {
     font-family: 'Poppins', sans-serif;
-    background: #0A0A0A;
+    background:
+      radial-gradient(ellipse 900px 500px at 15% 0%, rgba(229,9,20,0.10), transparent 60%),
+      radial-gradient(ellipse 700px 500px at 100% 20%, rgba(176,6,16,0.08), transparent 55%),
+      #0A0A0A;
     color: #fff;
     overflow-x: hidden;
   }
@@ -273,7 +276,7 @@
     color: transparent;
   }
 
-  /* ========== DROPDOWN PANEL (panel de cuenta Trakt) ========== */
+  /* ========== DROPDOWN PANEL (paneles de notificaciones/ajustes) ========== */
   .server-dropdown-panel {
     transform-origin: top right;
     transition: opacity 0.25s ease, transform 0.25s cubic-bezier(.16,1,.3,1);
@@ -456,66 +459,6 @@
               <button id="densityComfortableBtn" data-density="comfortable" class="density-btn flex-1 py-2 rounded-lg text-xs font-semibold transition-colors">Cómodo</button>
               <button id="densityCompactBtn" data-density="compact" class="density-btn flex-1 py-2 rounded-lg text-xs font-semibold transition-colors">Denso</button>
             </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Cuenta / Trakt -->
-      <div class="relative shrink-0">
-        <button id="traktAccountBtn" aria-label="Cuenta" class="w-9 h-9 rounded-full bg-gradient-to-br from-brand to-brandDark flex items-center justify-center font-bold text-sm hover:ring-2 hover:ring-white/40 transition-all overflow-hidden">
-          <i id="traktAccountIcon" class="fa-solid fa-user text-xs"></i>
-          <img id="traktAvatarImg" src="" alt="" class="hidden w-full h-full object-cover" />
-        </button>
-
-        <!-- Panel de cuenta (login / estado conectado) -->
-        <div id="traktPanel" class="server-dropdown-panel closed absolute right-0 mt-2 w-72 glass-strong rounded-2xl p-4 z-30 border border-white/10 shadow-2xl">
-
-          <!-- Estado: desconectado -->
-          <div id="traktLoggedOutView">
-            <div class="flex items-center gap-2 mb-3">
-              <i class="fa-solid fa-clapperboard text-brand"></i>
-              <p class="font-bold text-sm">Conectar con Trakt</p>
-            </div>
-            <p class="text-white/50 text-xs leading-relaxed mb-4">Sincroniza tu lista de vistos con tu cuenta de Trakt.tv, accesible desde cualquier dispositivo.</p>
-            <button id="traktLoginBtn" class="btn-ripple w-full bg-brand hover:bg-brandlight transition-colors py-2.5 rounded-lg font-bold text-sm">
-              Iniciar sesión
-            </button>
-          </div>
-
-          <!-- Estado: cargando código -->
-          <div id="traktLoadingView" class="hidden flex flex-col items-center py-4 gap-3">
-            <div class="w-6 h-6 border-2 border-white/20 border-t-brand rounded-full animate-spin"></div>
-            <p class="text-white/50 text-xs">Generando código…</p>
-          </div>
-
-          <!-- Estado: esperando confirmación (código PIN) -->
-          <div id="traktPendingView" class="hidden text-center">
-            <p class="text-white/50 text-xs mb-2">Ingresa este código en</p>
-            <a id="traktActivateLink" href="https://trakt.tv/activate" target="_blank" rel="noopener noreferrer" class="text-brand text-xs font-bold hover:underline mb-3 inline-block">trakt.tv/activate</a>
-            <div id="traktUserCode" class="text-2xl font-black tracking-[0.2em] bg-white/5 border border-white/10 rounded-xl py-3 mb-3 select-all"></div>
-            <div class="flex items-center justify-center gap-2 text-white/40 text-xs">
-              <div class="w-3 h-3 border-2 border-white/20 border-t-brand rounded-full animate-spin"></div>
-              Esperando confirmación…
-            </div>
-            <button id="traktCancelBtn" class="mt-3 text-white/40 hover:text-white text-xs underline transition-colors">Cancelar</button>
-          </div>
-
-          <!-- Estado: conectado -->
-          <div id="traktLoggedInView" class="hidden">
-            <div class="flex items-center gap-3 mb-4">
-              <img id="traktPanelAvatar" src="" alt="" class="w-10 h-10 rounded-full object-cover bg-white/10" />
-              <div class="min-w-0">
-                <p id="traktUsername" class="font-bold text-sm truncate"></p>
-                <p class="text-white/40 text-xs">Conectado a Trakt</p>
-              </div>
-            </div>
-            <p class="text-white/50 text-xs leading-relaxed mb-3">Los títulos que reproduzcas se marcan automáticamente como vistos en tu cuenta de Trakt.</p>
-            <button id="traktRetryProfileBtn" class="hidden btn-ripple w-full inline-flex items-center justify-center gap-1.5 bg-white/10 hover:bg-white/20 transition-colors py-2 rounded-lg font-semibold text-xs mb-2">
-              <i class="fa-solid fa-rotate-right"></i> Reintentar cargar perfil
-            </button>
-            <button id="traktLogoutBtn" class="btn-ripple w-full bg-white/10 hover:bg-white/20 transition-colors py-2.5 rounded-lg font-bold text-sm">
-              Cerrar sesión
-            </button>
           </div>
         </div>
       </div>
@@ -889,10 +832,12 @@
 </nav>
 <script>
 /* ================================================================
+   ================ CONFIGURACIÓN ================
    PELISVIDHD — MOTOR DE DATOS (TMDB API en vivo)
    Fuente: The Movie Database (https://www.themoviedb.org)
    Todo el catálogo, géneros, posters, banners, elenco y sinopsis
-   provienen de TMDB. No hay datos ficticios.
+   provienen de TMDB. No hay datos ficticios. La app funciona
+   completamente sin cuentas de terceros (no requiere login).
    ================================================================ */
 
 // ⚠️ Tu API Key (v3) de TMDB. Consíguela gratis en:
@@ -902,6 +847,7 @@ const TMDB_API_KEY = "0f7eed19a94a6e48e44b703f8bea6368";
 const TMDB_BASE = "https://api.themoviedb.org/3";
 const TMDB_IMG = "https://image.tmdb.org/t/p";
 const TMDB_LANG = "es-ES"; // resultados en español cuando TMDB los tenga traducidos
+// ================================================
 
 function posterUrl(path, size = "w500") {
   return path ? `${TMDB_IMG}/${size}${path}` : `https://placehold.co/400x600/1a1a1a/666?text=Sin+Imagen`;
@@ -1138,317 +1084,6 @@ async function loadAllRows() {
     }
   }
 
-  /* ================================================================
-     TRAKT.TV — LOGIN (Device Code Flow) + SYNC DE VISTOS
-     ----------------------------------------------------------------
-     ⚠️ Reemplaza estos valores por tu Client ID y Client Secret,
-     creados gratis en: https://trakt.tv/oauth/applications
-     (Redirect URI al crear la app: urn:ietf:wg:oauth:2.0:oob)
-
-     Nota de seguridad: como esta app no tiene backend propio, el
-     Client Secret queda visible en el código fuente. Es una limitación
-     conocida de las apps 100% del lado del cliente — el login del
-     usuario en sí sigue pasando por la página oficial de Trakt, pero
-     alguien con acceso al código podría reusar estas credenciales de
-     app (no las cuentas de usuarios).
-     ================================================================ */
-  const TRAKT_CLIENT_ID = "3kJ_9DiHnITxuDb12cw_aE86isGYuZ352UyHTrxlmyQ";
-  const TRAKT_CLIENT_SECRET = "zO5A2c5FFghpf3JeKKlTfyMXPsQ-wOPdSeNRNGTbAvA";
-  const TRAKT_API = "https://api.trakt.tv";
-  const TRAKT_TOKEN_KEY = "streamix_trakt_token_v1";
-
-  let traktPollInterval = null;
-  let traktPollTimeout = null;
-  let traktLoginInProgress = false; // evita que dos clics/llamadas dupliquen el polling
-
-  function traktIsConfigured() {
-    return TRAKT_CLIENT_ID && TRAKT_CLIENT_ID !== "TU_CLIENT_ID_AQUI" &&
-           TRAKT_CLIENT_SECRET && TRAKT_CLIENT_SECRET !== "TU_CLIENT_SECRET_AQUI";
-  }
-
-  function getTraktToken() {
-    try {
-      return JSON.parse(localStorage.getItem(TRAKT_TOKEN_KEY) || 'null');
-    } catch {
-      return null;
-    }
-  }
-  function saveTraktToken(tokenData) {
-    localStorage.setItem(TRAKT_TOKEN_KEY, JSON.stringify(tokenData));
-  }
-  function clearTraktToken() {
-    localStorage.removeItem(TRAKT_TOKEN_KEY);
-  }
-  function isTraktLoggedIn() {
-    const t = getTraktToken();
-    return !!(t && t.access_token);
-  }
-
-  async function traktFetch(path, { method = 'GET', body, auth = true } = {}) {
-    const headers = {
-      'Content-Type': 'application/json',
-      'trakt-api-version': '2',
-      'trakt-api-key': TRAKT_CLIENT_ID,
-    };
-    if (auth) {
-      const token = getTraktToken();
-      if (token && token.access_token) headers['Authorization'] = `Bearer ${token.access_token}`;
-    }
-    const res = await fetch(`${TRAKT_API}${path}`, {
-      method,
-      headers,
-      body: body ? JSON.stringify(body) : undefined,
-    });
-    return res;
-  }
-
-  // Paso 1: pide un código de dispositivo (el usuario lo escribe en trakt.tv/activate)
-  async function traktStartDeviceLogin() {
-    if (!traktIsConfigured()) {
-      showToast('Trakt no está configurado todavía (falta Client ID/Secret)');
-      return;
-    }
-    if (traktLoginInProgress) return; // ya hay un login en curso, no dupliques el polling
-    traktLoginInProgress = true;
-
-    byId('traktLoggedOutView').classList.add('hidden');
-    byId('traktLoadingView').classList.remove('hidden');
-
-    try {
-      const res = await fetch(`${TRAKT_API}/oauth/device/code`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ client_id: TRAKT_CLIENT_ID }),
-      });
-      if (!res.ok) throw new Error(`Trakt device/code error ${res.status}`);
-      const data = await res.json();
-
-      byId('traktLoadingView').classList.add('hidden');
-      byId('traktPendingView').classList.remove('hidden');
-      byId('traktUserCode').textContent = data.user_code;
-      byId('traktActivateLink').href = data.verification_url || 'https://trakt.tv/activate';
-
-      traktPollForToken(data.device_code, data.interval || 5, data.expires_in || 600);
-    } catch (err) {
-      console.error('[PelisVidHD] Error iniciando login de Trakt:', err);
-      showToast('No se pudo conectar con Trakt. Intenta de nuevo.');
-      byId('traktLoadingView').classList.add('hidden');
-      byId('traktLoggedOutView').classList.remove('hidden');
-      traktLoginInProgress = false;
-    }
-  }
-
-  // Paso 2: hace polling a Trakt cada "interval" segundos hasta que el
-  // usuario confirma el código, o hasta que expira.
-  //
-  // Códigos de respuesta de POST /oauth/device/token (según docs oficiales):
-  //   200 = confirmado, ya hay token
-  //   400 = "authorization_pending", el usuario todavía no confirmó (normal, seguimos esperando)
-  //   404 = device_code inválido
-  //   409 = ese código ya fue usado/confirmado antes
-  //   410 = código expirado
-  //   418 = el usuario rechazó explícitamente la solicitud
-  //   429 = estamos haciendo polling demasiado rápido: hay que RESPETAR
-  //         el intervalo indicado (o el header Retry-After) y bajar la frecuencia
-  let traktCurrentPollDelay = 5000; // se ajusta dinámicamente si Trakt pide más espacio
-
-  function traktPollForToken(deviceCode, interval, expiresIn) {
-    clearInterval(traktPollInterval);
-    clearTimeout(traktPollTimeout);
-    traktCurrentPollDelay = Math.max(interval, 5) * 1000; // Trakt exige mínimo ~5s entre polls
-
-    function scheduleNextPoll() {
-      clearInterval(traktPollInterval);
-      traktPollInterval = setInterval(pollOnce, traktCurrentPollDelay);
-    }
-
-    async function pollOnce() {
-      try {
-        const res = await fetch(`${TRAKT_API}/oauth/device/token`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            code: deviceCode,
-            client_id: TRAKT_CLIENT_ID,
-            client_secret: TRAKT_CLIENT_SECRET,
-          }),
-        });
-
-        if (res.status === 200) {
-          const tokenData = await res.json();
-          clearInterval(traktPollInterval);
-          clearTimeout(traktPollTimeout);
-          traktLoginInProgress = false;
-          saveTraktToken(tokenData);
-          await traktRefreshAccountUI();
-          showToast('Conectado a Trakt correctamente');
-        } else if (res.status === 400) {
-          // authorization_pending: comportamiento normal, seguimos esperando tal cual.
-        } else if (res.status === 404) {
-          clearInterval(traktPollInterval);
-          traktLoginInProgress = false;
-          showToast('Código inválido. Intenta de nuevo.');
-          traktResetPanelToLoggedOut();
-        } else if (res.status === 409) {
-          clearInterval(traktPollInterval);
-          traktLoginInProgress = false;
-          showToast('Este código ya fue usado. Intenta de nuevo.');
-          traktResetPanelToLoggedOut();
-        } else if (res.status === 410) {
-          clearInterval(traktPollInterval);
-          traktLoginInProgress = false;
-          showToast('El código expiró. Intenta de nuevo.');
-          traktResetPanelToLoggedOut();
-        } else if (res.status === 418) {
-          clearInterval(traktPollInterval);
-          traktLoginInProgress = false;
-          showToast('Solicitud rechazada en Trakt.');
-          traktResetPanelToLoggedOut();
-        } else if (res.status === 429) {
-          // Estamos pidiendo demasiado rápido: respetamos Retry-After si
-          // viene, o directamente duplicamos el intervalo actual.
-          const retryAfter = Number(res.headers.get('Retry-After'));
-          traktCurrentPollDelay = retryAfter > 0 ? retryAfter * 1000 : traktCurrentPollDelay * 2;
-          console.warn(`[PelisVidHD] Trakt pidió bajar la frecuencia de polling. Nuevo intervalo: ${traktCurrentPollDelay}ms`);
-          scheduleNextPoll();
-        }
-      } catch (err) {
-        console.error('[PelisVidHD] Error en polling de Trakt:', err);
-      }
-    }
-
-    scheduleNextPoll();
-
-    traktPollTimeout = setTimeout(() => {
-      clearInterval(traktPollInterval);
-      traktLoginInProgress = false;
-      showToast('El código de Trakt expiró.');
-      traktResetPanelToLoggedOut();
-    }, expiresIn * 1000);
-  }
-
-  function traktCancelLogin() {
-    clearInterval(traktPollInterval);
-    clearTimeout(traktPollTimeout);
-    traktLoginInProgress = false;
-    traktResetPanelToLoggedOut();
-  }
-
-  function traktResetPanelToLoggedOut() {
-    byId('traktPendingView').classList.add('hidden');
-    byId('traktLoadingView').classList.add('hidden');
-    byId('traktLoggedInView').classList.add('hidden');
-    byId('traktLoggedOutView').classList.remove('hidden');
-  }
-
-  // Refresca el header (ícono/avatar) y el panel según el estado real de sesión.
-  async function traktRefreshAccountUI(isRetry = false) {
-    if (!isTraktLoggedIn()) {
-      byId('traktAccountIcon').classList.remove('hidden');
-      byId('traktAvatarImg').classList.add('hidden');
-      traktResetPanelToLoggedOut();
-      return;
-    }
-
-    byId('traktLoggedOutView').classList.add('hidden');
-    byId('traktLoadingView').classList.add('hidden');
-    byId('traktPendingView').classList.add('hidden');
-    byId('traktLoggedInView').classList.remove('hidden');
-
-    try {
-      // extended=full es necesario para que Trakt incluya el campo
-      // "images" (avatar) en la respuesta. Antes se quitó pensando que
-      // causaba un error 500, pero ese 500 en realidad venía de abrir
-      // el archivo desde content:// (origen inválido) — ya resuelto al
-      // servir la página desde una URL http(s) real.
-      const res = await traktFetch('/users/me?extended=full');
-
-      if (res.status === 401) {
-        // Token realmente inválido/expirado: ahí sí cerramos sesión.
-        throw new Error('UNAUTHORIZED');
-      }
-      if (res.status >= 500 && !isRetry) {
-        // Error transitorio del lado de Trakt (ej. 500): un reintento
-        // rápido suele resolverlo sin necesidad de molestar al usuario.
-        throw new Error('RETRY_ONCE');
-      }
-      if (!res.ok) throw new Error(`Trakt /users/me error ${res.status}`);
-
-      const user = await res.json();
-
-      byId('traktUsername').textContent = user.username || 'Usuario de Trakt';
-      byId('traktRetryProfileBtn').classList.add('hidden'); // ya cargó bien, no hace falta
-
-      const avatarUrl = user.images && user.images.avatar
-        ? (user.images.avatar.full || user.images.avatar.medium || user.images.avatar)
-        : null;
-
-      if (!avatarUrl) {
-        console.warn('[PelisVidHD] Trakt no devolvió avatar para este usuario. user.images:', user.images);
-      }
-
-      if (avatarUrl) {
-        byId('traktAvatarImg').src = avatarUrl;
-        byId('traktAvatarImg').classList.remove('hidden');
-        byId('traktAccountIcon').classList.add('hidden');
-        byId('traktPanelAvatar').src = avatarUrl;
-      } else {
-        byId('traktAccountIcon').classList.remove('hidden');
-        byId('traktAvatarImg').classList.add('hidden');
-        byId('traktPanelAvatar').src = 'https://placehold.co/100x100/1a1a1a/666?text=%3F';
-      }
-    } catch (err) {
-      if (err.message === 'UNAUTHORIZED') {
-        console.error('[PelisVidHD] Token de Trakt inválido o expirado, cerrando sesión.');
-        clearTraktToken();
-        traktResetPanelToLoggedOut();
-        byId('traktAccountIcon').classList.remove('hidden');
-        byId('traktAvatarImg').classList.add('hidden');
-        showToast('Tu sesión de Trakt expiró. Vuelve a iniciar sesión.');
-      } else if (err.message === 'RETRY_ONCE') {
-        console.warn('[PelisVidHD] Trakt devolvió un error temporal (5xx), reintentando en 2s...');
-        setTimeout(() => traktRefreshAccountUI(true), 2000);
-      } else {
-        // Error de red/CORS/timeout tras el reintento: NO borramos el
-        // token ni cerramos sesión, porque el login sigue siendo válido
-        // — probablemente es un problema temporal de Trakt o de conexión.
-        // Dejamos la vista "conectado" con datos genéricos en vez de desloguear,
-        // y ofrecemos un botón para reintentar manualmente más tarde.
-        console.error('[PelisVidHD] No se pudo cargar el perfil de Trakt (posible error de red o falla temporal de Trakt):', err);
-        byId('traktUsername').textContent = 'Conectado (perfil no disponible)';
-        byId('traktAccountIcon').classList.remove('hidden');
-        byId('traktAvatarImg').classList.add('hidden');
-        byId('traktPanelAvatar').src = 'https://placehold.co/100x100/1a1a1a/666?text=%3F';
-        byId('traktRetryProfileBtn').classList.remove('hidden');
-      }
-    }
-  }
-
-  function traktLogout() {
-    clearTraktToken();
-    traktRefreshAccountUI();
-    showToast('Sesión de Trakt cerrada');
-  }
-
-  // Marca un título como visto en Trakt (POST /sync/history). Falla en
-  // silencio si no hay sesión o si Trakt no responde: nunca debe romper
-  // la reproducción normal ni el historial local, que siguen funcionando
-  // igual con o sin Trakt conectado.
-  async function traktMarkAsWatched(title) {
-    if (!isTraktLoggedIn() || !traktIsConfigured()) return;
-
-    const isMovie = title.tipo !== 'Serie';
-    const payload = isMovie
-      ? { movies: [{ ids: { tmdb: title.tmdbId } }] }
-      : { shows: [{ ids: { tmdb: title.tmdbId } }] };
-
-    try {
-      const res = await traktFetch('/sync/history', { method: 'POST', body: payload });
-      if (!res.ok) throw new Error(`Trakt /sync/history error ${res.status}`);
-    } catch (err) {
-      console.error('[PelisVidHD] Error marcando como visto en Trakt:', err);
-    }
-  }
 
   function addToHistory(title) {
     const history = getHistory().filter(h => h.id !== title.id); // evita duplicados: el repetido sube al frente
@@ -1509,7 +1144,6 @@ async function loadAllRows() {
 
   function goToPlayer(title) {
     addToHistory(title);
-    traktMarkAsWatched(title); // falla en silencio si no hay sesión de Trakt
 
     const tipoParam = title.tipo === 'Serie' ? 'tv' : 'movie';
     const params = new URLSearchParams({ tipo: tipoParam, id: title.tmdbId, titulo: title.titulo });
@@ -2629,13 +2263,6 @@ async function loadAllRows() {
       }, 50);
       return;
     }
-    if (action === 'trakt') {
-      setTimeout(() => {
-        byId('traktPanel').classList.remove('closed');
-      }, 50);
-      return;
-    }
-
     // Si venimos de un clic en un actor (desde el reproductor o el propio
     // index), abrimos directamente su filmografía y no aplicamos filtros.
     const actorId = params.get('actorId');
@@ -2721,7 +2348,6 @@ async function loadAllRows() {
   notificationsBtn.addEventListener('click', (e) => {
     e.stopPropagation();
     closeSettingsPanel();
-    closeTraktPanel();
     toggleNotificationsPanel();
   });
 
@@ -2802,7 +2428,6 @@ async function loadAllRows() {
 
   settingsBtn.addEventListener('click', (e) => {
     e.stopPropagation();
-    closeTraktPanel();
     closeNotificationsPanel();
     toggleSettingsPanel();
   });
@@ -2816,41 +2441,8 @@ async function loadAllRows() {
     if (e.key === 'Escape') closeSettingsPanel();
   });
 
-  /* ---------- PANEL DE CUENTA TRAKT: apertura/cierre + acciones ---------- */
-  const traktAccountBtn = byId('traktAccountBtn');
-  const traktPanel = byId('traktPanel');
-
-  function toggleTraktPanel() {
-    traktPanel.classList.toggle('closed');
-  }
-  function closeTraktPanel() {
-    traktPanel.classList.add('closed');
-  }
-
-  traktAccountBtn.addEventListener('click', (e) => {
-    e.stopPropagation();
-    closeSettingsPanel();
-    closeNotificationsPanel();
-    toggleTraktPanel();
-  });
-
-  document.addEventListener('click', (e) => {
-    if (!traktPanel.contains(e.target) && !traktAccountBtn.contains(e.target)) {
-      closeTraktPanel();
-    }
-  });
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') closeTraktPanel();
-  });
-
-  byId('traktLoginBtn').addEventListener('click', traktStartDeviceLogin);
-  byId('traktCancelBtn').addEventListener('click', traktCancelLogin);
-  byId('traktLogoutBtn').addEventListener('click', traktLogout);
-  byId('traktRetryProfileBtn').addEventListener('click', () => traktRefreshAccountUI(false));
-
   document.addEventListener('DOMContentLoaded', () => {
     byId('footerYear').textContent = new Date().getFullYear();
-    traktRefreshAccountUI(); // refleja si ya había una sesión guardada
     initApp();
   });
 })();
