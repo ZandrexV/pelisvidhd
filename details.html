@@ -3,20 +3,20 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title id="pageTitle">Reproductor | PelisVidHD</title>
-<meta name="description" content="Reproductor de películas y series con múltiples servidores.">
+<title id="pageTitle">Detalles | PelisVidHD</title>
+<meta name="description" content="Ficha completa de la película o serie: sinopsis, reparto, temporadas y servidores disponibles.">
 
 <!-- Open Graph / redes sociales (se actualizan por JS con los datos del título real al cargar) -->
 <meta property="og:type" content="video.other">
 <meta property="og:site_name" content="PelisVidHD">
-<meta id="ogTitle" property="og:title" content="PelisVidHD | Reproductor">
-<meta id="ogDescription" property="og:description" content="Reproductor de películas y series con múltiples servidores.">
+<meta id="ogTitle" property="og:title" content="PelisVidHD | Detalles">
+<meta id="ogDescription" property="og:description" content="Ficha completa de la película o serie: sinopsis, reparto, temporadas y servidores disponibles.">
 <meta id="ogImage" property="og:image" content="https://i.ibb.co/V0Sst1qh/20260203-025506.png">
 
 <!-- Twitter Card -->
 <meta name="twitter:card" content="summary_large_image">
-<meta id="twitterTitle" name="twitter:title" content="PelisVidHD | Reproductor">
-<meta id="twitterDescription" name="twitter:description" content="Reproductor de películas y series con múltiples servidores.">
+<meta id="twitterTitle" name="twitter:title" content="PelisVidHD | Detalles">
+<meta id="twitterDescription" name="twitter:description" content="Ficha completa de la película o serie: sinopsis, reparto, temporadas y servidores disponibles.">
 <meta id="twitterImage" name="twitter:image" content="https://i.ibb.co/V0Sst1qh/20260203-025506.png">
 
 <!-- Tailwind CSS CDN -->
@@ -111,14 +111,6 @@
     transition: color 0.6s ease;
   }
 
-  /* Ícono de alerta del error overlay: rojo fijo a propósito (alerta =
-     rojo semántico, no debería cambiar según el poster del título). */
-  .static-alert-icon {
-    background: rgba(229, 9, 20, 0.15);
-    border: 1px solid rgba(229, 9, 20, 0.3);
-    color: #E50914;
-  }
-
   /* ================================================================
      BASE
      ================================================================ */
@@ -182,41 +174,6 @@
   }
 
   /* ================================================================
-     PLAYER FRAME
-     ================================================================ */
-  .player-wrap {
-    aspect-ratio: 16 / 9;
-    background: #000;
-  }
-
-  #playerIframe {
-    transition: opacity 0.4s ease;
-  }
-  #playerIframe.loading {
-    opacity: 0;
-  }
-
-  /* ================================================================
-     LOADER
-     ================================================================ */
-  .spinner {
-    border: 3px solid rgba(255, 255, 255, 0.12);
-    border-top-color: rgb(var(--accent-rgb));
-    border-radius: 999px;
-    animation: spin 0.85s linear infinite;
-    transition: border-top-color 0.6s ease;
-  }
-  @keyframes spin { to { transform: rotate(360deg); } }
-
-  .pulse-dot {
-    animation: pulseDot 1.4s ease-in-out infinite;
-  }
-  @keyframes pulseDot {
-    0%, 100% { opacity: 0.3; transform: scale(0.85); }
-    50% { opacity: 1; transform: scale(1); }
-  }
-
-  /* ================================================================
      SERVER SELECTOR
      ================================================================ */
   .server-btn {
@@ -224,20 +181,6 @@
   }
   .server-btn:hover { transform: translateY(-2px); }
   .server-btn:active { transform: translateY(0) scale(0.97); }
-  .server-btn.active {
-    box-shadow: 0 8px 24px -6px rgba(var(--accent-rgb), 0.5);
-    transition: transform 0.2s ease, box-shadow 0.6s ease, border-color 0.25s ease, background-color 0.25s ease;
-  }
-
-  /* Highlight temporal en el grid al sugerir "cambiar de servidor" desde
-     el loader o el estado de error, en vez del dropdown eliminado. */
-  .server-grid-highlight {
-    animation: gridPulse 1.4s ease-in-out 2;
-  }
-  @keyframes gridPulse {
-    0%, 100% { box-shadow: 0 0 0 0 rgba(229,9,20,0); }
-    50% { box-shadow: 0 0 0 4px rgba(229,9,20,0.35); }
-  }
 
   /* ================================================================
      FADE / REVEAL
@@ -274,15 +217,19 @@
     * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
   }
 
-  /* ================================================================
-     STATUS DOT
-     ================================================================ */
-  .status-dot {
-    box-shadow: 0 0 8px currentColor;
+  /* ========== LOGO DE TÍTULO (TMDB) ==========
+     Fade-in + leve slide-up al aparecer junto al poster, mismo criterio
+     que en index.html (cards y modal). */
+  #detailsLogo {
+    animation: logoFadeIn 0.4s ease both;
+  }
+  @keyframes logoFadeIn {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
   }
 
   /* ================================================================
-     SKELETON LOADERS
+     RECOMMENDATIONS: SKELETON + CARDS
      ================================================================ */
   .skeleton-card {
     background: linear-gradient(100deg, #1a1a1a 30%, #262626 50%, #1a1a1a 70%);
@@ -293,6 +240,32 @@
     from { background-position: 200% 0; }
     to { background-position: -200% 0; }
   }
+
+  .rec-card {
+    transition: transform 0.35s cubic-bezier(.16,1,.3,1), box-shadow 0.35s ease;
+  }
+  .rec-card:hover, .rec-card:focus-visible {
+    transform: scale(1.06) translateY(-6px);
+    box-shadow: 0 20px 45px -10px rgba(0,0,0,0.8);
+    z-index: 10;
+  }
+  .rec-card .rec-overlay {
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+  .rec-card:hover .rec-overlay, .rec-card:focus-visible .rec-overlay {
+    opacity: 1;
+  }
+  @media (hover: none) {
+    .rec-card:active { transform: scale(1.03); }
+    .rec-card:active .rec-overlay { opacity: 1; }
+  }
+
+  /* ================================================================
+     CAST CARDS
+     ================================================================ */
+  .cast-card { transition: transform 0.25s ease; }
+  .cast-card:hover { transform: translateY(-3px); }
 
   /* ================================================================
      LANGUAGE TABS
@@ -310,6 +283,28 @@
   .lang-tab:not(.active):hover {
     background: rgba(255,255,255,0.08);
     color: rgba(255,255,255,0.85);
+  }
+
+  /* ================================================================
+     RATING BUTTONS (me gusta / no me gusta, valoración local)
+     ================================================================ */
+  .rating-btn {
+    transition: background-color 0.25s ease, color 0.25s ease, transform 0.2s ease;
+  }
+  .rating-btn.active-like {
+    background: rgba(34, 197, 94, 0.2); /* el "me gusta" se mantiene verde a propósito: no depende del acento */
+    color: rgb(74, 222, 128);
+    animation: ratingPop 0.35s cubic-bezier(.34,1.56,.64,1);
+  }
+  .rating-btn.active-dislike {
+    background: rgba(var(--accent-rgb), 0.2);
+    color: rgb(var(--accent-rgb));
+    animation: ratingPop 0.35s cubic-bezier(.34,1.56,.64,1);
+  }
+  @keyframes ratingPop {
+    0% { transform: scale(1); }
+    40% { transform: scale(1.22); }
+    100% { transform: scale(1); }
   }
 
   /* ================================================================
@@ -409,133 +404,57 @@
 <main class="flex-1 w-full max-w-6xl mx-auto px-0 md:px-6 py-0 md:py-6">
 
   <!-- ============================================================ -->
-  <!-- REPRODUCTOR 16:9 -->
+  <!-- HERO: backdrop grande + poster + logo + botón Reproducir -->
   <!-- ============================================================ -->
-  <section class="relative w-full md:rounded-2xl overflow-hidden md:shadow-2xl">
-    <div id="playerWrap" class="player-wrap relative w-full">
+  <section class="relative w-full md:rounded-2xl overflow-hidden">
+    <div class="relative w-full aspect-video md:aspect-[21/9] bg-bgsoft">
+      <img id="heroBackdrop" src="" alt="" class="absolute inset-0 w-full h-full object-cover opacity-0 transition-opacity duration-500" decoding="async" />
+      <div class="absolute inset-0 bg-gradient-to-t from-bg via-bg/50 to-bg/10"></div>
+      <div class="absolute inset-0 bg-gradient-to-r from-bg/70 via-transparent to-transparent"></div>
 
-      <!-- Iframe del reproductor (se construye 100% por JavaScript) -->
-      <iframe
-        id="playerIframe"
-        class="absolute inset-0 w-full h-full border-0 loading"
-        allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
-        allowfullscreen
-        referrerpolicy="origin"
-        title="Reproductor de video"
-      ></iframe>
+      <!-- Skeleton mientras carga -->
+      <div id="heroSkeleton" class="skeleton-card absolute inset-0"></div>
 
-      <!-- Preroll VAST: se muestra ANTES de asignar la URL del servidor al
-           iframe. Si el VAST falla o no hay tags configurados, este bloque
-           nunca aparece y se pasa directo al servidor. -->
-      <div id="vastAdOverlay" class="hidden absolute inset-0 z-30 bg-black">
-        <video id="vastAdVideo" class="absolute inset-0 w-full h-full object-contain bg-black" playsinline></video>
+      <div class="absolute bottom-0 left-0 right-0 p-4 md:p-8 flex flex-col sm:flex-row items-start sm:items-end gap-4 md:gap-6">
+        <img id="heroPoster" src="" alt="" class="hidden sm:block w-20 md:w-32 rounded-xl object-cover shadow-2xl shrink-0" decoding="async" />
 
-        <!-- Overlay clicable para el tracker de "click" del VAST. Va primero
-             en el DOM (fondo) para que los controles de abajo queden encima. -->
-        <button id="vastClickThroughBtn" class="absolute inset-0" aria-label="Ir al anunciante"></button>
-
-        <!-- Barra superior: etiqueta "Anuncio" + contador -->
-        <div class="absolute top-3 left-3 right-3 flex items-center justify-between pointer-events-none">
-          <span class="glass px-2.5 py-1 rounded text-[10px] md:text-xs font-bold text-white/80 uppercase tracking-wide">Anuncio</span>
-          <span id="vastAdCountdown" class="glass px-2.5 py-1 rounded text-[10px] md:text-xs font-bold text-white/80"></span>
-        </div>
-
-        <!-- Botón de saltar (aparece tras el tiempo configurado) -->
-        <button id="vastSkipBtn" class="hidden absolute bottom-3 right-3 btn-ripple glass-strong hover:bg-white/15 px-3 md:px-4 py-1.5 md:py-2 rounded-lg text-xs md:text-sm font-bold flex items-center gap-1.5 transition-colors">
-          Saltar anuncio
-          <i class="fa-solid fa-forward text-xs"></i>
-        </button>
-      </div>
-
-      <!-- Loader overlay -->
-      <div id="loaderOverlay" class="absolute inset-0 z-20 flex flex-col items-center justify-center gap-4 bg-bg">
-        <div class="spinner w-12 h-12 md:w-14 md:h-14"></div>
-        <div class="flex items-center gap-1.5 text-white/60 text-sm font-medium">
-          <span id="loaderPrefixText">Conectando con</span>
-          <span id="loaderServerName" class="text-white font-bold">servidor</span>
-          <span class="flex gap-0.5 ml-0.5">
-            <span class="pulse-dot w-1 h-1 rounded-full dynamic-accent-bg" style="animation-delay:0s"></span>
-            <span class="pulse-dot w-1 h-1 rounded-full dynamic-accent-bg" style="animation-delay:0.2s"></span>
-            <span class="pulse-dot w-1 h-1 rounded-full dynamic-accent-bg" style="animation-delay:0.4s"></span>
-          </span>
-        </div>
-
-        <!-- Aparece solo si la carga se demora más de lo normal (ver LOAD_SLOW_HINT_MS) -->
-        <button id="loaderSwitchServerBtn" class="hidden fade-in btn-ripple inline-flex items-center gap-2 bg-white/10 hover:bg-white/20 transition-colors px-4 py-2 rounded-lg text-xs md:text-sm font-semibold mt-1">
-          <i class="fa-solid fa-shuffle text-xs"></i>
-          ¿Tarda mucho? Probar otro servidor
-        </button>
-      </div>
-
-      <!-- Error overlay -->
-      <div id="errorOverlay" class="hidden absolute inset-0 z-20 flex flex-col items-center justify-center gap-4 bg-bg px-6 text-center">
-        <div class="static-alert-icon w-14 h-14 rounded-full flex items-center justify-center">
-          <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/></svg>
-        </div>
-        <div>
-          <p id="errorTitle" class="font-bold text-base md:text-lg mb-1">No se pudo cargar este servidor</p>
-          <p id="errorDescription" class="text-white/50 text-sm max-w-sm">Prueba con otro servidor de la lista o reintenta la conexión actual.</p>
-        </div>
-        <div class="flex items-center gap-3 mt-1">
-          <button id="retryBtn" class="btn-ripple bg-brand hover:bg-brandlight transition-colors px-5 py-2.5 rounded-lg font-bold text-sm flex items-center gap-2">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
-            Reintentar
-          </button>
-          <button id="errorServerToggleBtn" class="btn-ripple bg-white/10 hover:bg-white/20 transition-colors px-5 py-2.5 rounded-lg font-bold text-sm">
-            Cambiar servidor
-          </button>
+        <div class="min-w-0 flex-1">
+          <img id="heroLogo" src="" alt="" class="hidden max-h-12 md:max-h-20 max-w-[80%] object-contain object-left mb-2" decoding="async" />
+          <h1 id="heroTitleText" class="text-2xl md:text-4xl font-black leading-tight drop-shadow-xl"></h1>
+          <div id="heroMeta" class="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs md:text-sm text-white/75 font-medium mt-2"></div>
         </div>
       </div>
     </div>
-  </section>
 
-  <!-- ============================================================ -->
-  <!-- NAVEGACIÓN DE EPISODIO: Anterior / info / Siguiente (solo series) -->
-  <!-- ============================================================ -->
-  <section id="episodeNavSection" class="hidden px-4 md:px-0 mt-4">
-    <div class="glass rounded-2xl p-3 md:p-4 flex items-center justify-between gap-3">
-      <button id="prevEpisodeBtn" aria-label="Episodio anterior" class="btn-ripple flex items-center gap-1.5 bg-white/10 hover:bg-white/20 disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-white/10 transition-colors px-3 md:px-4 py-2 rounded-xl text-xs md:text-sm font-bold shrink-0">
-        <i class="fa-solid fa-backward-step"></i>
-        <span class="hidden sm:inline">Anterior</span>
+    <!-- Botones de acción -->
+    <div class="px-4 md:px-0 mt-4 flex flex-wrap items-center gap-2.5">
+      <button id="playBtn" class="btn-ripple dynamic-accent-bg hover:opacity-90 transition-opacity flex items-center gap-2 px-6 py-3 rounded-lg font-bold text-sm md:text-base">
+        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+        Reproducir
       </button>
-
-      <p id="episodeNavLabel" class="text-xs md:text-sm text-white/60 font-medium text-center truncate flex-1"></p>
-
-      <button id="nextEpisodeBtn" aria-label="Siguiente episodio" class="btn-ripple flex items-center gap-1.5 dynamic-accent-bg hover:opacity-90 disabled:opacity-30 disabled:cursor-not-allowed transition-colors px-3 md:px-4 py-2 rounded-xl text-xs md:text-sm font-bold shrink-0">
-        <span class="hidden sm:inline">Siguiente</span>
-        <i class="fa-solid fa-forward-step"></i>
+      <button id="trailerBtn" class="hidden btn-ripple inline-flex items-center gap-2 bg-white/10 hover:bg-white/20 transition-colors px-4 py-2.5 rounded-lg font-bold text-sm">
+        <i class="fa-regular fa-circle-play"></i>
+        Tráiler
+      </button>
+      <button id="listBtn" class="btn-ripple w-11 h-11 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors border border-white/20" aria-label="Agregar a mi lista">
+        <svg class="w-5 h-5 heart-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+      </button>
+      <div id="ratingButtons" class="flex items-center gap-1.5">
+        <button id="thumbUpBtn" class="rating-btn btn-ripple w-11 h-11 rounded-full bg-white/10 hover:bg-white/20 transition-colors flex items-center justify-center" aria-label="Me gusta" aria-pressed="false">
+          <i class="fa-solid fa-thumbs-up text-sm"></i>
+        </button>
+        <button id="thumbDownBtn" class="rating-btn btn-ripple w-11 h-11 rounded-full bg-white/10 hover:bg-white/20 transition-colors flex items-center justify-center" aria-label="No me gusta" aria-pressed="false">
+          <i class="fa-solid fa-thumbs-down text-sm"></i>
+        </button>
+      </div>
+      <button id="shareBtn" class="btn-ripple w-11 h-11 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors" aria-label="Compartir">
+        <i class="fa-solid fa-share-nodes text-sm"></i>
       </button>
     </div>
   </section>
 
   <!-- ============================================================ -->
-  <!-- BARRA DE CONTROL: servidor activo + selector -->
-  <!-- ============================================================ -->
-  <section class="px-4 md:px-0 mt-4 md:mt-6">
-    <div class="glass rounded-2xl p-4 md:p-5">
-
-      <div class="flex items-center justify-between gap-3 mb-4 flex-wrap">
-        <div class="flex items-center gap-2.5 min-w-0">
-          <span id="activeStatusDot" class="status-dot w-2 h-2 rounded-full bg-emerald-400 shrink-0"></span>
-          <div class="min-w-0">
-            <p class="text-[11px] text-white/40 font-medium leading-tight">Servidor activo</p>
-            <p id="activeServerLabel" class="font-bold text-sm md:text-base leading-tight truncate">—</p>
-          </div>
-        </div>
-
-        <div class="flex items-center gap-2 shrink-0">
-          <!-- Selector de idioma: filtra qué servidores se muestran -->
-          <div id="languageTabs" class="flex items-center gap-1 bg-white/5 border border-white/10 rounded-xl p-1" role="group" aria-label="Filtrar servidores por idioma"></div>
-        </div>
-      </div>
-
-      <!-- Grid de servidores (siempre visible, estilo "chips" grandes) -->
-      <div id="serverGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2.5" role="group" aria-label="Seleccionar servidor de video"></div>
-    </div>
-  </section>
-
-  <!-- ============================================================ -->
-  <!-- SELECTOR DE TEMPORADA / EPISODIO (solo series) -->
+  <!-- SELECTOR DE TEMPORADA / EPISODIO (solo series, informativo) -->
   <!-- ============================================================ -->
   <section id="episodesSection" class="hidden px-4 md:px-0 mt-4 md:mt-6">
     <div class="glass rounded-2xl p-4 md:p-5">
@@ -557,7 +476,7 @@
         <div class="skeleton-card h-20 md:h-24 w-full rounded-xl"></div>
       </div>
 
-      <!-- Lista de episodios -->
+      <!-- Lista de episodios: cada uno navega a player.html con ese episodio -->
       <div id="episodesList" class="hidden flex flex-col gap-2.5 max-h-[420px] overflow-y-auto no-scrollbar pr-1"></div>
 
       <p id="episodesEmpty" class="hidden text-white/40 text-sm text-center py-8">No se encontró información de episodios para esta temporada.</p>
@@ -565,20 +484,109 @@
   </section>
 
   <!-- ============================================================ -->
-  <!-- INFO ADICIONAL -->
+  <!-- DETALLES: SINOPSIS + REPARTO -->
+  <!-- ============================================================ -->
+  <section class="px-4 md:px-0 mt-4 md:mt-6">
+    <!-- Estado de carga de detalles -->
+    <div id="detailsLoading" class="glass rounded-2xl p-4 md:p-6">
+      <div class="flex gap-4">
+        <div class="skeleton-card shrink-0 w-20 md:w-28 aspect-[2/3] rounded-xl"></div>
+        <div class="flex-1 flex flex-col gap-2 pt-1">
+          <div class="skeleton-card h-4 w-3/4 rounded"></div>
+          <div class="skeleton-card h-3 w-1/2 rounded"></div>
+          <div class="skeleton-card h-3 w-full rounded mt-2"></div>
+          <div class="skeleton-card h-3 w-full rounded"></div>
+          <div class="skeleton-card h-3 w-2/3 rounded"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Contenido de detalles (oculto hasta que TMDB responde) -->
+    <div id="detailsSection" class="hidden glass rounded-2xl p-4 md:p-6">
+      <h2 class="text-sm md:text-base font-bold mb-3 text-white/60 uppercase tracking-wide">Sinopsis</h2>
+      <p id="detailsOverview" class="text-white/85 text-sm md:text-base leading-relaxed mb-5"></p>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3 text-sm">
+        <div id="detailsDirectorWrap" class="hidden">
+          <span class="text-white/40 font-medium text-xs uppercase tracking-wide">Director</span>
+          <p id="detailsDirector" class="text-white/90 font-semibold mt-0.5"></p>
+        </div>
+        <div id="detailsCreatorWrap" class="hidden">
+          <span class="text-white/40 font-medium text-xs uppercase tracking-wide">Creador</span>
+          <p id="detailsCreator" class="text-white/90 font-semibold mt-0.5"></p>
+        </div>
+        <div id="detailsGenresWrap" class="hidden">
+          <span class="text-white/40 font-medium text-xs uppercase tracking-wide">Géneros</span>
+          <p id="detailsGenres" class="text-white/90 font-semibold mt-0.5"></p>
+        </div>
+      </div>
+
+      <!-- Reparto -->
+      <div id="castWrap" class="hidden mt-5 md:mt-6 pt-5 md:pt-6 border-t border-white/10">
+        <h3 class="text-sm md:text-base font-bold mb-3">Reparto principal</h3>
+        <div id="castRow" class="flex gap-3 overflow-x-auto no-scrollbar pb-1"></div>
+      </div>
+
+      <!-- Saga/colección (solo películas que pertenecen a una) -->
+      <div id="collectionWrap" class="hidden mt-5 md:mt-6 pt-5 md:pt-6 border-t border-white/10">
+        <h3 class="text-sm md:text-base font-bold mb-3">Parte de la saga</h3>
+        <a id="collectionLink" href="index.html" class="flex items-center gap-3 p-3 rounded-xl bg-white/5 hover:bg-white/10 transition-colors">
+          <img id="collectionPoster" src="" alt="" class="w-12 h-16 rounded-lg object-cover shrink-0" decoding="async" />
+          <div class="min-w-0">
+            <p id="collectionName" class="font-bold text-sm leading-tight truncate"></p>
+            <p class="text-xs text-white/45 mt-0.5">Ver todas las películas de la saga</p>
+          </div>
+          <i class="fa-solid fa-chevron-right text-white/40 ml-auto shrink-0"></i>
+        </a>
+      </div>
+    </div>
+
+    <!-- Estado de error de detalles (falla silenciosa: sección oculta) -->
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- CONTENIDO QUE TE PODRÍA GUSTAR -->
+  <!-- ============================================================ -->
+  <section class="px-4 md:px-0 mt-4 md:mt-6">
+    <div id="recommendationsSection" class="hidden">
+      <h2 class="text-lg md:text-xl font-bold tracking-tight mb-3 px-0">Contenido que te podría gustar</h2>
+      <div id="recommendationsRow" class="flex gap-3 md:gap-4 overflow-x-auto no-scrollbar pb-2 scroll-px-4"></div>
+    </div>
+
+    <!-- Estado de carga de recomendaciones -->
+    <div id="recommendationsLoading" class="hidden">
+      <h2 class="text-lg md:text-xl font-bold tracking-tight mb-3">Contenido que te podría gustar</h2>
+      <div class="flex gap-3 md:gap-4 overflow-x-auto no-scrollbar pb-2">
+        <div class="skeleton-card shrink-0 w-[38vw] sm:w-[160px] md:w-[180px] aspect-[2/3] rounded-xl"></div>
+        <div class="skeleton-card shrink-0 w-[38vw] sm:w-[160px] md:w-[180px] aspect-[2/3] rounded-xl"></div>
+        <div class="skeleton-card shrink-0 w-[38vw] sm:w-[160px] md:w-[180px] aspect-[2/3] rounded-xl hidden sm:block"></div>
+        <div class="skeleton-card shrink-0 w-[38vw] sm:w-[160px] md:w-[180px] aspect-[2/3] rounded-xl hidden md:block"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- SERVIDORES DISPONIBLES (informativo: elegir uno lleva al reproductor) -->
   <!-- ============================================================ -->
   <section class="px-4 md:px-0 mt-4 md:mt-6 pb-8">
-    <div class="glass rounded-2xl p-4 md:p-5 flex items-start gap-3">
-      <svg class="w-5 h-5 text-white/40 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-      <p class="text-white/50 text-xs md:text-sm leading-relaxed">
-        Si el video no carga o se ve cortado, prueba cambiar de servidor. Cada servidor es independiente:
-        el temporizador, temporada y episodio se mantienen automáticamente al cambiar.
+    <div class="glass rounded-2xl p-4 md:p-5">
+      <div class="flex items-center justify-between gap-3 mb-4 flex-wrap">
+        <h2 class="text-base md:text-lg font-bold">Servidores disponibles</h2>
+
+        <!-- Selector de idioma: filtra qué servidores se muestran -->
+        <div id="languageTabs" class="flex items-center gap-1 bg-white/5 border border-white/10 rounded-xl p-1" role="group" aria-label="Filtrar servidores por idioma"></div>
+      </div>
+
+      <!-- Grid de servidores: solo selector informativo, cada uno navega a
+           player.html (que ya decide el servidor real con su propia lógica
+           de "último servidor guardado" / lista negra / idioma). -->
+      <div id="serverGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2.5" role="group" aria-label="Ir al reproductor con un servidor"></div>
+
+      <p class="text-white/40 text-xs md:text-sm leading-relaxed mt-4 flex items-start gap-2">
+        <svg class="w-4 h-4 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        Si un servidor no carga, prueba con otro de la lista una vez dentro del reproductor.
       </p>
     </div>
-    <a id="viewDetailsLink" href="#" class="btn-ripple flex items-center justify-center gap-2 mt-3 bg-white/5 hover:bg-white/10 border border-white/10 transition-colors py-3 rounded-xl text-sm font-semibold text-white/80">
-      <i class="fa-solid fa-circle-info text-xs"></i>
-      Ver ficha completa (sinopsis, reparto, recomendaciones)
-    </a>
   </section>
 </main>
 
@@ -609,6 +617,20 @@
     </a>
   </div>
 </nav>
+
+<!-- ============================================================ -->
+<!-- MODAL: TRÁILER (embed de YouTube) -->
+<!-- ============================================================ -->
+<div id="trailerModal" class="hidden fixed inset-0 z-[70] flex items-center justify-center bg-black/95 px-4">
+  <div class="relative w-full max-w-3xl">
+    <button id="trailerCloseBtn" class="absolute -top-11 right-0 md:-right-2 w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors" aria-label="Cerrar tráiler">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+    </button>
+    <div class="player-wrap w-full rounded-xl overflow-hidden bg-black">
+      <iframe id="trailerIframe" class="absolute inset-0 w-full h-full border-0" src="" title="Tráiler" allow="autoplay; fullscreen" allowfullscreen></iframe>
+    </div>
+  </div>
+</div>
 
 <!-- ================================================================
      SCRIPT PRINCIPAL DEL REPRODUCTOR
@@ -874,40 +896,12 @@
     btoa(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="4"/><path d="M9 8v8l7-4z" fill="white" stroke="none"/></svg>`);
 
   /* ================================================================
-     PREROLL VAST (anuncio antes del servidor)
-     ----------------------------------------------------------------
-     Se muestra una sola vez por sesión de reproducción, ANTES de
-     asignar la URL del servidor elegido al iframe. Para agregar un
-     nuevo ad tag, solo hace falta añadir su URL al arreglo — se elige
-     uno al azar en cada carga. Dejar el arreglo vacío ([]) desactiva
-     el preroll por completo (se pasa directo al servidor).
-
-     Si el VAST falla por cualquier motivo (red caída, XML inválido,
-     sin MediaFile utilizable, CORS), el preroll se salta en silencio
-     y se carga el servidor con normalidad: un anuncio roto nunca debe
-     bloquear el acceso al contenido.
-     ================================================================ */
-  const vastAdTags = [
-    // "https://tu-ad-server.com/vast?tag=streamix-preroll-a",
-    // "https://tu-ad-server.com/vast?tag=streamix-preroll-b",
-  ];
-  const VAST_SKIP_AFTER_SECONDS = 5; // el botón "Saltar anuncio" aparece a los X segundos
-  const VAST_FETCH_TIMEOUT_MS = 6000; // si el ad server no responde en este tiempo, se salta el preroll
-  const VAST_SESSION_KEY = "streamix_preroll_shown_v1"; // evita repetir el preroll si el usuario cambia de servidor/episodio en la misma visita
-
-  /* ================================================================
      2. ESTADO Y CONSTANTES
      ================================================================ */
-  const LAST_SERVER_KEY = "streamix_last_server_v1";
   const LAST_LANGUAGE_KEY = "streamix_last_language_v1";
   const WATCHED_EPISODES_KEY = "streamix_watched_episodes_v1";
-  const LOAD_TIMEOUT_MS = 12000; // si el iframe no confirma carga en este tiempo, se asume error
-  const LOAD_SLOW_HINT_MS = 6000; // a los 6s sin confirmar carga, se sugiere cambiar de servidor
 
-  let currentServerIndex = 0;
   let currentLanguage = LANGUAGES[0].code; // se resuelve de verdad en init()
-  let loadTimeoutId = null;
-  let loadSlowHintTimeoutId = null;
   let media = { tipo: "movie", tmdbId: null, temporada: null, episodio: null, imdbId: null };
 
   // Estado de episodios (solo series): usado para calcular "Siguiente episodio",
@@ -947,43 +941,6 @@
   }
 
   /* ================================================================
-     4. CONSTRUCCIÓN DINÁMICA DE LA URL DEL IFRAME
-     ----------------------------------------------------------------
-     Fórmula por defecto (usada si el servidor no define "formatoUrl"):
-       Película: {urlBase}/play/movie/{tmdb_id}
-       Serie:    {urlBase}/play/tv/{tmdb_id}/{season}/{episode}
-
-     Si el servidor define "formatoUrl", se usa esa plantilla en su
-     lugar, reemplazando los placeholders {urlBase}, {tmdb_id},
-     {season}, {episode} e {imdb_id} por los valores reales.
-
-     {imdb_id} se resuelve pidiendo a TMDB los IDs externos del título
-     (endpoint external_ids), ya que el reproductor solo recibe el TMDB
-     ID por URL. Mientras ese dato no haya llegado (o el título no
-     tenga IMDB ID en TMDB), el placeholder se reemplaza por cadena vacía.
-     ================================================================ */
-  const DEFAULT_URL_FORMAT = {
-    movie: "{urlBase}/play/movie/{tmdb_id}",
-    tv: "{urlBase}/play/tv/{tmdb_id}/{season}/{episode}",
-  };
-
-  function fillUrlTemplate(template, server, mediaInfo) {
-    const base = server.urlBase.replace(/\/+$/, ""); // sin barra final duplicada
-    return template
-      .replaceAll("{urlBase}", base)
-      .replaceAll("{tmdb_id}", mediaInfo.tmdbId)
-      .replaceAll("{season}", mediaInfo.temporada ?? "")
-      .replaceAll("{episode}", mediaInfo.episodio ?? "")
-      .replaceAll(/\{imdb_id\}/gi, mediaInfo.imdbId ?? ""); // acepta {imdb_id} o {IMDB_ID}
-  }
-
-  function buildEmbedUrl(server, mediaInfo) {
-    const format = server.formatoUrl || DEFAULT_URL_FORMAT;
-    const template = mediaInfo.tipo === "tv" ? format.tv : format.movie;
-    return fillUrlTemplate(template, server, mediaInfo);
-  }
-
-  /* ================================================================
      5. RIPPLE EN BOTONES
      ================================================================ */
   function ripple(e, btn) {
@@ -1001,333 +958,6 @@
     const btn = e.target.closest(".btn-ripple");
     if (btn) ripple(e, btn);
   });
-
-  /* ================================================================
-     6. ESTADOS VISUALES: loading / error / listo
-     ================================================================ */
-  function showLoading(server) {
-    byId("loaderOverlay").classList.remove("hidden");
-    byId("errorOverlay").classList.add("hidden");
-    byId("loaderPrefixText").textContent = "Conectando con";
-    byId("loaderServerName").textContent = server.nombre;
-    byId("playerIframe").classList.add("loading");
-    byId("loaderSwitchServerBtn").classList.add("hidden"); // se muestra de nuevo solo si vuelve a tardar
-  }
-
-  function showReady() {
-    byId("loaderOverlay").classList.add("hidden");
-    byId("errorOverlay").classList.add("hidden");
-    byId("playerIframe").classList.remove("loading");
-    clearTimeout(loadSlowHintTimeoutId);
-  }
-
-  function showError() {
-    byId("loaderOverlay").classList.add("hidden");
-    byId("errorOverlay").classList.remove("hidden");
-    byId("playerIframe").classList.add("loading");
-    clearTimeout(loadSlowHintTimeoutId);
-  }
-
-  // Aviso breve de que se está probando otro servidor automáticamente
-  // (fallback), sin tapar toda la pantalla como el error final.
-  function showFallbackNotice(fromServer, toServer) {
-    byId("loaderOverlay").classList.remove("hidden");
-    byId("errorOverlay").classList.add("hidden");
-    byId("loaderPrefixText").textContent = `"${fromServer.nombre}" falló. Probando`;
-    byId("loaderServerName").textContent = toServer.nombre;
-  }
-
-  /* ================================================================
-     6.5. PREROLL VAST: parser + reproducción + trackers
-     ================================================================ */
-
-  // Pide y parsea un XML de VAST, devolviendo solo lo que necesitamos:
-  // la URL del MediaFile de video más adecuado y los trackers relevantes.
-  // Soporta VAST simple (InLine) y un nivel de Wrapper (redirección a
-  // otro VAST, común en cadenas de ad servers); no sigue más de un
-  // wrapper para evitar cadenas infinitas o demasiado lentas.
-  async function fetchAndParseVast(tagUrl, depth = 0) {
-    if (depth > 1) return null; // máximo un salto de Wrapper
-
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), VAST_FETCH_TIMEOUT_MS);
-
-    let xmlText;
-    try {
-      const res = await fetch(tagUrl, { signal: controller.signal });
-      if (!res.ok) throw new Error(`VAST HTTP ${res.status}`);
-      xmlText = await res.text();
-    } catch (err) {
-      console.warn("[PelisVidHD Player] No se pudo obtener el VAST:", err);
-      return null;
-    } finally {
-      clearTimeout(timeoutId);
-    }
-
-    let doc;
-    try {
-      doc = new DOMParser().parseFromString(xmlText, "text/xml");
-      if (doc.querySelector("parsererror")) throw new Error("XML de VAST inválido");
-    } catch (err) {
-      console.warn("[PelisVidHD Player] Error parseando VAST:", err);
-      return null;
-    }
-
-    const ad = doc.querySelector("Ad");
-    if (!ad) return null;
-
-    // Wrapper: el VAST solo redirige a otro ad tag real.
-    const wrapperUri = ad.querySelector("Wrapper > VASTAdTagURI")?.textContent?.trim();
-    if (wrapperUri) {
-      return fetchAndParseVast(wrapperUri, depth + 1);
-    }
-
-    const inline = ad.querySelector("InLine");
-    if (!inline) return null;
-
-    // Elige el MediaFile progresivo (mp4) de mejor calidad disponible;
-    // evitamos HLS/DASH (requieren un player de streaming aparte).
-    const mediaFiles = [...inline.querySelectorAll("MediaFile")]
-      .filter(mf => (mf.getAttribute("delivery") || "").toLowerCase() !== "streaming")
-      .map(mf => ({
-        url: mf.textContent.trim(),
-        type: mf.getAttribute("type") || "",
-        width: Number(mf.getAttribute("width")) || 0,
-        bitrate: Number(mf.getAttribute("bitrate")) || 0,
-      }))
-      .filter(mf => mf.url && /^https?:\/\//i.test(mf.url));
-
-    if (!mediaFiles.length) return null;
-
-    // Preferimos mp4 con buena resolución, sin pasarnos de tamaño (mejor
-    // carga rápida en móvil que máxima calidad para un preroll de segundos).
-    mediaFiles.sort((a, b) => {
-      const aIsMp4 = a.type.includes("mp4") ? 1 : 0;
-      const bIsMp4 = b.type.includes("mp4") ? 1 : 0;
-      if (aIsMp4 !== bIsMp4) return bIsMp4 - aIsMp4;
-      return Math.abs(a.width - 640) - Math.abs(b.width - 640);
-    });
-
-    const getTrackerUrls = (selector) =>
-      [...inline.querySelectorAll(selector)].map(el => el.textContent.trim()).filter(Boolean);
-
-    return {
-      mediaUrl: mediaFiles[0].url,
-      clickThroughUrl: inline.querySelector("VideoClicks > ClickThrough")?.textContent?.trim() || null,
-      trackers: {
-        impression: getTrackerUrls("Impression"),
-        start: getTrackerUrls('Tracking[event="start"]'),
-        firstQuartile: getTrackerUrls('Tracking[event="firstQuartile"]'),
-        midpoint: getTrackerUrls('Tracking[event="midpoint"]'),
-        thirdQuartile: getTrackerUrls('Tracking[event="thirdQuartile"]'),
-        complete: getTrackerUrls('Tracking[event="complete"]'),
-        skip: getTrackerUrls('Tracking[event="skip"]'),
-        clickTracking: getTrackerUrls("VideoClicks > ClickTracking"),
-      },
-    };
-  }
-
-  // Dispara pixels de tracking sin bloquear ni esperar respuesta: los
-  // ad servers esperan un GET simple, no importa el resultado.
-  function fireTrackers(urls) {
-    (urls || []).forEach(url => {
-      try {
-        fetch(url, { mode: "no-cors", keepalive: true }).catch(() => {});
-      } catch {
-        // Fallback silencioso: un pixel de tracking que falla no debe romper nada.
-      }
-    });
-  }
-
-  // Reproduce un anuncio VAST completo en el overlay. Devuelve una
-  // promesa que se resuelve cuando el preroll termina (visto completo,
-  // saltado, o cualquier error) — nunca se rechaza, para que quien la
-  // llame simplemente continúe con la carga del servidor después.
-  function playVastPreroll() {
-    return new Promise(async (resolve) => {
-      if (!vastAdTags.length) { resolve(); return; }
-
-      // Ya se mostró un preroll en esta sesión de navegación (evita
-      // repetirlo si el usuario solo cambia de servidor o de episodio).
-      if (sessionStorage.getItem(VAST_SESSION_KEY)) { resolve(); return; }
-
-      const tag = vastAdTags[Math.floor(Math.random() * vastAdTags.length)];
-      const vast = await fetchAndParseVast(tag);
-
-      if (!vast) { resolve(); return; } // sin anuncio válido: seguimos directo al servidor
-
-      const overlay = byId("vastAdOverlay");
-      const video = byId("vastAdVideo");
-      const skipBtn = byId("vastSkipBtn");
-      const countdown = byId("vastAdCountdown");
-      const clickThroughBtn = byId("vastClickThroughBtn");
-
-      let finished = false;
-      let firedQuartiles = new Set();
-
-      function finish() {
-        if (finished) return;
-        finished = true;
-        overlay.classList.add("hidden");
-        video.pause();
-        video.src = "";
-        sessionStorage.setItem(VAST_SESSION_KEY, "1");
-        resolve();
-      }
-
-      clickThroughBtn.onclick = () => {
-        fireTrackers(vast.trackers.clickTracking);
-        if (vast.clickThroughUrl) window.open(vast.clickThroughUrl, "_blank", "noopener");
-      };
-
-      skipBtn.classList.add("hidden");
-      skipBtn.onclick = () => {
-        fireTrackers(vast.trackers.skip);
-        finish();
-      };
-
-      video.onloadedmetadata = () => {
-        overlay.classList.remove("hidden");
-        video.play().catch(() => finish()); // autoplay bloqueado por el navegador: no insistimos, pasamos al servidor
-        fireTrackers(vast.trackers.impression);
-        fireTrackers(vast.trackers.start);
-
-        setTimeout(() => skipBtn.classList.remove("hidden"), VAST_SKIP_AFTER_SECONDS * 1000);
-      };
-
-      video.ontimeupdate = () => {
-        if (!video.duration) return;
-        const remaining = Math.max(0, Math.ceil(video.duration - video.currentTime));
-        countdown.textContent = `${remaining}s`;
-
-        const progress = video.currentTime / video.duration;
-        if (progress >= 0.25 && !firedQuartiles.has("firstQuartile")) {
-          firedQuartiles.add("firstQuartile");
-          fireTrackers(vast.trackers.firstQuartile);
-        }
-        if (progress >= 0.5 && !firedQuartiles.has("midpoint")) {
-          firedQuartiles.add("midpoint");
-          fireTrackers(vast.trackers.midpoint);
-        }
-        if (progress >= 0.75 && !firedQuartiles.has("thirdQuartile")) {
-          firedQuartiles.add("thirdQuartile");
-          fireTrackers(vast.trackers.thirdQuartile);
-        }
-      };
-
-      video.onended = () => {
-        fireTrackers(vast.trackers.complete);
-        finish();
-      };
-
-      video.onerror = () => finish(); // video roto/inaccesible: seguimos al servidor sin bloquear
-
-      video.src = vast.mediaUrl;
-      video.load();
-    });
-  }
-
-  /* ================================================================
-     7. CARGA DE UN SERVIDOR EN EL IFRAME
-     ----------------------------------------------------------------
-     Cambia únicamente el "src" del iframe existente: la página nunca
-     se recarga. Se guarda el servidor elegido en localStorage y se
-     arma un timeout de seguridad por si el iframe nunca dispara
-     "load" (servidor caído, bloqueado por CORS/X-Frame-Options, error
-     de red/SSL como 404 o ERR_SSL_UNRECOGNIZED_NAME_ALERT, etc).
-
-     Si un servidor falla, se intenta automáticamente el siguiente
-     servidor disponible en el mismo idioma (fallback en cadena), y solo
-     se muestra el error final cuando ya se probaron todos sin éxito.
-     ================================================================ */
-  let fallbackAttempted = new Set(); // índices de servidor ya probados en esta cadena de fallback
-
-  function loadServer(index, { isRetry = false, isFallback = false } = {}) {
-    const server = servers[index];
-    if (!server) return;
-
-    if (!isFallback) fallbackAttempted.clear(); // nueva elección manual: reinicia la cadena
-    fallbackAttempted.add(index);
-
-    currentServerIndex = index;
-    localStorage.setItem(LAST_SERVER_KEY, String(index));
-
-    showLoading(server);
-    updateActiveServerUI();
-
-    const iframe = byId("playerIframe");
-
-    clearTimeout(loadTimeoutId);
-    clearTimeout(loadSlowHintTimeoutId);
-
-    // Si es un reintento sobre la misma URL, forzamos recarga real
-    // vaciando el src antes de volver a asignarlo.
-    if (isRetry) iframe.src = "about:blank";
-
-    // Si este servidor usa {imdb_id} y todavía no lo tenemos, lo pedimos
-    // antes de construir la URL (evita mandar el placeholder vacío).
-    // Para el resto de los servidores esto no agrega ninguna espera.
-    const urlReady = serverNeedsImdbId(server) && !media.imdbId
-      ? fetchImdbId(media).then(() => buildEmbedUrl(server, media))
-      : Promise.resolve(buildEmbedUrl(server, media));
-
-    urlReady.then((url) => {
-      // Pequeño delay para que el navegador procese el "about:blank"
-      // antes de asignar la URL real (evita que el evento load se pierda).
-      requestAnimationFrame(() => {
-        iframe.src = url;
-      });
-    });
-
-    // A los pocos segundos sin confirmar carga, sugerimos cambiar de
-    // servidor sin cancelar el intento actual (que sigue corriendo).
-    loadSlowHintTimeoutId = setTimeout(() => {
-      byId("loaderSwitchServerBtn").classList.remove("hidden");
-    }, LOAD_SLOW_HINT_MS);
-
-    loadTimeoutId = setTimeout(() => {
-      handleServerFailure(index);
-    }, LOAD_TIMEOUT_MS);
-  }
-
-  // Se llama cuando un servidor falla (timeout o evento "error" del
-  // iframe). Busca el siguiente servidor no probado en el mismo idioma
-  // y lo intenta automáticamente; si ya se probaron todos, muestra error.
-  function handleServerFailure(failedIndex) {
-    const failedServer = servers[failedIndex];
-    const candidates = getServersForCurrentLanguage()
-      .filter(({ index }) => !fallbackAttempted.has(index));
-
-    if (candidates.length) {
-      const next = candidates[0];
-      showFallbackNotice(failedServer, next.server);
-      loadServer(next.index, { isFallback: true });
-    } else {
-      // Ya se probaron todos los servidores disponibles en este idioma.
-      showError();
-      byId("errorTitle").textContent = "Ningún servidor respondió";
-      byId("errorDescription").textContent = `Se probaron todos los servidores disponibles en este idioma sin éxito. Intenta con otro idioma o vuelve a intentarlo más tarde.`;
-    }
-  }
-
-  /* ================================================================
-     8. EVENTOS DEL IFRAME
-     ================================================================ */
-  function initIframeEvents() {
-    const iframe = byId("playerIframe");
-
-    iframe.addEventListener("load", () => {
-      // "about:blank" también dispara "load": lo ignoramos.
-      if (iframe.src === "about:blank" || iframe.src === "") return;
-      clearTimeout(loadTimeoutId);
-      showReady();
-    });
-
-    iframe.addEventListener("error", () => {
-      clearTimeout(loadTimeoutId);
-      handleServerFailure(currentServerIndex);
-    });
-  }
 
   /* ================================================================
      9. RENDER: GRID DE SERVIDORES + DROPDOWN
@@ -1382,6 +1012,10 @@
       .filter(({ server }) => server.idioma === currentLanguage && !isServerBlocked(server));
   }
 
+  // Grid de servidores: puramente informativo/selector. Cada botón
+  // navega a player.html, que decide el servidor real a cargar con su
+  // propia lógica (último servidor guardado, idioma, lista negra) —
+  // esta página no reproduce nada ni guarda preferencia de servidor.
   function renderServerGrid() {
     const grid = byId("serverGrid");
     grid.innerHTML = "";
@@ -1393,33 +1027,28 @@
       return;
     }
 
-    filtered.forEach(({ server, index }) => {
-      const btn = document.createElement("button");
-      btn.className = "server-btn btn-ripple flex flex-row items-center gap-2.5 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 py-2.5 px-3 text-left";
-      btn.dataset.index = index;
-      btn.setAttribute("aria-pressed", index === currentServerIndex ? "true" : "false");
-      btn.setAttribute("aria-label", `Servidor ${server.nombre}${index === currentServerIndex ? " (activo)" : ""}`);
+    const playerHref = buildPlayerHref(media);
 
-      btn.innerHTML = `
+    filtered.forEach(({ server }) => {
+      const link = document.createElement("a");
+      link.href = playerHref;
+      link.className = "server-btn btn-ripple flex flex-row items-center gap-2.5 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 py-2.5 px-3 text-left";
+      link.setAttribute("aria-label", `Ver con el servidor ${server.nombre}`);
+
+      link.innerHTML = `
         ${buildServerIconHtml(server, "w-5 h-5 shrink-0")}
         <span class="text-xs font-semibold leading-tight truncate">${server.nombre}</span>
       `;
 
-      btn.addEventListener("click", () => {
-        if (index === currentServerIndex) return; // ya está activo
-        loadServer(index);
-      });
-
-      grid.appendChild(btn);
+      grid.appendChild(link);
     });
 
-    updateActiveServerUI();
     enableArrowKeyNav(grid, ".server-btn");
   }
 
   // Renderiza las pestañas de idioma (Español / Português / English) a
-  // partir de LANGUAGES. Al hacer clic en una, filtra los servidores y
-  // carga automáticamente el primero disponible en ese idioma.
+  // partir de LANGUAGES. Solo filtra qué servidores se listan; no carga
+  // ni recuerda nada (esa lógica vive en player.html).
   function renderLanguageTabs() {
     const wrap = byId("languageTabs");
     wrap.innerHTML = "";
@@ -1433,83 +1062,21 @@
 
       tab.addEventListener("click", () => {
         if (lang.code === currentLanguage) return;
-        switchLanguage(lang.code);
+        currentLanguage = lang.code;
+
+        document.querySelectorAll("#languageTabs .lang-tab").forEach((t) => {
+          const isActive = t.dataset.lang === lang.code;
+          t.classList.toggle("active", isActive);
+          t.setAttribute("aria-pressed", isActive ? "true" : "false");
+        });
+
+        renderServerGrid();
       });
 
       wrap.appendChild(tab);
     });
 
     enableArrowKeyNav(wrap, ".lang-tab");
-  }
-
-  // Cambia el idioma activo: actualiza pestañas, filtra servidores,
-  // guarda la preferencia y recarga el video con el primer servidor
-  // disponible en el nuevo idioma.
-  function switchLanguage(langCode) {
-    currentLanguage = langCode;
-    localStorage.setItem(LAST_LANGUAGE_KEY, langCode);
-
-    document.querySelectorAll("#languageTabs .lang-tab").forEach((tab) => {
-      const isActive = tab.dataset.lang === langCode;
-      tab.classList.toggle("active", isActive);
-      tab.setAttribute("aria-pressed", isActive ? "true" : "false");
-    });
-
-    renderServerGrid();
-
-    const available = getServersForCurrentLanguage();
-    if (available.length) {
-      loadServer(available[0].index);
-    } else {
-      // No hay servidores en este idioma: no hay nada que cargar.
-      showError();
-      byId("errorTitle").textContent = "Sin servidores en este idioma";
-      byId("errorDescription").textContent = "Prueba con otro idioma desde el selector de arriba.";
-      byId("retryBtn").classList.add("hidden");
-      byId("errorServerToggleBtn").classList.add("hidden");
-    }
-  }
-
-  // Actualiza el estado visual (activo/inactivo) en el grid y el label superior
-  function updateActiveServerUI() {
-    const server = servers[currentServerIndex];
-    if (!server) return;
-
-    // El color ya no es el propio de cada servidor: todos siguen el
-    // acento dinámico del poster del título actual, para que la UI se
-    // sienta unificada con el resto del reproductor.
-    const accentRgb = getComputedStyle(document.documentElement).getPropertyValue("--accent-rgb").trim();
-
-    // Label principal
-    byId("activeServerLabel").textContent = server.nombre;
-    byId("activeStatusDot").style.backgroundColor = `rgb(${accentRgb})`;
-    byId("activeStatusDot").style.color = `rgb(${accentRgb})`;
-
-    // Grid: resalta el botón activo
-    document.querySelectorAll("#serverGrid .server-btn").forEach((btn) => {
-      const isActive = Number(btn.dataset.index) === currentServerIndex;
-      btn.classList.toggle("active", isActive);
-      btn.setAttribute("aria-pressed", isActive ? "true" : "false");
-      btn.style.borderColor = isActive ? `rgb(${accentRgb})` : "";
-      btn.style.backgroundColor = isActive ? `rgba(${accentRgb}, 0.14)` : "";
-      const name = btn.querySelector("span")?.textContent || "";
-      btn.setAttribute("aria-label", `Servidor ${name}${isActive ? " (activo)" : ""}`);
-    });
-  }
-
-  /* ================================================================
-     10. IR AL GRID DE SERVIDORES (reemplaza al dropdown eliminado)
-     ----------------------------------------------------------------
-     El grid de servidores ya está siempre visible, así que "cambiar de
-     servidor" ahora simplemente hace scroll hasta él y lo resalta un
-     instante, en vez de abrir un panel que duplicaba la misma lista.
-     ================================================================ */
-  function scrollToServerGrid() {
-    const grid = byId("serverGrid");
-    grid.scrollIntoView({ behavior: "smooth", block: "center" });
-    grid.classList.remove("server-grid-highlight");
-    void grid.offsetWidth; // fuerza reflow para poder reiniciar la animación
-    grid.classList.add("server-grid-highlight");
   }
 
   /* ================================================================
@@ -1530,11 +1097,8 @@
 
     if (media.tipo === "tv") {
       subtitleEl.textContent = `Temporada ${media.temporada} · Episodio ${media.episodio}`;
-      byId("episodeNavSection").classList.remove("hidden");
-      updateEpisodeNavLabel();
     } else {
       subtitleEl.textContent = "Película";
-      byId("episodeNavSection").classList.add("hidden");
     }
 
     updatePageTitle(displayTitle);
@@ -1560,41 +1124,205 @@
      se oculta silenciosamente (no se muestra un error visible aquí,
      ya que el reproductor sigue funcionando igual sin esta info).
      ================================================================ */
+  function tmdbProfileUrl(path, size = "w185") {
+    return path ? `${TMDB_IMG}/${size}${path}` : `https://placehold.co/185x278/1a1a1a/666?text=%3F`;
+  }
 
-  // Versión mínima: player.html ya no muestra sinopsis/reparto/colección
-  // (esa ficha completa vive en details.html) — solo necesita resolver
-  // el título para el header, el color de acento a partir del poster, los
-  // metadatos de Open Graph, y las temporadas reales si es una serie.
+  function formatRuntime(minutes) {
+    if (!minutes) return null;
+    const h = Math.floor(minutes / 60);
+    const m = minutes % 60;
+    return h > 0 ? `${h}h ${m.toString().padStart(2, "0")}m` : `${m}m`;
+  }
+
+  function buildCastCard(person) {
+    const card = document.createElement("button");
+    card.className = "cast-card shrink-0 w-20 md:w-24 text-center";
+    card.setAttribute("aria-label", `Ver filmografía de ${person.name}`);
+    card.innerHTML = `
+      <img src="${tmdbProfileUrl(person.profile_path)}" alt="${person.name}" loading="lazy" decoding="async"
+           class="w-20 h-20 md:w-24 md:h-24 rounded-full object-cover mx-auto mb-2 border-2 border-white/10" />
+      <p class="text-xs font-bold leading-tight line-clamp-2">${person.name}</p>
+      <p class="text-[10px] text-white/45 leading-tight line-clamp-2 mt-0.5">${person.character || ""}</p>
+    `;
+    // La filmografía se muestra en index.html (reutiliza el overlay de
+    // búsqueda que ya existe ahí); aquí solo redirigimos con los datos.
+    card.addEventListener("click", () => {
+      const params = new URLSearchParams({ actorId: person.id, actorName: person.name });
+      window.location.href = `index.html?${params.toString()}`;
+    });
+    return card;
+  }
+
   async function loadDetails() {
     if (!media.tmdbId) return;
 
+    byId("detailsLoading").classList.remove("hidden");
+    byId("detailsSection").classList.add("hidden");
+
     try {
       const endpoint = media.tipo === "tv" ? `/tv/${media.tmdbId}` : `/movie/${media.tmdbId}`;
-      const data = await tmdbFetch(endpoint, { append_to_response: "external_ids" });
+      const data = await tmdbFetch(endpoint, {
+        append_to_response: "credits,videos,external_ids,images",
+        include_image_language: "en,es,null",
+      });
 
-      // Guarda el IMDB ID en "media" si no lo teníamos ya (por ejemplo,
-      // pedido antes por loadServer() para un servidor con {imdb_id}).
+      // Guarda el IMDB ID en "media" por si algún dato futuro lo necesita.
       if (!media.imdbId && data.external_ids && data.external_ids.imdb_id) {
         media.imdbId = data.external_ids.imdb_id;
       }
 
-      if (data.poster_path) updatePosterTheme(data.poster_path); // tema dinámico: color del poster como acento
+      // --- Backdrop del hero ---
+      if (data.backdrop_path) {
+        const backdropEl = byId("heroBackdrop");
+        backdropEl.onload = () => {
+          backdropEl.classList.remove("opacity-0");
+          byId("heroSkeleton").classList.add("hidden");
+        };
+        backdropEl.src = tmdbBackdropUrl(data.backdrop_path);
+      } else {
+        byId("heroSkeleton").classList.add("hidden");
+      }
+
+      // --- Poster ---
+      const posterEl = byId("heroPoster");
+      if (data.poster_path) {
+        posterEl.src = tmdbPosterUrl(data.poster_path, "w185");
+        posterEl.alt = data.title || data.name || "";
+        posterEl.classList.remove("hidden");
+        updatePosterTheme(data.poster_path); // tema dinámico: color del poster como acento
+      } else {
+        posterEl.classList.add("hidden");
+      }
+
+      // --- Logo del título: igual criterio de prioridad que en el
+      // catálogo (index.html) — logo sin idioma marcado (el más
+      // "limpio") > español > inglés > cualquier otro. Si no hay logo
+      // disponible, el <img> queda oculto y el título en texto alcanza.
+      const logoEl = byId("heroLogo");
+      const heroTitleEl = byId("heroTitleText");
+      const logos = (data.images && data.images.logos) || [];
+      const logoPick =
+        logos.find(l => l.iso_639_1 === null) ||
+        logos.find(l => l.iso_639_1 === "es") ||
+        logos.find(l => l.iso_639_1 === "en") ||
+        logos[0];
+      if (logoPick) {
+        logoEl.onload = () => { logoEl.classList.remove("hidden"); heroTitleEl.classList.add("hidden"); };
+        logoEl.onerror = () => { logoEl.classList.add("hidden"); heroTitleEl.classList.remove("hidden"); };
+        logoEl.src = tmdbLogoUrl(logoPick.file_path);
+        logoEl.alt = data.title || data.name || "";
+      } else {
+        logoEl.classList.add("hidden");
+        heroTitleEl.classList.remove("hidden");
+      }
 
       // --- Título (usa el que trae TMDB si no vino uno explícito por la URL) ---
       const titulo = media.titulo || data.title || data.name || "Sin título";
+      heroTitleEl.textContent = titulo;
       if (!media.titulo) updatePageTitle(titulo);
 
       // --- Open Graph / redes sociales: refleja el título real que se está viendo ---
       updateOpenGraphTags(titulo, data.overview, data.poster_path);
+
+      // --- Metadatos (año, duración, rating) ---
+      const anio = (data.release_date || data.first_air_date || "").slice(0, 4);
+      const rating = data.vote_average ? Math.round(data.vote_average * 10) / 10 : null;
+      const runtime = media.tipo === "tv"
+        ? (data.episode_run_time && data.episode_run_time[0] ? `${data.episode_run_time[0]}m/ep` : null)
+        : formatRuntime(data.runtime);
+
+      const metaParts = [];
+      if (rating) metaParts.push(`<span class="flex items-center gap-1 text-green-400 font-bold"><svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.958a1 1 0 00.95.69h4.162c.969 0 1.371 1.24.588 1.81l-3.368 2.447a1 1 0 00-.364 1.118l1.287 3.957c.3.922-.755 1.688-1.539 1.118l-3.367-2.446a1 1 0 00-1.176 0l-3.367 2.446c-.784.57-1.838-.196-1.539-1.118l1.287-3.957a1 1 0 00-.364-1.118L2.063 9.385c-.783-.57-.38-1.81.588-1.81h4.163a1 1 0 00.95-.69l1.285-3.958z"/></svg>${rating}</span>`);
+      if (anio) metaParts.push(`<span>${anio}</span>`);
+      if (runtime) metaParts.push(`<span>${runtime}</span>`);
+      metaParts.push(`<span class="badge bg-white/10 px-2 py-0.5 rounded text-[11px] font-bold">${media.tipo === "tv" ? "Serie" : "Película"}</span>`);
+      byId("heroMeta").innerHTML = metaParts.join('<span class="text-white/25">&middot;</span>');
+
+      // --- Sinopsis ---
+      byId("detailsOverview").textContent = data.overview || "Sin sinopsis disponible.";
+
+      // --- Director (películas) / Creador (series) ---
+      if (media.tipo === "movie") {
+        const director = data.credits && data.credits.crew
+          ? (data.credits.crew.find(c => c.job === "Director") || {}).name
+          : null;
+        if (director) {
+          byId("detailsDirector").textContent = director;
+          byId("detailsDirectorWrap").classList.remove("hidden");
+        }
+        byId("detailsCreatorWrap").classList.add("hidden");
+      } else {
+        const creators = (data.created_by || []).map(c => c.name).join(", ");
+        if (creators) {
+          byId("detailsCreator").textContent = creators;
+          byId("detailsCreatorWrap").classList.remove("hidden");
+        }
+        byId("detailsDirectorWrap").classList.add("hidden");
+      }
+
+      // --- Géneros ---
+      const genres = (data.genres || []).map(g => g.name).join(", ");
+      if (genres) {
+        byId("detailsGenres").textContent = genres;
+        byId("detailsGenresWrap").classList.remove("hidden");
+      }
+
+      // --- Reparto ---
+      const cast = (data.credits && data.credits.cast ? data.credits.cast : []).slice(0, 12);
+      if (cast.length) {
+        const castRow = byId("castRow");
+        castRow.innerHTML = "";
+        cast.forEach(person => castRow.appendChild(buildCastCard(person)));
+        byId("castWrap").classList.remove("hidden");
+      } else {
+        byId("castWrap").classList.add("hidden");
+      }
+
+      // --- Saga/colección (solo aplica a películas) ---
+      const collectionWrap = byId("collectionWrap");
+      if (media.tipo === "movie" && data.belongs_to_collection) {
+        const collection = data.belongs_to_collection;
+        byId("collectionName").textContent = collection.name;
+        byId("collectionPoster").src = tmdbPosterUrl(collection.poster_path, "w185");
+        byId("collectionPoster").alt = collection.name;
+        const params = new URLSearchParams({ collectionId: collection.id, collectionName: collection.name });
+        byId("collectionLink").href = `index.html?${params.toString()}`;
+        collectionWrap.classList.remove("hidden");
+      } else {
+        collectionWrap.classList.add("hidden");
+      }
+
+      // --- Tráiler ---
+      const videos = (data.videos && data.videos.results) ? data.videos.results : [];
+      const trailer =
+        videos.find(v => v.site === "YouTube" && v.type === "Trailer" && v.official) ||
+        videos.find(v => v.site === "YouTube" && v.type === "Trailer") ||
+        videos.find(v => v.site === "YouTube" && v.type === "Teaser");
+
+      const trailerBtn = byId("trailerBtn");
+      if (trailer) {
+        trailerBtn.dataset.youtubeKey = trailer.key;
+        trailerBtn.classList.remove("hidden");
+      } else {
+        trailerBtn.classList.add("hidden");
+        delete trailerBtn.dataset.youtubeKey;
+      }
+
+      byId("detailsLoading").classList.add("hidden");
+      byId("detailsSection").classList.remove("hidden");
 
       // Si es serie, inicializa el selector de temporada/episodio con
       // las temporadas reales que reporta TMDB para este título.
       if (media.tipo === "tv" && Array.isArray(data.seasons)) {
         initEpisodesModule(data.seasons);
       }
+
+      initRatingButtons();
     } catch (err) {
       console.error("[PelisVidHD Player] Error cargando detalles:", err);
-      // Falla silenciosa: sin esos datos extra, pero el reproductor sigue intacto.
+      byId("detailsLoading").classList.add("hidden");
+      // Falla silenciosa: sin detalles visibles, pero el reproductor sigue intacto.
     }
   }
 
@@ -1662,9 +1390,6 @@
       episodes.forEach(ep => list.appendChild(buildEpisodeCard(ep, seasonNumber)));
       list.classList.remove("hidden");
       enableArrowKeyNav(list, ".episode-card");
-
-      updateEpisodeNavControls();
-      updateEpisodeNavLabel();
     } catch (err) {
       console.error("[PelisVidHD Player] Error cargando episodios:", err);
       byId("episodesLoading").classList.add("hidden");
@@ -1676,13 +1401,14 @@
     const isActive = String(seasonNumber) === String(media.temporada) && String(ep.episode_number) === String(media.episodio);
     const isWatched = isEpisodeWatched(seasonNumber, ep.episode_number);
 
-    const card = document.createElement("button");
+    const card = document.createElement("a");
+    card.href = buildPlayerHref({ ...media, temporada: seasonNumber, episodio: ep.episode_number });
     card.className = `episode-card w-full flex items-center gap-3 p-2.5 rounded-xl border border-white/10 text-left ${isActive ? "active" : ""} ${isWatched ? "is-watched" : ""}`;
     card.dataset.season = seasonNumber;
     card.dataset.episode = ep.episode_number;
     card.setAttribute(
       "aria-label",
-      `Episodio ${ep.episode_number}: ${ep.name || "Sin título"}${isWatched ? ", visto" : ""}${isActive ? ", en curso" : ""}`
+      `Ver episodio ${ep.episode_number}: ${ep.name || "Sin título"}${isWatched ? ", visto" : ""}${isActive ? ", en curso" : ""}`
     );
     if (isActive) card.setAttribute("aria-current", "true");
 
@@ -1705,111 +1431,9 @@
       </div>
     `;
 
-    card.addEventListener("click", () => changeEpisode(seasonNumber, ep.episode_number));
-
     return card;
   }
 
-  // Calcula cuál sería el "siguiente episodio": el consecutivo dentro de
-  // la temporada actual, o el episodio 1 de la siguiente temporada si el
-  // actual es el último. Devuelve null si no hay nada después.
-  function getNextEpisodeTarget() {
-    const currentEpNum = Number(media.episodio);
-    const nextInSameSeason = currentSeasonEpisodes.find(ep => ep.episode_number === currentEpNum + 1);
-    if (nextInSameSeason) {
-      return { season: media.temporada, episode: nextInSameSeason.episode_number };
-    }
-
-    // Último episodio de la temporada: buscar la siguiente temporada disponible
-    const currentSeasonNum = Number(media.temporada);
-    const nextSeason = allSeasons
-      .filter(s => s.season_number > currentSeasonNum)
-      .sort((a, b) => a.season_number - b.season_number)[0];
-
-    if (nextSeason) {
-      return { season: nextSeason.season_number, episode: 1 };
-    }
-
-    return null; // no hay más episodios: es el final de la serie
-  }
-
-  // Simétrico a getNextEpisodeTarget: busca el episodio anterior dentro
-  // de la temporada actual, o el último episodio de la temporada previa
-  // si el actual es el primero. Como no sabemos cuántos episodios tiene
-  // la temporada anterior sin pedirla, se resuelve de forma perezosa
-  // (se pide su lista completa solo si el usuario realmente retrocede
-  // hasta ahí, ver goToPrevEpisode).
-  function getPrevEpisodeTarget() {
-    const currentEpNum = Number(media.episodio);
-    const prevInSameSeason = currentSeasonEpisodes.find(ep => ep.episode_number === currentEpNum - 1);
-    if (prevInSameSeason) {
-      return { season: media.temporada, episode: prevInSameSeason.episode_number };
-    }
-
-    const currentSeasonNum = Number(media.temporada);
-    const prevSeason = allSeasons
-      .filter(s => s.season_number < currentSeasonNum)
-      .sort((a, b) => b.season_number - a.season_number)[0];
-
-    if (prevSeason) {
-      return { season: prevSeason.season_number, episode: "last" }; // "last" se resuelve al hacer clic
-    }
-
-    return null; // ya estamos en el primer episodio de la serie
-  }
-
-  async function goToPrevEpisode() {
-    const target = getPrevEpisodeTarget();
-    if (!target) return;
-
-    if (target.episode === "last") {
-      // Necesitamos saber cuántos episodios tiene la temporada anterior
-      // antes de poder saltar a su último capítulo.
-      try {
-        const data = await tmdbFetch(`/tv/${media.tmdbId}/season/${target.season}`);
-        const episodes = data.episodes || [];
-        if (!episodes.length) return;
-        const lastEp = episodes[episodes.length - 1].episode_number;
-        changeEpisode(target.season, lastEp);
-      } catch (err) {
-        console.error("[PelisVidHD Player] Error obteniendo la temporada anterior:", err);
-      }
-      return;
-    }
-
-    changeEpisode(target.season, target.episode);
-  }
-
-  // Actualiza ambos botones (Anterior/Siguiente) y el label central de
-  // la barra de navegación de episodios, según el episodio actual.
-  function updateEpisodeNavControls() {
-    const prevTarget = getPrevEpisodeTarget();
-    const nextTarget = getNextEpisodeTarget();
-
-    byId("prevEpisodeBtn").disabled = !prevTarget;
-    byId("nextEpisodeBtn").disabled = !nextTarget;
-
-    if (nextTarget) {
-      byId("nextEpisodeBtn").dataset.season = nextTarget.season;
-      byId("nextEpisodeBtn").dataset.episode = nextTarget.episode;
-    } else {
-      delete byId("nextEpisodeBtn").dataset.season;
-      delete byId("nextEpisodeBtn").dataset.episode;
-    }
-  }
-
-  function updateEpisodeNavLabel() {
-    const label = byId("episodeNavLabel");
-    if (!label) return;
-    const currentEp = currentSeasonEpisodes.find(ep => String(ep.episode_number) === String(media.episodio));
-    label.textContent = currentEp
-      ? `T${media.temporada}E${media.episodio} · ${currentEp.name || "Sin título"}`
-      : `Temporada ${media.temporada} · Episodio ${media.episodio}`;
-  }
-
-  // Cambia de episodio: actualiza el estado, recarga el iframe en el
-  // MISMO servidor activo (conserva servidor e idioma), y refresca la
-  // UI (header, badge y resaltado en la lista de episodios).
   /* ================================================================
      EPISODIOS VISTOS (solo series)
      ----------------------------------------------------------------
@@ -1889,48 +1513,6 @@
         check.remove();
       }
     });
-  }
-
-  function changeEpisode(seasonNumber, episodeNumber) {
-    const seasonChanged = String(seasonNumber) !== String(media.temporada);
-
-    media.temporada = String(seasonNumber);
-    media.episodio = String(episodeNumber);
-
-    renderMediaHeader();
-    loadServer(currentServerIndex, { isRetry: true });
-    markEpisodeWatched(seasonNumber, episodeNumber);
-    updateUrlWithCurrentEpisode();
-
-    if (seasonChanged) {
-      // Saltamos a otra temporada (ej. vía "Siguiente episodio" en el
-      // último capítulo): sincroniza el select y recarga su lista completa.
-      const select = byId("seasonSelect");
-      if (select) select.value = seasonNumber;
-      loadEpisodesForSeason(seasonNumber); // esto ya llama a updateEpisodeNavControls() al terminar
-    } else {
-      document.querySelectorAll("#episodesList .episode-card").forEach(card => {
-        const isActive = card.dataset.season === String(seasonNumber) && card.dataset.episode === String(episodeNumber);
-        card.classList.toggle("active", isActive);
-      });
-      updateEpisodeNavControls();
-      refreshWatchedChecksInList();
-    }
-  }
-
-  // Actualiza los parámetros temporada/episodio en la URL de la barra de
-  // direcciones para que reflejen el episodio actual — así el link se
-  // puede compartir o recargar sin perder el punto exacto. Usa
-  // replaceState (no pushState) para no llenar el historial del
-  // navegador con una entrada por cada cambio de episodio: el botón
-  // "atrás" del navegador debe seguir llevando al index, no episodio
-  // por episodio.
-  function updateUrlWithCurrentEpisode() {
-    if (media.tipo !== "tv") return;
-    const url = new URL(window.location.href);
-    url.searchParams.set("temporada", media.temporada);
-    url.searchParams.set("episodio", media.episodio);
-    window.history.replaceState(null, "", url.toString());
   }
 
   /* ================================================================
@@ -2102,6 +1684,222 @@
     return res.json();
   }
 
+  /* ================================================================
+     VALORACIÓN LOCAL (me gusta / no me gusta)
+     ----------------------------------------------------------------
+     Sin backend ni cuenta externa: la valoración de cada título se
+     guarda en localStorage, igual que el resto del estado de la app
+     (historial, lista, episodios vistos). Los botones están siempre
+     visibles y disponibles, sin depender de ningún login.
+     ================================================================ */
+  const RATINGS_KEY = "streamix_ratings_v1"; // { "movie-550": "like", "tv-1396": "dislike", ... }
+
+  function getRatingsStore() {
+    try {
+      return JSON.parse(localStorage.getItem(RATINGS_KEY) || "{}");
+    } catch {
+      return {};
+    }
+  }
+  function saveRatingsStore(store) {
+    try {
+      localStorage.setItem(RATINGS_KEY, JSON.stringify(store));
+    } catch (err) {
+      console.warn("[PelisVidHD Player] No se pudo guardar la valoración localmente:", err);
+    }
+  }
+  function ratingKeyFor(mediaInfo) {
+    return `${mediaInfo.tipo}-${mediaInfo.tmdbId}`;
+  }
+
+  let currentUserRating = null; // null | "like" | "dislike"
+
+  function updateRatingButtonsUI() {
+    byId("thumbUpBtn").classList.toggle("active-like", currentUserRating === "like");
+    byId("thumbDownBtn").classList.toggle("active-dislike", currentUserRating === "dislike");
+    byId("thumbUpBtn").setAttribute("aria-pressed", currentUserRating === "like" ? "true" : "false");
+    byId("thumbDownBtn").setAttribute("aria-pressed", currentUserRating === "dislike" ? "true" : "false");
+  }
+
+  // Carga la valoración ya guardada (si existe) para el título actual.
+  function loadExistingRating() {
+    if (!media.tmdbId) return;
+    const store = getRatingsStore();
+    currentUserRating = store[ratingKeyFor(media)] || null;
+    updateRatingButtonsUI();
+  }
+
+  // Guarda (o quita, si se repite el mismo thumb) la valoración local.
+  function submitRating(kind) {
+    if (!media.tmdbId) return;
+    const store = getRatingsStore();
+    const key = ratingKeyFor(media);
+    const isRemoving = currentUserRating === kind;
+
+    if (isRemoving) {
+      delete store[key];
+      currentUserRating = null;
+      showButtonToast("Valoración eliminada");
+    } else {
+      store[key] = kind;
+      currentUserRating = kind;
+      showButtonToast(kind === "like" ? "Te gusta este título" : "Marcado como no me gusta");
+    }
+    saveRatingsStore(store);
+    updateRatingButtonsUI();
+  }
+
+  // Pequeño toast reutilizando el mismo patrón visual que showFallbackNotice,
+  // pero como notificación efímera independiente del loader del reproductor.
+  function showButtonToast(msg) {
+    let toast = byId("ratingToast");
+    if (!toast) {
+      toast = document.createElement("div");
+      toast.id = "ratingToast";
+      toast.className = "fixed bottom-24 md:bottom-6 left-1/2 -translate-x-1/2 z-[70] frosted-glass px-4 py-2.5 rounded-xl text-xs font-semibold transition-all duration-300";
+      toast.style.opacity = "0";
+      toast.style.transform = "translate(-50%, 12px)";
+      document.body.appendChild(toast);
+    }
+    toast.textContent = msg;
+    requestAnimationFrame(() => {
+      toast.style.opacity = "1";
+      toast.style.transform = "translate(-50%, 0)";
+    });
+    clearTimeout(showButtonToast._t);
+    showButtonToast._t = setTimeout(() => {
+      toast.style.opacity = "0";
+      toast.style.transform = "translate(-50%, 12px)";
+    }, 2000);
+  }
+
+  function initRatingButtons() {
+    loadExistingRating();
+  }
+
+  // Construye el link hacia player.html para un título (el propio, o
+  // uno recomendado). Incluye el título (para que el header del
+  // reproductor no muestre el genérico "TMDB #id") y, si es una serie
+  // que ya se empezó a ver, retoma el último episodio visto en vez de
+  // forzar siempre T1E1.
+  function buildPlayerHref(item) {
+    const params = new URLSearchParams({ titulo: item.titulo });
+
+    if (item.tipo === "tv") {
+      params.set("tipo", "tv");
+      params.set("id", item.tmdbId);
+      const lastWatched = getLastWatchedEpisodeFor(item.tmdbId);
+      params.set("temporada", String(lastWatched ? lastWatched.season : 1));
+      params.set("episodio", String(lastWatched ? lastWatched.episode : 1));
+    } else {
+      params.set("tipo", "movie");
+      params.set("id", item.tmdbId);
+    }
+
+    return `player.html?${params.toString()}`;
+  }
+
+  // Igual que buildPlayerHref, pero hacia esta misma página (details.html):
+  // se usa en las recomendaciones, para que el usuario vea la ficha
+  // completa del título recomendado antes de decidir reproducirlo, en
+  // vez de saltar directo al reproductor.
+  function buildDetailsHref(item) {
+    const params = new URLSearchParams({ titulo: item.titulo });
+    if (item.tipo === "tv") {
+      params.set("tipo", "tv");
+      params.set("id", item.tmdbId);
+    } else {
+      params.set("tipo", "movie");
+      params.set("id", item.tmdbId);
+    }
+    return `details.html?${params.toString()}`;
+  }
+
+  // Igual que getLastWatchedEpisode de index.html, pero vive acá para
+  // que el link a player.html retome el último episodio visto de una
+  // serie, no solo los clics desde el catálogo.
+  function getLastWatchedEpisodeFor(tmdbId) {
+    const entry = getSeriesWatchedEntry(getWatchedEpisodesStore(), tmdbId);
+    if (!entry || !entry.last) return null;
+    return { season: entry.last.season, episode: entry.last.episode };
+  }
+
+  function buildRecommendationCard(item) {
+    const card = document.createElement("a");
+    card.href = buildDetailsHref(item);
+    card.className = "rec-card relative shrink-0 w-[38vw] sm:w-[160px] md:w-[180px] rounded-xl overflow-hidden bg-bgcard cursor-pointer block";
+    card.setAttribute("aria-label", `Reproducir ${item.titulo}`);
+
+    card.innerHTML = `
+      <div class="relative w-full aspect-[2/3] overflow-hidden">
+        <img src="${tmdbPosterUrl(item.posterPath)}" alt="${item.titulo}" loading="lazy" decoding="async"
+             class="w-full h-full object-cover" />
+
+        <!-- Rating badge -->
+        <span class="absolute top-2 right-2 flex items-center gap-1 bg-black/70 border border-white/15 text-white text-[10px] md:text-[11px] font-bold px-1.5 py-0.5 rounded-full">
+          <svg class="w-2.5 h-2.5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.958a1 1 0 00.95.69h4.162c.969 0 1.371 1.24.588 1.81l-3.368 2.447a1 1 0 00-.364 1.118l1.287 3.957c.3.922-.755 1.688-1.539 1.118l-3.367-2.446a1 1 0 00-1.176 0l-3.367 2.446c-.784.57-1.838-.196-1.539-1.118l1.287-3.957a1 1 0 00-.364-1.118L2.063 9.385c-.783-.57-.38-1.81.588-1.81h4.163a1 1 0 00.95-.69l1.285-3.958z"/></svg>
+          ${item.rating.toFixed(1)}
+        </span>
+
+        <!-- Play overlay al hover -->
+        <div class="rec-overlay absolute inset-0 bg-black/50 flex items-center justify-center">
+          <span class="w-10 h-10 rounded-full bg-white/90 flex items-center justify-center">
+            <svg class="w-4 h-4 text-black translate-x-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+          </span>
+        </div>
+
+        <!-- Título -->
+        <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/95 via-black/50 to-transparent pt-8 pb-2 px-2">
+          <p class="text-xs md:text-sm font-bold leading-tight line-clamp-2">${item.titulo}</p>
+          <p class="text-[10px] text-white/50 font-medium mt-0.5">${item.anio}</p>
+        </div>
+      </div>
+    `;
+
+    return card;
+  }
+
+  function normalizeRecommendation(raw, tipo) {
+    return {
+      tipo,
+      tmdbId: raw.id,
+      titulo: raw.title || raw.name || "Sin título",
+      anio: (raw.release_date || raw.first_air_date || "").slice(0, 4) || "—",
+      rating: raw.vote_average ? Math.round(raw.vote_average * 10) / 10 : 0,
+      posterPath: raw.poster_path,
+    };
+  }
+
+  async function loadRecommendations() {
+    if (!media.tmdbId) return;
+
+    byId("recommendationsLoading").classList.remove("hidden");
+
+    try {
+      const endpoint = media.tipo === "tv"
+        ? `/tv/${media.tmdbId}/recommendations`
+        : `/movie/${media.tmdbId}/recommendations`;
+
+      const data = await tmdbFetch(endpoint);
+      const results = (data.results || [])
+        .slice(0, 12)
+        .map(r => normalizeRecommendation(r, media.tipo));
+
+      byId("recommendationsLoading").classList.add("hidden");
+
+      if (!results.length) return; // sin recomendaciones: la sección queda oculta
+
+      const row = byId("recommendationsRow");
+      row.innerHTML = "";
+      results.forEach(item => row.appendChild(buildRecommendationCard(item)));
+
+      byId("recommendationsSection").classList.remove("hidden");
+    } catch (err) {
+      console.error("[PelisVidHD Player] Error cargando recomendaciones:", err);
+      byId("recommendationsLoading").classList.add("hidden");
+      // Falla silenciosa: no mostramos error, simplemente no hay sección de recomendaciones.
+    }
+  }
 
   /* ================================================================
      15. INICIALIZACIÓN
@@ -2119,24 +1917,6 @@
     return LANGUAGES[0].code;
   }
 
-  // Resuelve el servidor inicial DENTRO del idioma ya elegido:
-  // preferencia guardada (si sigue perteneciendo a ese idioma y no está
-  // en la lista negra) > primer servidor disponible en ese idioma.
-  function resolveInitialServerIndex() {
-    const saved = localStorage.getItem(LAST_SERVER_KEY);
-    const savedIndex = saved !== null ? Number(saved) : NaN;
-    if (
-      !Number.isNaN(savedIndex) &&
-      servers[savedIndex] &&
-      servers[savedIndex].idioma === currentLanguage &&
-      !isServerBlocked(servers[savedIndex])
-    ) {
-      return savedIndex;
-    }
-    const available = getServersForCurrentLanguage();
-    return available.length ? available[0].index : 0;
-  }
-
   function init() {
     media = parseMediaFromUrl();
     renderMediaHeader(); // ya actualiza document.title (con T/E si es serie)
@@ -2144,93 +1924,78 @@
     currentLanguage = resolveInitialLanguage();
     renderLanguageTabs();
     renderServerGrid();
-    initIframeEvents();
 
-    // Si no hay TMDB ID en la URL, no intentamos cargar ningún servidor.
+    // Sin TMDB ID en la URL: no hay nada que mostrar.
     if (!media.tmdbId) {
-      showError();
-      byId("errorTitle").textContent = "Falta el contenido a reproducir";
-      byId("errorDescription").textContent =
-        "Agrega ?tipo=movie&id=550 (película) o ?tipo=tv&id=1396&temporada=1&episodio=1 (serie) a la URL.";
-      byId("retryBtn").classList.add("hidden");
-      byId("errorServerToggleBtn").classList.add("hidden");
+      byId("heroTitleText").textContent = "Sin contenido seleccionado";
+      byId("heroSkeleton").classList.add("hidden");
       return;
     }
 
-    const startIndex = resolveInitialServerIndex();
+    // Botón principal: lleva al reproductor con este mismo título.
+    byId("playBtn").onclick = () => { location.href = buildPlayerHref(media); };
+    syncListButtonUI();
 
-    // El servidor arranca a cargar de inmediato (con su preroll VAST si
-    // hay ads configurados): ya no hay cover/botón de play intermedio.
     loadDetails();
-    playVastPreroll().then(() => {
-      loadServer(startIndex);
-    });
-
-    // "Ver ficha completa" lleva a details.html con este mismo título.
-    const detailsParams = new URLSearchParams({ tipo: media.tipo, id: media.tmdbId, titulo: media.titulo || "" });
-    byId("viewDetailsLink").href = `details.html?${detailsParams.toString()}`;
+    loadRecommendations();
 
     if (media.tipo === "tv") {
       markEpisodeWatched(media.temporada, media.episodio);
     }
   }
 
-  // Revisa si la plantilla de un servidor (por defecto o personalizada)
-  // usa el placeholder {imdb_id}, para saber si vale la pena esperar
-  // a tener ese dato antes de construir su URL por primera vez.
-  function serverNeedsImdbId(server) {
-    if (!server) return false;
-    const format = server.formatoUrl || DEFAULT_URL_FORMAT;
-    const template = media.tipo === "tv" ? format.tv : format.movie;
-    return /\{imdb_id\}/i.test(template);
-  }
-
-  // Pide a TMDB el IMDB ID del título actual (external_ids) y lo guarda
-  // en media.imdbId. Se cachea en sessionStorage igual que el resto del
-  // catálogo, para no volver a pedirlo si se cambia de servidor/idioma.
-  async function fetchImdbId(mediaInfo) {
-    if (mediaInfo.imdbId) return mediaInfo.imdbId; // ya lo teníamos
-    try {
-      const endpoint = mediaInfo.tipo === "tv" ? `/tv/${mediaInfo.tmdbId}/external_ids` : `/movie/${mediaInfo.tmdbId}/external_ids`;
-      const data = await tmdbFetch(endpoint);
-      mediaInfo.imdbId = data.imdb_id || "";
-      return mediaInfo.imdbId;
-    } catch (err) {
-      console.error("[PelisVidHD Player] Error obteniendo IMDB ID:", err);
-      mediaInfo.imdbId = "";
-      return "";
-    }
-  }
-
   /* ================================================================
      16. LISTENERS GLOBALES
      ================================================================ */
-  byId("retryBtn").addEventListener("click", () => {
-    loadServer(currentServerIndex, { isRetry: true });
+
+  // --- Mi Lista: mismo storage y mismo formato de ID que index.html
+  // ("Tipo-tmdbId", ej. "Película-550"), para que agregar/quitar desde
+  // acá se refleje también en el catálogo. ---
+  const FAVORITES_KEY = "streamix_mylist_v1";
+  function favIdFor(mediaInfo) {
+    const tipoLabel = mediaInfo.tipo === "tv" ? "Serie" : "Película";
+    return `${tipoLabel}-${mediaInfo.tmdbId}`;
+  }
+  function getFavorites() {
+    try {
+      return new Set(JSON.parse(localStorage.getItem(FAVORITES_KEY) || "[]"));
+    } catch {
+      return new Set();
+    }
+  }
+  function syncListButtonUI() {
+    const heart = document.querySelector("#listBtn .heart-icon");
+    const isFav = getFavorites().has(favIdFor(media));
+    heart.setAttribute("fill", isFav ? "#E50914" : "none");
+    byId("listBtn").setAttribute("aria-pressed", isFav ? "true" : "false");
+    byId("listBtn").setAttribute("aria-label", isFav ? "Quitar de mi lista" : "Agregar a mi lista");
+  }
+  byId("listBtn").addEventListener("click", () => {
+    if (!media.tmdbId) return;
+    const favorites = getFavorites();
+    const id = favIdFor(media);
+    if (favorites.has(id)) favorites.delete(id); else favorites.add(id);
+    localStorage.setItem(FAVORITES_KEY, JSON.stringify([...favorites]));
+    syncListButtonUI();
+    showButtonToast(favorites.has(id) ? "Agregado a Mi Lista" : "Quitado de Mi Lista");
   });
 
-  byId("errorServerToggleBtn").addEventListener("click", () => {
-    scrollToServerGrid();
-  });
-
-  byId("nextEpisodeBtn").addEventListener("click", () => {
-    const btn = byId("nextEpisodeBtn");
-    const season = btn.dataset.season;
-    const episode = btn.dataset.episode;
-    if (season && episode) changeEpisode(season, episode);
-  });
-
-  byId("prevEpisodeBtn").addEventListener("click", goToPrevEpisode);
-
-  byId("loaderSwitchServerBtn").addEventListener("click", () => {
-    scrollToServerGrid();
+  // --- Compartir ---
+  byId("shareBtn").addEventListener("click", async () => {
+    const titulo = byId("heroTitleText").textContent || document.title;
+    const url = location.href;
+    if (navigator.share) {
+      navigator.share({ title: titulo, url }).catch(() => {});
+    } else if (navigator.clipboard) {
+      navigator.clipboard.writeText(url).then(() => showButtonToast("Enlace copiado al portapapeles"));
+    }
   });
 
   // "Inicio"/"Volver" en la bottom nav SIEMPRE va directo a index.html
   // (usando la URL exacta guardada al llegar aquí, si existe, para
   // conservar scroll/estado). Deliberadamente NO usa history.back():
-  // eso recorrería cada cambio de servidor/episodio/recomendación como
-  // si fueran páginas distintas, en vez de ir directo al catálogo.
+  // eso recorrería cada card/ficha visitada como si fueran páginas
+  // distintas, en vez de ir directo al catálogo.
   function goToIndexDirectly() {
     const returnUrl = sessionStorage.getItem("streamix_return_url");
     window.location.href = returnUrl || "index.html";
@@ -2239,11 +2004,8 @@
   byId("bottomNavBack").addEventListener("click", goToIndexDirectly);
   byId("bottomNavHome").addEventListener("click", goToIndexDirectly);
 
-  // "Buscar" y "Guardados" no existen dentro del reproductor: llevan a
-  // index.html con una acción que abre directamente el buscador o hace
-  // scroll a "Mi Lista" apenas carga. Usan la URL de retorno guardada
-  // como base si existe, para no perder query params relevantes, y le
-  // suman/reemplazan el parámetro "action".
+  // "Buscar" y "Guardados" llevan a index.html con una acción que abre
+  // directamente el buscador o hace scroll a "Mi Lista" apenas carga.
   function goToIndexWithAction(action) {
     const returnUrl = sessionStorage.getItem("streamix_return_url");
     const base = returnUrl ? returnUrl.split("?")[0] : "index.html";
@@ -2252,6 +2014,31 @@
 
   byId("bottomNavSearch").addEventListener("click", () => goToIndexWithAction("search"));
   byId("bottomNavSaved").addEventListener("click", () => goToIndexWithAction("saved"));
+
+  // --- Modal de tráiler ---
+  function openTrailerModal() {
+    const key = byId("trailerBtn").dataset.youtubeKey;
+    if (!key) return;
+    byId("trailerIframe").src = `https://www.youtube.com/embed/${key}?autoplay=1&rel=0`;
+    byId("trailerModal").classList.remove("hidden");
+    document.body.style.overflow = "hidden";
+  }
+  function closeTrailerModal() {
+    byId("trailerModal").classList.add("hidden");
+    byId("trailerIframe").src = ""; // detiene la reproducción al cerrar
+    document.body.style.overflow = "";
+  }
+
+  byId("trailerBtn").addEventListener("click", openTrailerModal);
+  byId("thumbUpBtn").addEventListener("click", () => submitRating("like"));
+  byId("thumbDownBtn").addEventListener("click", () => submitRating("dislike"));
+  byId("trailerCloseBtn").addEventListener("click", closeTrailerModal);
+  byId("trailerModal").addEventListener("click", (e) => {
+    if (e.target.id === "trailerModal") closeTrailerModal();
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") closeTrailerModal();
+  });
 
   // --- Panel de notificaciones (mismo patrón que index.html) ---
   const notificationsBtn = byId("notificationsBtn");

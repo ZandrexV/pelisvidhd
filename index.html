@@ -90,16 +90,8 @@
     border: 1px solid rgba(255,255,255,0.06);
   }
 
-  /* Navbar y bottom nav: mismo fondo sólido, siempre visibles. */
-  .glass-nav {
-    background: rgba(8, 8, 8, 0.97);
-    border: 1px solid rgba(255,255,255,0.06);
-    contain: layout style; /* aísla su repintado del resto del documento */
-  }
-
-  /* ========== NAVBAR HIDE/SHOW ========== */
+  /* ========== NAVBAR ========== */
   #navbar { transition: transform 0.45s cubic-bezier(.4,0,.2,1), background-color 0.4s ease; }
-  #navbar.nav-hidden { transform: translateY(-100%); }
 
   /* ========== HERO ========== */
   .hero-slide {
@@ -221,28 +213,6 @@
   .btn-ghost:hover { background: rgba(255,255,255,0.22); transform: translateY(-1px); }
   .btn-ghost:active { transform: translateY(0) scale(0.98); }
 
-  /* ========== MODAL ========== */
-  #modalBackdrop {
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.35s ease;
-  }
-  #modalBackdrop.open { opacity: 1; pointer-events: auto; }
-
-  #modalPanel {
-    transition: transform 0.45s cubic-bezier(.16,1,.3,1), opacity 0.4s ease;
-  }
-  /* Desktop: centered zoom-in */
-  @media (min-width: 768px) {
-    #modalPanel { transform: scale(0.92) translateY(20px); opacity: 0; }
-    #modalBackdrop.open #modalPanel { transform: scale(1) translateY(0); opacity: 1; }
-  }
-  /* Mobile: bottom sheet slide-up */
-  @media (max-width: 767px) {
-    #modalPanel { transform: translateY(100%); }
-    #modalBackdrop.open #modalPanel { transform: translateY(0); }
-  }
-
   /* ========== LINE CLAMP ========== */
   .clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
   .clamp-3 { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
@@ -276,6 +246,17 @@
     color: transparent;
   }
 
+  /* ========== LOGO DE TÍTULO (TMDB) ==========
+     Fade-in + leve slide-up al aparecer, para que el logo no reemplace
+     el texto de golpe (cards del carrusel). */
+  .title-logo-img {
+    animation: logoFadeIn 0.4s ease both;
+  }
+  @keyframes logoFadeIn {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
   /* ========== DROPDOWN PANEL (paneles de notificaciones/ajustes) ========== */
   .server-dropdown-panel {
     transform-origin: top right;
@@ -285,6 +266,26 @@
     opacity: 0;
     transform: scale(0.95) translateY(-8px);
     pointer-events: none;
+  }
+
+  /* ========== VIDRIO ESMERILADO (estilo iOS/tvOS) ==========
+     Blur real del contenido que queda detrás + superficie translúcida
+     neutra + borde de luz muy sutil (blanco, no de color) + sombra
+     suave. Reemplaza el fondo sólido de .glass-strong en
+     las barras flotantes (navbar, bottom nav, toasts). */
+  .frosted-glass {
+    background: rgba(30, 30, 32, 0.55);
+    -webkit-backdrop-filter: saturate(180%) blur(24px);
+    backdrop-filter: saturate(180%) blur(24px);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow:
+      0 8px 32px -8px rgba(0, 0, 0, 0.55),
+      inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  }
+  /* Sin soporte de backdrop-filter: cae a un fondo sólido oscuro para
+     no quedar transparente sobre el contenido. */
+  @supports not ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
+    .frosted-glass { background: rgba(18, 18, 20, 0.92); }
   }
 
   /* ========== BOTTOM NAV (móvil) ========== */
@@ -377,15 +378,15 @@
 <!-- ============================================================ -->
 <!-- NAVBAR -->
 <!-- ============================================================ -->
-<header id="navbar" class="fixed top-0 left-0 w-full z-50 glass-nav">
-  <div class="max-w-[1600px] mx-auto px-4 md:px-8 h-16 md:h-20 flex items-center justify-between gap-4">
+<header id="navbar" class="fixed top-3 left-3 right-3 md:left-4 md:right-4 z-50 frosted-glass rounded-full">
+  <div class="max-w-[1600px] mx-auto px-5 md:px-8 h-14 md:h-16 flex items-center justify-between gap-4">
 
     <!-- Logo -->
     <a href="#" class="flex items-center gap-2 shrink-0" aria-label="PelisVidHD inicio">
-      <span class="logo-mark w-9 h-9 rounded-lg overflow-hidden flex items-center justify-center shrink-0">
-        <img src="https://i.ibb.co/V0Sst1qh/20260203-025506.png" alt="PelisVidHD" class="w-full h-full object-cover" />
+      <span class="logo-mark w-8 h-8 md:w-9 md:h-9 rounded-lg overflow-hidden flex items-center justify-center shrink-0">
+        <img src="https://i.ibb.co/V0Sst1qh/20260203-025506.png" alt="PelisVidHD" class="w-full h-full object-cover" decoding="async" />
       </span>
-      <span class="hidden sm:block font-extrabold text-xl tracking-tight">PELISVID<span class="text-brand">HD</span></span>
+      <span class="hidden sm:block font-extrabold text-lg md:text-xl tracking-tight">PELISVID<span class="text-brand">HD</span></span>
     </a>
 
     <!-- Nav links: ocultos por defecto (navbar minimalista), quedan accesibles
@@ -611,7 +612,7 @@
   <article class="card group relative shrink-0 w-[42vw] sm:w-[220px] md:w-[240px] rounded-xl overflow-hidden bg-bgcard cursor-pointer" tabindex="0">
     <div class="relative w-full aspect-[2/3] overflow-hidden">
       <div class="skeleton absolute inset-0"></div>
-      <img class="poster-img w-full h-full object-cover relative opacity-0 transition-opacity duration-500" loading="lazy" alt="" />
+      <img class="poster-img w-full h-full object-cover relative opacity-0 transition-opacity duration-500" loading="lazy" decoding="async" alt="" />
 
       <!-- Rating badge (estrella) -->
       <span class="rating-badge absolute top-2 right-2 flex items-center gap-1 bg-black/70 border border-white/15 text-white text-[11px] md:text-xs font-bold px-2 py-1 rounded-full">
@@ -626,23 +627,17 @@
 
       <!-- Title area: logo real de TMDB si existe (reemplaza al texto); si no hay logo, o falla, se ve el nombre en texto -->
       <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent pt-10 pb-3 px-3 flex flex-col items-start gap-1.5 min-h-[30%]">
-        <img class="title-logo-img max-h-8 md:max-h-10 max-w-[70%] object-contain object-left hidden" alt="" loading="lazy" />
+        <img class="title-logo-img max-h-8 md:max-h-10 max-w-[70%] object-contain object-left hidden" alt="" loading="lazy" decoding="async" />
         <p class="card-title-fallback font-extrabold text-sm md:text-base leading-tight text-left drop-shadow-lg"></p>
       </div>
 
-      <!-- Hover overlay -->
-      <div class="card-overlay absolute inset-0 bg-gradient-to-t from-black via-black/70 to-black/10 flex flex-col justify-end p-2.5 md:p-3">
+      <!-- Hover overlay: solo informativo (título + metadatos). Toda la
+           card es el único disparador de clic (lleva a la ficha de
+           detalles) — sin botones de acción superpuestos que puedan
+           confundirse entre sí al tocar en móvil. -->
+      <div class="card-overlay absolute inset-0 bg-gradient-to-t from-black via-black/70 to-black/10 flex flex-col justify-end p-2.5 md:p-3 pointer-events-none">
         <p class="card-title font-bold text-xs md:text-sm leading-tight mb-1 line-clamp-2"></p>
-        <div class="card-meta flex items-center gap-1.5 text-[10px] md:text-xs text-white/70 font-medium mb-2"></div>
-        <div class="flex items-center gap-1.5">
-          <button class="play-mini flex-1 bg-white text-black rounded-md py-1.5 flex items-center justify-center gap-1 font-bold text-[10px] md:text-xs hover:bg-white/85 transition-colors">
-            <svg class="w-3 h-3 md:w-3.5 md:h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-            Ver
-          </button>
-          <button class="info-mini w-7 h-7 rounded-md bg-white/15 hover:bg-white/25 flex items-center justify-center transition-colors" aria-label="Más información">
-            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-          </button>
-        </div>
+        <div class="card-meta flex items-center gap-1.5 text-[10px] md:text-xs text-white/70 font-medium"></div>
       </div>
     </div>
   </article>
@@ -657,9 +652,7 @@
       <div class="col-span-2 md:col-span-1">
         <div class="flex items-center gap-2 mb-4">
           <span class="w-8 h-8 rounded-lg overflow-hidden flex items-center justify-center shrink-0">
-            <img src="https://i.ibb.co/V0Sst1qh/20260203-025506.png" alt="PelisVidHD" class="w-full h-full object-cover" />
-          </span>
-          <span class="font-extrabold text-lg">PELISVID<span class="text-brand">HD</span></span>
+            <img src="https://i.ibb.co/V0Sst1qh/20260203-025506.png" alt="PelisVidHD" class="w-full h-full object-cover" loading="lazy" decoding="async" />
         </div>
         <p class="text-white/50 text-sm leading-relaxed max-w-xs">Tu plataforma de streaming premium. Miles de películas y series, en cualquier lugar.</p>
         <div class="flex items-center gap-3 mt-5">
@@ -717,78 +710,8 @@
 <!-- ============================================================ -->
 <!-- MODAL -->
 <!-- ============================================================ -->
-<div id="modalBackdrop" class="fixed inset-0 z-[60] flex items-end md:items-center justify-center bg-black/90">
-  <div id="modalPanel" class="glass-strong w-full md:max-w-2xl lg:max-w-3xl max-h-[92vh] md:max-h-[88vh] overflow-y-auto rounded-t-3xl md:rounded-2xl relative no-scrollbar">
-
-    <!-- Close -->
-    <button id="modalCloseBtn" class="absolute top-3 right-3 z-10 w-9 h-9 rounded-full bg-black/60 hover:bg-black/80 flex items-center justify-center transition-colors" aria-label="Cerrar">
-      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-    </button>
-
-    <!-- Mobile drag handle -->
-    <div class="md:hidden w-10 h-1 rounded-full bg-white/30 mx-auto mt-3"></div>
-
-    <!-- Banner -->
-    <div class="relative w-full aspect-video">
-      <img id="modalBanner" class="w-full h-full object-cover" alt="" />
-      <div class="absolute inset-0 bg-gradient-to-t from-[#0d0d0d] via-transparent to-black/40"></div>
-      <div class="absolute bottom-3 left-4 right-4 flex items-end gap-4">
-        <img id="modalPoster" class="w-20 md:w-24 rounded-lg shadow-2xl border border-white/10 -mb-2" alt="" />
-        <h2 id="modalTitle" class="text-xl md:text-3xl font-black drop-shadow-xl pb-1"></h2>
-      </div>
-    </div>
-
-    <div class="p-5 md:p-8 pt-6">
-      <!-- Rating y calidad: los datos que más se escanean primero, con más peso visual -->
-      <div id="modalHighlightBadges" class="flex items-center gap-2 mb-3"></div>
-
-      <div id="modalMeta" class="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-sm text-white/75 font-medium mb-4"></div>
-
-      <div class="flex flex-wrap items-center gap-3 mb-6">
-        <button id="modalPlayBtn" class="btn-ripple btn-primary flex items-center gap-2 px-5 py-2.5 rounded-lg font-bold text-sm">
-          <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-          Reproducir
-        </button>
-        <button id="modalListBtn" class="btn-ripple btn-ghost flex items-center gap-2 px-5 py-2.5 rounded-lg font-bold text-sm">
-          <svg class="w-4 h-4 modal-heart" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
-          <span class="modal-list-label">Mi Lista</span>
-        </button>
-        <button id="modalShareBtn" class="btn-ripple w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors" aria-label="Compartir">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342a3 3 0 100 2.316m0-2.316a3 3 0 100-2.316m0 2.316l6.632 3.316m0-8.632l-6.632 3.316m6.632-3.316a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 8.632a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z"/></svg>
-        </button>
-      </div>
-
-      <p id="modalDesc" class="text-white/80 text-sm md:text-base leading-relaxed mb-6"></p>
-
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-        <div>
-          <span class="text-white/40 font-medium">Director</span>
-          <p id="modalDirector" class="text-white/85 font-medium mt-0.5"></p>
-        </div>
-        <div>
-          <span class="text-white/40 font-medium">Reparto</span>
-          <p id="modalActors" class="text-white/85 font-medium mt-0.5"></p>
-        </div>
-      </div>
-
-      <!-- Saga/colección (solo si la película pertenece a una) -->
-      <div id="modalCollectionWrap" class="hidden mt-5 pt-5 border-t border-white/10">
-        <p class="text-white/40 font-medium text-xs uppercase tracking-wide mb-2">Parte de la saga</p>
-        <button id="modalCollectionBtn" class="w-full flex items-center gap-3 p-3 rounded-xl bg-white/5 hover:bg-white/10 transition-colors text-left">
-          <img id="modalCollectionPoster" src="" alt="" class="w-12 h-16 rounded-lg object-cover shrink-0" />
-          <div class="min-w-0">
-            <p id="modalCollectionName" class="font-bold text-sm leading-tight truncate"></p>
-            <p class="text-xs text-white/45 mt-0.5">Ver todas las películas de la saga</p>
-          </div>
-          <svg class="w-4 h-4 text-white/40 ml-auto shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-        </button>
-      </div>
-    </div>
-  </div>
-</div>
-
 <!-- Toast -->
-<div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-[70] glass-strong px-5 py-3 rounded-xl text-sm font-semibold flex items-center gap-2 shadow-2xl">
+<div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-[70] frosted-glass px-5 py-3 rounded-xl text-sm font-semibold flex items-center gap-2">
   <svg class="w-4 h-4 text-brand" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
   <span id="toastMsg">Agregado a Mi Lista</span>
 </div>
@@ -806,7 +729,7 @@
 <!-- ============================================================ -->
 <!-- BOTTOM NAV (solo móvil): Inicio · Películas · Series · Anime · API -->
 <!-- ============================================================ -->
-<nav id="bottomNav" class="md:hidden fixed left-3 right-3 z-40 glass-nav rounded-full shadow-2xl">
+<nav id="bottomNav" class="md:hidden fixed left-3 right-3 z-40 frosted-glass rounded-full">
   <div class="grid grid-cols-5 h-14">
     <a href="#inicio" id="bottomNavHome" data-nav-filter="all" class="bottom-nav-item flex flex-col items-center justify-center gap-0.5 text-white/55 rounded-full" aria-label="Inicio">
       <i class="fa-solid fa-house text-sm"></i>
@@ -1266,7 +1189,7 @@ async function loadAllRows() {
     }
 
     const img = node.querySelector('.poster-img');
-    img.src = posterUrl(title.posterPath);
+    img.src = posterUrl(title.posterPath, 'w342'); // suficiente para el ancho real de la card (máx. 240px), incluso en pantallas retina
     img.alt = `${title.titulo} (${title.anio})`;
     img.onload = () => {
       img.classList.remove('opacity-0');
@@ -1303,17 +1226,9 @@ async function loadAllRows() {
       if (byId('mi-lista-row-anchor')) renderMyList();
     });
 
-    node.querySelector('.play-mini').addEventListener('click', (e) => {
-      e.stopPropagation();
-      goToPlayer(title);
-    });
-    node.querySelector('.info-mini').addEventListener('click', (e) => {
-      e.stopPropagation();
-      openModal(title.id);
-    });
-    node.addEventListener('click', () => openModal(title.id));
+    node.addEventListener('click', () => goToDetails(title.id));
     node.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openModal(title.id); }
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); goToDetails(title.id); }
     });
 
     // Optional rank badge (Top 10 row)
@@ -1475,7 +1390,7 @@ async function loadAllRows() {
     }
 
     byId('heroPlayBtn').onclick = () => goToPlayer(t);
-    byId('heroInfoBtn').onclick = () => openModal(t.id);
+    byId('heroInfoBtn').onclick = () => goToDetails(t.id);
     byId('heroListBtn').onclick = () => {
       const nowFav = toggleFav(t.id);
       showToast(nowFav ? `Agregado a Mi Lista: ${t.titulo}` : `Quitado de Mi Lista: ${t.titulo}`);
@@ -1544,215 +1459,30 @@ async function loadAllRows() {
     restartHeroTimer();
   }
 
-  /* ---------- MODAL ---------- */
-  const modalBackdrop = byId('modalBackdrop');
-  let lastFocusedEl = null;
-
-  function openModal(id) {
+  /* ---------- NAVEGACIÓN A LA FICHA DE DETALLES ---------- */
+  // Reemplaza al modal: el clic en una card o el hero ahora navega a
+  // una página propia con la ficha completa (sinopsis, reparto, saga,
+  // recomendaciones, y los servidores como último paso antes de
+  // reproducir), en vez de abrir un popup resumido.
+  function goToDetails(id) {
     const t = TITLES.find(x => x.id === id) || getHistory().find(x => x.id === id);
     if (!t) return;
-    lastFocusedEl = document.activeElement;
 
-    byId('modalBanner').src = bannerUrl(t.backdropPath);
-    byId('modalBanner').alt = t.titulo;
-    byId('modalPoster').src = posterUrl(t.posterPath);
-    byId('modalPoster').alt = t.titulo;
-    byId('modalTitle').textContent = t.titulo;
+    const tipoParam = t.tipo === 'Serie' ? 'tv' : 'movie';
+    const params = new URLSearchParams({ tipo: tipoParam, id: t.tmdbId, titulo: t.titulo });
 
-    // Rating primero: es lo que más se escanea al abrir un título, así
-    // que lleva más tamaño y color que el resto de metadatos.
-    const ratingColor = t.rating >= 7.5 ? 'text-green-400 border-green-400/30 bg-green-400/10'
-      : t.rating >= 6 ? 'text-amber-400 border-amber-400/30 bg-amber-400/10'
-      : 'text-white/70 border-white/15 bg-white/5';
-    byId('modalHighlightBadges').innerHTML = `
-      <span class="flex items-center gap-1.5 ${ratingColor} border rounded-lg px-3 py-1.5 font-black text-base">
-        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.958a1 1 0 00.95.69h4.162c.969 0 1.371 1.24.588 1.81l-3.368 2.447a1 1 0 00-.364 1.118l1.287 3.957c.3.922-.755 1.688-1.539 1.118l-3.367-2.446a1 1 0 00-1.176 0l-3.367 2.446c-.784.57-1.838-.196-1.539-1.118l1.287-3.957a1 1 0 00-.364-1.118L2.063 9.385c-.783-.57-.38-1.81.588-1.81h4.163a1 1 0 00.95-.69l1.285-3.958z"/></svg>
-        ${t.rating}
-      </span>
-    `;
-
-    byId('modalMeta').innerHTML = `
-      <span>${t.anio}</span><span>&middot;</span>
-      <span>${t.duracion}</span><span>&middot;</span>
-      <span>${t.genero}</span><span>&middot;</span>
-      <span>${t.categoria}</span>
-    `;
-    byId('modalDesc').textContent = t.descripcion;
-
-    // Director: clicable si tenemos su ID de TMDB; si no, texto plano.
-    if (t.directorId) {
-      byId('modalDirector').innerHTML = `<button class="person-link hover:text-brand hover:underline transition-colors text-left" data-person-id="${t.directorId}" data-person-name="${t.director}">${t.director}</button>`;
-    } else {
-      byId('modalDirector').textContent = t.director;
-    }
-
-    // Reparto: cada actor es clicable individualmente hacia su filmografía.
-    if (t.castList && t.castList.length) {
-      byId('modalActors').innerHTML = t.castList
-        .map(actor => `<button class="person-link hover:text-brand hover:underline transition-colors" data-person-id="${actor.id}" data-person-name="${actor.name}">${actor.name}</button>`)
-        .join('<span class="text-white/30">, </span>');
-    } else {
-      byId('modalActors').textContent = t.actores;
-    }
-
-    const heart = document.querySelector('.modal-heart');
-    const label = document.querySelector('.modal-list-label');
-    function syncFavUI() {
-      const fav = isFav(t.id);
-      heart.setAttribute('fill', fav ? '#E50914' : 'none');
-      label.textContent = fav ? 'En Mi Lista' : 'Mi Lista';
-    }
-    syncFavUI();
-
-    byId('modalPlayBtn').onclick = () => goToPlayer(t);
-    byId('modalListBtn').onclick = () => {
-      const nowFav = toggleFav(t.id);
-      showToast(nowFav ? `Agregado a Mi Lista: ${t.titulo}` : `Quitado de Mi Lista: ${t.titulo}`);
-      syncFavUI();
-      renderMyList();
-    };
-    byId('modalShareBtn').onclick = async () => {
-      const url = `${location.href.split('#')[0]}#title-${t.id}`;
-      const shareText = `${t.titulo} (${t.anio}) · ${t.rating}★ en PelisVidHD`;
-
-      // Intenta compartir CON el poster como imagen adjunta (requiere que
-      // el navegador soporte Web Share API nivel 2 con archivos). Si algo
-      // falla en el camino, cae al comportamiento simple de texto+link.
-      if (navigator.share && navigator.canShare) {
-        try {
-          const posterResponse = await fetch(posterUrl(t.posterPath, 'w500'));
-          const posterBlob = await posterResponse.blob();
-          const posterFile = new File([posterBlob], `${t.titulo}.jpg`, { type: posterBlob.type || 'image/jpeg' });
-
-          if (navigator.canShare({ files: [posterFile] })) {
-            await navigator.share({ title: t.titulo, text: shareText, url, files: [posterFile] });
-            return;
-          }
-        } catch (err) {
-          // Usuario canceló el share, o el navegador rechazó el archivo:
-          // seguimos con el fallback de texto, sin mostrar error.
-          if (err.name === 'AbortError') return; // canceló a propósito: no insistir con el fallback
-          console.warn('[PelisVidHD] No se pudo compartir con imagen, usando fallback de texto:', err);
-        }
-      }
-
-      if (navigator.share) {
-        navigator.share({ title: t.titulo, text: shareText, url }).catch(() => {});
-      } else if (navigator.clipboard) {
-        navigator.clipboard.writeText(url).then(() => showToast('Enlace copiado al portapapeles'));
-      } else {
-        showToast('No se pudo compartir en este navegador');
-      }
-    };
-
-    modalBackdrop.classList.add('open');
-    document.body.style.overflow = 'hidden';
-
-    // Saga/colección: solo aplica a películas. Se pide de forma perezosa
-    // y se cachea en el propio objeto para no repetir la llamada si el
-    // modal se vuelve a abrir para el mismo título.
-    const collectionWrap = byId('modalCollectionWrap');
-    collectionWrap.classList.add('hidden');
-    if (t.tipo === 'Película') {
-      loadCollectionInfo(t);
-    }
+    // Misma URL de retorno que usa goToPlayer, para que el botón
+    // "volver" de la ficha (y del reproductor, si se llega a entrar
+    // desde ahí) puedan regresar aquí de forma fiable.
+    sessionStorage.setItem('streamix_return_url', window.location.href);
+    window.location.href = `details.html?${params.toString()}`;
   }
 
-  // Pide (o reutiliza de caché) la información de "belongs_to_collection"
-  // de una película, y muestra el bloque de saga en el modal si aplica.
-  async function loadCollectionInfo(t) {
-    if (t.collectionChecked) {
-      renderCollectionBlock(t.collectionInfo);
-      return;
-    }
-    try {
-      const data = await tmdbFetch(`/movie/${t.tmdbId}`);
-      t.collectionChecked = true;
-      t.collectionInfo = data.belongs_to_collection || null;
-      renderCollectionBlock(t.collectionInfo);
-    } catch (err) {
-      console.error('[PelisVidHD] Error consultando colección:', err);
-      t.collectionChecked = true;
-      t.collectionInfo = null;
-    }
-  }
 
-  function renderCollectionBlock(collection) {
-    const wrap = byId('modalCollectionWrap');
-    if (!collection) {
-      wrap.classList.add('hidden');
-      return;
-    }
-    byId('modalCollectionName').textContent = collection.name;
-    byId('modalCollectionPoster').src = posterUrl(collection.poster_path, 'w185');
-    byId('modalCollectionPoster').alt = collection.name;
-    byId('modalCollectionBtn').onclick = () => openCollectionView(collection.id, collection.name);
-    wrap.classList.remove('hidden');
-  }
-
-  // Muestra todas las películas de una colección/saga, reutilizando el
-  // overlay de búsqueda (igual que openPersonView).
-  async function openCollectionView(collectionId, collectionName) {
-    closeModal();
-
-    searchOverlay.classList.remove('hidden');
-    document.body.style.overflow = 'hidden';
-    byId('searchResultsTitle').textContent = `Saga: ${collectionName}`;
-
-    searchGrid.innerHTML = `
-      <div class="col-span-full flex items-center justify-center py-16">
-        <div class="w-8 h-8 border-2 border-white/20 border-t-brand rounded-full animate-spin"></div>
-      </div>`;
-    searchEmptyMsg.classList.add('hidden');
-
-    try {
-      const data = await tmdbFetch(`/collection/${collectionId}`);
-      const rawResults = (data.parts || []).sort((a, b) => {
-        // Ordena por fecha de estreno cuando existe, para ver la saga en orden
-        const dateA = a.release_date || '9999';
-        const dateB = b.release_date || '9999';
-        return dateA.localeCompare(dateB);
-      });
-      const normalized = rawResults.map(r => normalizeItem(r, 'Película'));
-
-      const known = new Map(TITLES.map(t => [t.id, t]));
-      const results = normalized.map(item => known.get(item.id) || item);
-
-      searchGrid.innerHTML = '';
-      results.forEach(t => searchGrid.appendChild(buildCard(t)));
-      observePendingLogos(searchGrid);
-      searchEmptyMsg.textContent = `No se encontraron películas de esta saga.`;
-      searchEmptyMsg.classList.toggle('hidden', results.length > 0);
-    } catch (err) {
-      console.error('[PelisVidHD] Error cargando colección:', err);
-      searchGrid.innerHTML = '';
-      searchEmptyMsg.textContent = 'No se pudo cargar la saga. Intenta de nuevo.';
-      searchEmptyMsg.classList.remove('hidden');
-    }
-  }
-
-  function closeModal() {
-    modalBackdrop.classList.remove('open');
-    document.body.style.overflow = '';
-    if (lastFocusedEl) lastFocusedEl.focus();
-  }
-
-  byId('modalCloseBtn').addEventListener('click', closeModal);
-  modalBackdrop.addEventListener('click', (e) => { if (e.target === modalBackdrop) closeModal(); });
-  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { closeModal(); closeSearch(); } });
-
-  /* ---------- NAVBAR: hide on scroll down, show on scroll up ---------- */
+  /* ---------- NAVBAR: siempre visible, fondo transparente fijo ---------- */
   const navbar = byId('navbar');
-  let lastScrollY = window.scrollY;
   window.addEventListener('scroll', () => {
     const y = window.scrollY;
-    if (y > lastScrollY && y > 120) {
-      navbar.classList.add('nav-hidden');
-    } else {
-      navbar.classList.remove('nav-hidden');
-    }
-    navbar.classList.toggle('bg-transparent', y < 40);
-    lastScrollY = y;
 
     // Back to top button
     const backBtn = byId('backToTop');
@@ -1900,7 +1630,7 @@ async function loadAllRows() {
     const roleLabel = person.known_for_department === 'Directing' ? 'Director/a' : 'Actor/actriz';
 
     card.innerHTML = `
-      <img src="${photoUrl}" alt="${person.name}" loading="lazy" class="w-16 h-16 md:w-20 md:h-20 rounded-full object-cover border-2 border-white/10" />
+      <img src="${photoUrl}" alt="${person.name}" loading="lazy" decoding="async" class="w-16 h-16 md:w-20 md:h-20 rounded-full object-cover border-2 border-white/10" />
       <div class="min-w-0">
         <p class="text-xs md:text-sm font-bold leading-tight line-clamp-2">${person.name}</p>
         <p class="text-[10px] text-white/45 mt-0.5">${roleLabel}</p>
@@ -1915,8 +1645,6 @@ async function loadAllRows() {
   // el mismo overlay del buscador. Pide /person/{id}/combined_credits,
   // que trae tanto películas como series en una sola llamada.
   async function openPersonView(personId, personName) {
-    closeModal(); // el modal de título no debe quedar abierto detrás del overlay
-
     searchOverlay.classList.remove('hidden');
     document.body.style.overflow = 'hidden';
     byId('searchResultsTitle').textContent = `Filmografía de ${personName}`;
