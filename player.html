@@ -141,15 +141,19 @@
   .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
   /* ================================================================
-     PANELES: fondo sólido (sin blur)
+     PANELES: fondo semi-transparente (se ve el backdrop de fondo)
      ================================================================ */
   .glass {
-    background: rgba(18, 18, 18, 0.97);
-    border: 1px solid rgba(255, 255, 255, 0.06);
+    background: rgba(18, 18, 18, 0.55);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
   }
   .glass-strong {
-    background: #0d0d0d;
-    border: 1px solid rgba(255, 255, 255, 0.06);
+    background: rgba(13, 13, 13, 0.65);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    -webkit-backdrop-filter: blur(16px);
+    backdrop-filter: blur(16px);
   }
 
   /* ========== HEADER SUPERIOR: transparente ==========
@@ -413,8 +417,16 @@
       </div>
     </div>
 
-    <!-- Notificaciones + Cuenta: mismo estilo minimalista que index.html -->
+    <!-- Buscar + Notificaciones + Perfil: mismo estilo minimalista que index.html -->
     <div class="flex items-center gap-1.5 shrink-0">
+      <!-- Buscar: no hay catálogo propio aquí, así que al enviar lleva a
+           index.html con la búsqueda ya escrita. -->
+      <div class="relative">
+        <button id="searchToggleBtn" aria-label="Buscar" class="w-9 h-9 flex items-center justify-center rounded-full hover:bg-white/10 transition-colors">
+          <svg class="w-4 h-4 md:w-[18px] md:h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35m0 0A7.5 7.5 0 104.5 4.5a7.5 7.5 0 0012.15 12.15z"/></svg>
+        </button>
+      </div>
+
       <div class="relative shrink-0">
         <button id="notificationsBtn" aria-label="Notificaciones" class="relative w-9 h-9 rounded-full hover:bg-white/10 flex items-center justify-center transition-colors">
           <i class="fa-regular fa-bell text-sm"></i>
@@ -431,7 +443,54 @@
         </div>
       </div>
 
+      <!-- Perfil (por ahora, invitado/"Guest": login y registro son solo
+           visuales, sin backend real todavía) -->
+      <div class="relative shrink-0">
+        <button id="profileBtn" aria-label="Perfil" class="flex items-center gap-2 pl-1.5 pr-2.5 md:pl-2 md:pr-3 h-9 rounded-full hover:bg-white/10 transition-colors">
+          <span class="w-6 h-6 md:w-7 md:h-7 rounded-full bg-gradient-to-br from-white/25 to-white/10 border border-white/20 flex items-center justify-center shrink-0">
+            <i class="fa-solid fa-user text-[10px] md:text-xs text-white/80"></i>
+          </span>
+          <span class="hidden sm:inline text-xs md:text-sm font-semibold text-white/85">Guest</span>
+        </button>
+
+        <div id="profilePanel" class="server-dropdown-panel closed absolute right-0 mt-2 w-72 glass-strong rounded-2xl p-4 z-30 border border-white/10 shadow-2xl">
+          <!-- Encabezado: identidad actual (invitado) -->
+          <div class="flex items-center gap-3 mb-4 pb-4 border-b border-white/10">
+            <span class="w-10 h-10 rounded-full bg-gradient-to-br from-white/25 to-white/10 border border-white/20 flex items-center justify-center shrink-0">
+              <i class="fa-solid fa-user text-sm text-white/80"></i>
+            </span>
+            <div class="min-w-0">
+              <p class="font-bold text-sm truncate">Guest</p>
+              <p class="text-white/40 text-xs">Sesión de invitado</p>
+            </div>
+          </div>
+
+          <!-- Cuenta: por ahora solo visuales, sin backend -->
+          <div class="flex items-center gap-2 mb-4">
+            <button id="loginBtn" class="btn-ripple flex-1 bg-brand hover:bg-brandlight transition-colors py-2 rounded-lg font-bold text-xs">
+              Iniciar Sesión
+            </button>
+            <button id="signupBtn" class="btn-ripple flex-1 bg-white/10 hover:bg-white/20 transition-colors py-2 rounded-lg font-bold text-xs">
+              Registrarse
+            </button>
+          </div>
+
+          <!-- Guardados (Mi Lista): lleva al catálogo con esa sección abierta -->
+          <a href="index.html?action=saved" class="flex items-center gap-2.5 px-2.5 py-2.5 rounded-xl hover:bg-white/5 transition-colors text-sm font-semibold">
+            <i class="fa-solid fa-bookmark text-white/50 w-4 text-center"></i>
+            Guardados (Mi Lista)
+          </a>
+        </div>
+      </div>
     </div>
+  </div>
+
+  <!-- Mobile search bar (expandable) -->
+  <div id="mobileSearchWrap" class="max-h-0 overflow-hidden transition-all duration-300 px-4 md:px-6">
+    <form id="mobileSearchForm" class="pb-3">
+      <input id="searchInputMobile" type="text" placeholder="Buscar títulos..."
+        class="w-full bg-white/10 rounded-full pl-4 pr-4 py-2.5 text-sm placeholder-white/40 outline-none border border-white/10 focus:border-brand/50" />
+    </form>
   </div>
 </header>
 
@@ -443,7 +502,8 @@
   <!-- ============================================================ -->
   <!-- REPRODUCTOR 16:9 -->
   <!-- ============================================================ -->
-  <section class="relative w-full md:rounded-2xl overflow-hidden md:shadow-2xl">
+  <section class="relative w-full px-2 md:px-0">
+    <div class="relative w-full rounded-2xl overflow-hidden shadow-2xl">
     <div id="playerWrap" class="player-wrap relative w-full">
 
       <!-- Iframe del reproductor (se construye 100% por JavaScript) -->
@@ -518,6 +578,7 @@
           </button>
         </div>
       </div>
+    </div>
     </div>
   </section>
 
@@ -2423,6 +2484,72 @@
   byId("bottomNavSearch").addEventListener("click", () => goToIndexWithAction("search"));
   byId("bottomNavSaved").addEventListener("click", () => goToIndexWithAction("saved"));
 
+  // --- Buscar: expande el input; al enviar, navega a index.html con la
+  // búsqueda ya escrita (aquí no hay catálogo propio para filtrar). ---
+  const searchToggleBtn = byId("searchToggleBtn");
+  const mobileSearchWrap = byId("mobileSearchWrap");
+  searchToggleBtn.addEventListener("click", () => {
+    const isOpen = mobileSearchWrap.style.maxHeight && mobileSearchWrap.style.maxHeight !== "0px";
+    mobileSearchWrap.style.maxHeight = isOpen ? "0px" : "80px";
+    if (!isOpen) byId("searchInputMobile").focus();
+  });
+  byId("mobileSearchForm").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const q = byId("searchInputMobile").value.trim();
+    if (!q) return;
+    window.location.href = `index.html?action=search&q=${encodeURIComponent(q)}`;
+  });
+
+  // --- Panel de perfil (mismo patrón que notificaciones) ---
+  const profileBtn = byId("profileBtn");
+  const profilePanel = byId("profilePanel");
+  profileBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    notificationsPanel.classList.add("closed");
+    profilePanel.classList.toggle("closed");
+  });
+  document.addEventListener("click", (e) => {
+    if (!profilePanel.contains(e.target) && !profileBtn.contains(e.target)) {
+      profilePanel.classList.add("closed");
+    }
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") profilePanel.classList.add("closed");
+  });
+
+  // Toast genérico reutilizable (se crea la primera vez que hace falta).
+  function showButtonToast(msg) {
+    let toast = byId("profileToast");
+    if (!toast) {
+      toast = document.createElement("div");
+      toast.id = "profileToast";
+      toast.className = "fixed bottom-24 md:bottom-6 left-1/2 -translate-x-1/2 z-[70] frosted-glass px-4 py-2.5 rounded-xl text-xs font-semibold transition-all duration-300";
+      toast.style.opacity = "0";
+      toast.style.transform = "translate(-50%, 12px)";
+      document.body.appendChild(toast);
+    }
+    toast.textContent = msg;
+    requestAnimationFrame(() => {
+      toast.style.opacity = "1";
+      toast.style.transform = "translate(-50%, 0)";
+    });
+    clearTimeout(showButtonToast._t);
+    showButtonToast._t = setTimeout(() => {
+      toast.style.opacity = "0";
+      toast.style.transform = "translate(-50%, 12px)";
+    }, 2000);
+  }
+
+  // Iniciar Sesión / Registrarse: por ahora solo visuales, sin backend.
+  byId("loginBtn").addEventListener("click", () => {
+    profilePanel.classList.add("closed");
+    showButtonToast("El inicio de sesión estará disponible próximamente");
+  });
+  byId("signupBtn").addEventListener("click", () => {
+    profilePanel.classList.add("closed");
+    showButtonToast("El registro estará disponible próximamente");
+  });
+
   // --- Panel de notificaciones (mismo patrón que index.html) ---
   const notificationsBtn = byId("notificationsBtn");
   const notificationsPanel = byId("notificationsPanel");
@@ -2454,6 +2581,7 @@
 
   notificationsBtn.addEventListener("click", (e) => {
     e.stopPropagation();
+    profilePanel.classList.add("closed");
     notificationsPanel.classList.toggle("closed");
   });
   document.addEventListener("click", (e) => {
