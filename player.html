@@ -310,6 +310,29 @@
   }
 
   /* ================================================================
+     RECOMMENDATION CARDS
+     ================================================================ */
+  .rec-card {
+    transition: transform 0.3s cubic-bezier(.16,1,.3,1), box-shadow 0.3s ease;
+  }
+  .rec-card:hover, .rec-card:focus-visible {
+    transform: scale(1.04) translateY(-4px);
+    box-shadow: 0 16px 36px -10px rgba(0,0,0,0.8);
+    z-index: 10;
+  }
+  .rec-card .rec-overlay {
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+  .rec-card:hover .rec-overlay, .rec-card:focus-visible .rec-overlay {
+    opacity: 1;
+  }
+  @media (hover: none) {
+    .rec-card:active { transform: scale(1.02); }
+    .rec-card:active .rec-overlay { opacity: 1; }
+  }
+
+  /* ================================================================
      EPISODE CARDS
      ================================================================ */
   .episode-card {
@@ -362,6 +385,18 @@
 <body class="bg-bg text-white antialiased min-h-screen flex flex-col">
 
 <!-- ============================================================ -->
+<!-- BACKDROP DE FONDO: cubre toda la página, fijo, detrás de todo.
+     El reproductor (más abajo) tiene su propio fondo negro opaco, así
+     que el backdrop solo se nota alrededor de él y en el resto de la
+     página (servidores, episodios). -->
+<!-- ============================================================ -->
+<div class="fixed inset-0 z-0 overflow-hidden pointer-events-none">
+  <img id="pageBackdrop" src="" alt="" class="absolute inset-0 w-full h-full object-cover opacity-0 transition-opacity duration-700" decoding="async" />
+  <div class="absolute inset-0 bg-gradient-to-b from-bg/20 via-bg/75 to-bg"></div>
+  <div class="absolute inset-0 bg-gradient-to-r from-bg/80 via-transparent to-bg/40"></div>
+</div>
+
+<!-- ============================================================ -->
 <!-- HEADER MÍNIMO -->
 <!-- ============================================================ -->
 <header class="navbar-transparent sticky top-2 mx-2 md:mx-4 rounded-full z-30">
@@ -403,7 +438,7 @@
 <!-- ============================================================ -->
 <!-- MAIN -->
 <!-- ============================================================ -->
-<main class="flex-1 w-full max-w-6xl mx-auto px-0 md:px-6 py-0 md:py-6">
+<main class="relative z-10 flex-1 w-full max-w-6xl mx-auto px-0 md:px-6 py-0 md:py-6">
 
   <!-- ============================================================ -->
   <!-- REPRODUCTOR 16:9 -->
@@ -564,7 +599,7 @@
   <!-- ============================================================ -->
   <!-- INFO ADICIONAL -->
   <!-- ============================================================ -->
-  <section class="px-4 md:px-0 mt-4 md:mt-6 pb-8">
+  <section class="px-4 md:px-0 mt-4 md:mt-6">
     <div class="glass rounded-2xl p-4 md:p-5 flex items-start gap-3">
       <svg class="w-5 h-5 text-white/40 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
       <p class="text-white/50 text-xs md:text-sm leading-relaxed">
@@ -572,10 +607,26 @@
         el temporizador, temporada y episodio se mantienen automáticamente al cambiar.
       </p>
     </div>
-    <a id="viewDetailsLink" href="#" class="btn-ripple flex items-center justify-center gap-2 mt-3 bg-white/5 hover:bg-white/10 border border-white/10 transition-colors py-3 rounded-xl text-sm font-semibold text-white/80">
-      <i class="fa-solid fa-circle-info text-xs"></i>
-      Ver ficha completa (sinopsis, reparto, recomendaciones)
-    </a>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- RECOMENDADOS: pósters, 3 por fila -->
+  <!-- ============================================================ -->
+  <section class="px-4 md:px-0 mt-4 md:mt-6 pb-8">
+    <div id="recommendationsSection" class="hidden">
+      <h2 class="text-lg md:text-xl font-bold tracking-tight mb-3">Recomendados</h2>
+      <div id="recommendationsGrid" class="grid grid-cols-3 gap-2.5 md:gap-4"></div>
+    </div>
+
+    <!-- Estado de carga de recomendaciones -->
+    <div id="recommendationsLoading" class="hidden">
+      <h2 class="text-lg md:text-xl font-bold tracking-tight mb-3">Recomendados</h2>
+      <div class="grid grid-cols-3 gap-2.5 md:gap-4">
+        <div class="skeleton-card aspect-[2/3] rounded-xl"></div>
+        <div class="skeleton-card aspect-[2/3] rounded-xl"></div>
+        <div class="skeleton-card aspect-[2/3] rounded-xl"></div>
+      </div>
+    </div>
   </section>
 </main>
 
@@ -1577,6 +1628,13 @@
 
       if (data.poster_path) updatePosterTheme(data.poster_path); // tema dinámico: color del poster como acento
 
+      // --- Backdrop de fondo de toda la página ---
+      if (data.backdrop_path) {
+        const backdropEl = byId("pageBackdrop");
+        backdropEl.onload = () => backdropEl.classList.remove("opacity-0");
+        backdropEl.src = tmdbBackdropUrl(data.backdrop_path);
+      }
+
       // --- Título (usa el que trae TMDB si no vino uno explícito por la URL) ---
       const titulo = media.titulo || data.title || data.name || "Sin título";
       if (!media.titulo) updatePageTitle(titulo);
@@ -1957,6 +2015,124 @@
   }
 
   /* ================================================================
+     RECOMENDADOS ("Contenido que te podría gustar")
+     ----------------------------------------------------------------
+     Usa la API pública de TMDB para traer títulos relacionados con lo
+     que se está reproduciendo (/movie|tv/{id}/recommendations). Cada
+     card navega directo al reproductor con ese título (no a una ficha
+     intermedia): en player.html el flujo es "seguir viendo algo".
+     Si TMDB no responde o el título no tiene recomendaciones, la
+     sección completa queda oculta en vez de mostrarse vacía.
+     ================================================================ */
+
+  // Retoma el último episodio visto de una serie recomendada (si lo
+  // hay), para no forzar siempre T1E1 al entrar desde una recomendación.
+  function getLastWatchedEpisodeFor(tmdbId) {
+    const entry = getSeriesWatchedEntry(getWatchedEpisodesStore(), tmdbId);
+    if (!entry || !entry.last) return null;
+    return { season: entry.last.season, episode: entry.last.episode };
+  }
+
+  // Construye el link hacia este mismo reproductor para un título
+  // recomendado, incluyendo el título (para que el header no muestre
+  // el genérico "TMDB #id").
+  function buildRecommendationHref(item) {
+    const params = new URLSearchParams({ titulo: item.titulo });
+    if (item.tipo === "tv") {
+      params.set("tipo", "tv");
+      params.set("id", item.tmdbId);
+      const lastWatched = getLastWatchedEpisodeFor(item.tmdbId);
+      params.set("temporada", String(lastWatched ? lastWatched.season : 1));
+      params.set("episodio", String(lastWatched ? lastWatched.episode : 1));
+    } else {
+      params.set("tipo", "movie");
+      params.set("id", item.tmdbId);
+    }
+    return `player.html?${params.toString()}`;
+  }
+
+  function normalizeRecommendation(raw, tipo) {
+    return {
+      tipo,
+      tmdbId: raw.id,
+      titulo: raw.title || raw.name || "Sin título",
+      anio: (raw.release_date || raw.first_air_date || "").slice(0, 4) || "—",
+      rating: raw.vote_average ? Math.round(raw.vote_average * 10) / 10 : 0,
+      posterPath: raw.poster_path,
+    };
+  }
+
+  // Card de recomendación: grid fijo de 3 por fila (a diferencia del
+  // carrusel de scroll horizontal que usa index.html/details.html),
+  // pensado para que quepan bien debajo del reproductor sin necesitar
+  // arrastrar.
+  function buildRecommendationCard(item) {
+    const card = document.createElement("a");
+    card.href = buildRecommendationHref(item);
+    card.className = "rec-card relative block rounded-lg md:rounded-xl overflow-hidden bg-bgcard cursor-pointer";
+    card.setAttribute("aria-label", `Ver ${item.titulo}`);
+
+    card.innerHTML = `
+      <div class="relative w-full aspect-[2/3] overflow-hidden">
+        <img src="${tmdbPosterUrl(item.posterPath)}" alt="${item.titulo}" loading="lazy" decoding="async"
+             class="w-full h-full object-cover" />
+
+        <!-- Rating badge -->
+        <span class="absolute top-1.5 right-1.5 md:top-2 md:right-2 flex items-center gap-1 bg-black/70 border border-white/15 text-white text-[9px] md:text-[11px] font-bold px-1.5 py-0.5 rounded-full">
+          <svg class="w-2.5 h-2.5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.958a1 1 0 00.95.69h4.162c.969 0 1.371 1.24.588 1.81l-3.368 2.447a1 1 0 00-.364 1.118l1.287 3.957c.3.922-.755 1.688-1.539 1.118l-3.367-2.446a1 1 0 00-1.176 0l-3.367 2.446c-.784.57-1.838-.196-1.539-1.118l1.287-3.957a1 1 0 00-.364-1.118L2.063 9.385c-.783-.57-.38-1.81.588-1.81h4.163a1 1 0 00.95-.69l1.285-3.958z"/></svg>
+          ${item.rating.toFixed(1)}
+        </span>
+
+        <!-- Play overlay al hover -->
+        <div class="rec-overlay absolute inset-0 bg-black/50 flex items-center justify-center">
+          <span class="w-9 h-9 md:w-10 md:h-10 rounded-full bg-white/90 flex items-center justify-center">
+            <svg class="w-3.5 h-3.5 md:w-4 md:h-4 text-black translate-x-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+          </span>
+        </div>
+
+        <!-- Título -->
+        <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/95 via-black/50 to-transparent pt-6 pb-1.5 px-1.5 md:pt-8 md:pb-2 md:px-2">
+          <p class="text-[11px] md:text-sm font-bold leading-tight line-clamp-2">${item.titulo}</p>
+          <p class="text-[9px] md:text-[10px] text-white/50 font-medium mt-0.5">${item.anio}</p>
+        </div>
+      </div>
+    `;
+
+    return card;
+  }
+
+  async function loadRecommendations() {
+    if (!media.tmdbId) return;
+
+    byId("recommendationsLoading").classList.remove("hidden");
+
+    try {
+      const endpoint = media.tipo === "tv"
+        ? `/tv/${media.tmdbId}/recommendations`
+        : `/movie/${media.tmdbId}/recommendations`;
+
+      const data = await tmdbFetch(endpoint);
+      const results = (data.results || [])
+        .slice(0, 9) // múltiplo de 3: siempre completa filas enteras
+        .map(r => normalizeRecommendation(r, media.tipo));
+
+      byId("recommendationsLoading").classList.add("hidden");
+
+      if (!results.length) return; // sin recomendaciones: la sección queda oculta
+
+      const grid = byId("recommendationsGrid");
+      grid.innerHTML = "";
+      results.forEach(item => grid.appendChild(buildRecommendationCard(item)));
+
+      byId("recommendationsSection").classList.remove("hidden");
+    } catch (err) {
+      console.error("[PelisVidHD Player] Error cargando recomendaciones:", err);
+      byId("recommendationsLoading").classList.add("hidden");
+      // Falla silenciosa: no mostramos error, simplemente no hay sección de recomendaciones.
+    }
+  }
+
+  /* ================================================================
      TEMA DINÁMICO POR POSTER
      ----------------------------------------------------------------
      Extrae el color dominante del poster del título actual (usando
@@ -2159,13 +2335,10 @@
     // El servidor arranca a cargar de inmediato (con su preroll VAST si
     // hay ads configurados): ya no hay cover/botón de play intermedio.
     loadDetails();
+    loadRecommendations();
     playVastPreroll().then(() => {
       loadServer(startIndex);
     });
-
-    // "Ver ficha completa" lleva a details.html con este mismo título.
-    const detailsParams = new URLSearchParams({ tipo: media.tipo, id: media.tmdbId, titulo: media.titulo || "" });
-    byId("viewDetailsLink").href = `details.html?${detailsParams.toString()}`;
 
     if (media.tipo === "tv") {
       markEpisodeWatched(media.temporada, media.episodio);

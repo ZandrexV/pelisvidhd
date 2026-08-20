@@ -171,15 +171,6 @@
   }
 
   /* ================================================================
-     SERVER SELECTOR
-     ================================================================ */
-  .server-btn {
-    transition: transform 0.2s ease, box-shadow 0.25s ease, border-color 0.25s ease, background-color 0.25s ease;
-  }
-  .server-btn:hover { transform: translateY(-2px); }
-  .server-btn:active { transform: translateY(0) scale(0.97); }
-
-  /* ================================================================
      FADE / REVEAL
      ================================================================ */
   .fade-in { animation: fadeIn 0.5s ease both; }
@@ -265,24 +256,6 @@
   .cast-card:hover { transform: translateY(-3px); }
 
   /* ================================================================
-     LANGUAGE TABS
-     ================================================================ */
-  .lang-tab {
-    transition: background-color 0.25s ease, color 0.25s ease, box-shadow 0.25s ease;
-  }
-  .lang-tab.active {
-    color: #fff;
-    /* background y box-shadow: ver override dinámico más arriba (sigue el acento del poster) */
-  }
-  .lang-tab:not(.active) {
-    color: rgba(255,255,255,0.55);
-  }
-  .lang-tab:not(.active):hover {
-    background: rgba(255,255,255,0.08);
-    color: rgba(255,255,255,0.85);
-  }
-
-  /* ================================================================
      RATING BUTTONS (me gusta / no me gusta, valoración local)
      ================================================================ */
   .rating-btn {
@@ -357,6 +330,19 @@
 <body class="bg-bg text-white antialiased min-h-screen flex flex-col">
 
 <!-- ============================================================ -->
+<!-- BACKDROP DE FONDO: cubre toda la página, fijo, detrás de todo -->
+<!-- ============================================================ -->
+<div class="fixed inset-0 z-0 overflow-hidden pointer-events-none">
+  <img id="heroBackdrop" src="" alt="" class="absolute inset-0 w-full h-full object-cover opacity-0 transition-opacity duration-700" decoding="async" />
+  <!-- Skeleton mientras carga -->
+  <div id="heroSkeleton" class="skeleton-card absolute inset-0"></div>
+  <!-- Degradados: aseguran que el texto/contenido siga siendo legible
+       sobre cualquier imagen, sin importar cuán clara o cuán oscura sea. -->
+  <div class="absolute inset-0 bg-gradient-to-b from-bg/20 via-bg/70 to-bg"></div>
+  <div class="absolute inset-0 bg-gradient-to-r from-bg/80 via-transparent to-bg/40"></div>
+</div>
+
+<!-- ============================================================ -->
 <!-- HEADER MÍNIMO -->
 <!-- ============================================================ -->
 <header class="navbar-transparent sticky top-2 mx-2 md:mx-4 rounded-full z-30">
@@ -398,21 +384,15 @@
 <!-- ============================================================ -->
 <!-- MAIN -->
 <!-- ============================================================ -->
-<main class="flex-1 w-full max-w-6xl mx-auto px-0 md:px-6 py-0 md:py-6">
+<main class="relative z-10 flex-1 w-full max-w-6xl mx-auto px-0 md:px-6 py-0 md:py-6">
 
   <!-- ============================================================ -->
-  <!-- HERO: backdrop grande + poster + logo + botón Reproducir -->
+  <!-- HERO: poster + logo + botón Reproducir (el backdrop de fondo ya
+       cubre toda la página, ver capa fija justo después de <body>) -->
   <!-- ============================================================ -->
-  <section class="relative w-full md:rounded-2xl overflow-hidden">
-    <div class="relative w-full aspect-video md:aspect-[21/9] bg-bgsoft">
-      <img id="heroBackdrop" src="" alt="" class="absolute inset-0 w-full h-full object-cover opacity-0 transition-opacity duration-500" decoding="async" />
-      <div class="absolute inset-0 bg-gradient-to-t from-bg via-bg/50 to-bg/10"></div>
-      <div class="absolute inset-0 bg-gradient-to-r from-bg/70 via-transparent to-transparent"></div>
-
-      <!-- Skeleton mientras carga -->
-      <div id="heroSkeleton" class="skeleton-card absolute inset-0"></div>
-
-      <div class="absolute bottom-0 left-0 right-0 p-4 md:p-8 flex flex-col sm:flex-row items-start sm:items-end gap-4 md:gap-6">
+  <section class="relative w-full">
+    <div class="relative w-full pt-[45vh] md:pt-[52vh]">
+      <div class="px-4 md:px-0 flex flex-col sm:flex-row items-start sm:items-end gap-4 md:gap-6">
         <img id="heroPoster" src="" alt="" class="hidden sm:block w-20 md:w-32 rounded-xl object-cover shadow-2xl shrink-0" decoding="async" />
 
         <div class="min-w-0 flex-1">
@@ -516,6 +496,50 @@
           <span class="text-white/40 font-medium text-xs uppercase tracking-wide">Géneros</span>
           <p id="detailsGenres" class="text-white/90 font-semibold mt-0.5"></p>
         </div>
+        <div id="detailsTaglineWrap" class="hidden sm:col-span-2">
+          <span class="text-white/40 font-medium text-xs uppercase tracking-wide">Eslogan</span>
+          <p id="detailsTagline" class="text-white/70 italic mt-0.5"></p>
+        </div>
+        <div id="detailsStatusWrap" class="hidden">
+          <span class="text-white/40 font-medium text-xs uppercase tracking-wide">Estado</span>
+          <p id="detailsStatus" class="text-white/90 font-semibold mt-0.5"></p>
+        </div>
+        <div id="detailsLanguageWrap" class="hidden">
+          <span class="text-white/40 font-medium text-xs uppercase tracking-wide">Idioma original</span>
+          <p id="detailsLanguage" class="text-white/90 font-semibold mt-0.5"></p>
+        </div>
+        <div id="detailsCountriesWrap" class="hidden">
+          <span class="text-white/40 font-medium text-xs uppercase tracking-wide">País de origen</span>
+          <p id="detailsCountries" class="text-white/90 font-semibold mt-0.5"></p>
+        </div>
+        <div id="detailsBudgetWrap" class="hidden">
+          <span class="text-white/40 font-medium text-xs uppercase tracking-wide">Presupuesto</span>
+          <p id="detailsBudget" class="text-white/90 font-semibold mt-0.5"></p>
+        </div>
+        <div id="detailsRevenueWrap" class="hidden">
+          <span class="text-white/40 font-medium text-xs uppercase tracking-wide">Recaudación</span>
+          <p id="detailsRevenue" class="text-white/90 font-semibold mt-0.5"></p>
+        </div>
+        <div id="detailsNetworksWrap" class="hidden">
+          <span class="text-white/40 font-medium text-xs uppercase tracking-wide">Cadena / Plataforma</span>
+          <p id="detailsNetworks" class="text-white/90 font-semibold mt-0.5"></p>
+        </div>
+        <div id="detailsEpisodesCountWrap" class="hidden">
+          <span class="text-white/40 font-medium text-xs uppercase tracking-wide">Episodios totales</span>
+          <p id="detailsEpisodesCount" class="text-white/90 font-semibold mt-0.5"></p>
+        </div>
+      </div>
+
+      <!-- Palabras clave -->
+      <div id="keywordsWrap" class="hidden mt-5 pt-5 border-t border-white/10">
+        <span class="text-white/40 font-medium text-xs uppercase tracking-wide">Palabras clave</span>
+        <div id="keywordsRow" class="flex flex-wrap gap-1.5 mt-2"></div>
+      </div>
+
+      <!-- Compañías productoras (logo si TMDB lo tiene, texto si no) -->
+      <div id="companiesWrap" class="hidden mt-5 md:mt-6 pt-5 md:pt-6 border-t border-white/10">
+        <h3 class="text-sm md:text-base font-bold mb-3">Producción</h3>
+        <div id="companiesRow" class="flex flex-wrap items-center gap-4 md:gap-6"></div>
       </div>
 
       <!-- Reparto -->
@@ -559,30 +583,6 @@
         <div class="skeleton-card shrink-0 w-[38vw] sm:w-[160px] md:w-[180px] aspect-[2/3] rounded-xl hidden sm:block"></div>
         <div class="skeleton-card shrink-0 w-[38vw] sm:w-[160px] md:w-[180px] aspect-[2/3] rounded-xl hidden md:block"></div>
       </div>
-    </div>
-  </section>
-
-  <!-- ============================================================ -->
-  <!-- SERVIDORES DISPONIBLES (informativo: elegir uno lleva al reproductor) -->
-  <!-- ============================================================ -->
-  <section class="px-4 md:px-0 mt-4 md:mt-6 pb-8">
-    <div class="glass rounded-2xl p-4 md:p-5">
-      <div class="flex items-center justify-between gap-3 mb-4 flex-wrap">
-        <h2 class="text-base md:text-lg font-bold">Servidores disponibles</h2>
-
-        <!-- Selector de idioma: filtra qué servidores se muestran -->
-        <div id="languageTabs" class="flex items-center gap-1 bg-white/5 border border-white/10 rounded-xl p-1" role="group" aria-label="Filtrar servidores por idioma"></div>
-      </div>
-
-      <!-- Grid de servidores: solo selector informativo, cada uno navega a
-           player.html (que ya decide el servidor real con su propia lógica
-           de "último servidor guardado" / lista negra / idioma). -->
-      <div id="serverGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2.5" role="group" aria-label="Ir al reproductor con un servidor"></div>
-
-      <p class="text-white/40 text-xs md:text-sm leading-relaxed mt-4 flex items-start gap-2">
-        <svg class="w-4 h-4 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-        Si un servidor no carga, prueba con otro de la lista una vez dentro del reproductor.
-      </p>
     </div>
   </section>
 </main>
@@ -635,446 +635,6 @@
 <script>
 (function () {
   'use strict';
-
-  /* ================================================================
-     1. CONFIGURACIÓN DE SERVIDORES
-     ----------------------------------------------------------------
-     Para agregar un nuevo servidor, solo hay que añadir un objeto
-     más a este arreglo. No es necesario tocar el resto del código:
-     el selector, el grid y el dropdown se generan dinámicamente
-     a partir de "servers".
-
-     Campos de cada servidor:
-       nombre    → texto visible
-       icono     → URL de una imagen (favicon/logo). Si falla o se
-                   deja vacío, se muestra un ícono genérico de reserva.
-       color     → (sin efecto visual actualmente) todos los servidores
-                   comparten el acento dinámico del poster del título en
-                   reproducción. Se mantiene el campo por si en el futuro
-                   se quiere volver a un esquema de color por servidor.
-       urlBase   → dominio/base del servidor
-       idioma    → código de idioma fijo de este servidor (ver LANGUAGES
-                   más abajo). Determina en qué pestaña de idioma aparece.
-       formatoUrl (opcional) → plantilla personalizada de la URL del
-                   embed para ESTE servidor. Si no se define, se usa la
-                   fórmula por defecto (ver DEFAULT_URL_FORMAT más abajo).
-
-     Placeholders disponibles en formatoUrl:
-       {urlBase}  → la urlBase del servidor
-       {tmdb_id}  → ID de TMDB del título
-       {season}   → temporada (solo series)
-       {episode}  → episodio (solo series)
-     ================================================================ */
-
-  // Idiomas disponibles para filtrar servidores. Cada servidor debe usar
-  // uno de estos códigos en su campo "idioma". Agregar un idioma nuevo
-  // aquí y asignarlo a algún servidor es suficiente: la pestaña aparece
-  // sola en el selector.
-  const LANGUAGES = [
-    { code: "es", label: "Español", flag: "🌐" }, // español neutro/universal (no latino específico)
-    { code: "pt", label: "Português", flag: "🇧🇷" },
-    { code: "en", label: "English", flag: "🇺🇸" },
-  ];
-
-  const servers = [
-    {
-      nombre: "TONPlayer",
-      icono: "https://tonplayer.space/favicon.ico",
-      color: "#E50914", // rojo Streamix
-      urlBase: "https://api.tonplayer.space",
-      idioma: "es",
-      // Usa la fórmula por defecto: {urlBase}/play/movie|tv/{tmdb_id}[/{season}/{episode}]
-},
-    {
-      nombre: "Unlimplay",
-      icono: "https://www.google.com/s2/favicons?domain=Unlimplay.com&sz=64",
-      color: "#3B82F6", // azul
-      urlBase: "https://unlimplay.com",
-      idioma: "es",
-      formatoUrl: {
-        movie: "{urlBase}/f/embed/movie/{tmdb_id}",
-        tv: "{urlBase}/f/embed/tv/{tmdb_id}/{season}/{episode}",
-      },
-},
-    {
-      nombre: "Vimeus",
-      icono: "https://www.google.com/s2/favicons?domain=vimeus.com&sz=64",
-      color: "#22C55E", // verde
-      urlBase: "https://vimeus.com",
-      idioma: "es",
-      // Ejemplo de fórmula personalizada: este servidor usa "/embed/" en vez de "/play/"
-      formatoUrl: {
-        movie: "{urlBase}/e/movie?tmdb={tmdb_id}&view_key=2EOKjEd-ocsv9E_PZzrfBGgOiTLm6jtPFbp8apcC2Q",
-        tv: "{urlBase}/e/serie?tmdb={tmdb_id}&view_key=rmEZpTbdvA9V7oAkOlDwjyry88rqLvT2wy452Y_qgw&se={season}&ep={episode}",
-      },
-},
-    {
-      nombre: "Embed69",
-      icono: "https://www.google.com/s2/favicons?domain=embed69.com&sz=64",
-      color: "#3B82F6", // azul
-      urlBase: "https://embed69.org",
-      idioma: "es",
-      // Ejemplo de fórmula personalizada: este servidor identifica el
-      // contenido por IMDB ID en vez de TMDB ID (común en varias APIs
-      // de streaming reales). El placeholder {imdb_id} se resuelve
-      // automáticamente pidiendo external_ids a TMDB antes de cargar.
-      formatoUrl: {
-        movie: "{urlBase}/f/{imdb_id}/",
-        tv: "{urlBase}/f/{imdb_id}-{season}x{episode}",
-      },
-},
-{
-      nombre: "VerHDLink",
-      icono: "https://www.google.com/s2/favicons?domain=verhdlink.cam&sz=64",
-      color: "#3B82F6", // azul
-      urlBase: "https://verhdlink.cam",
-      idioma: "es",
-      // Ejemplo de fórmula personalizada: este servidor identifica el
-      // contenido por IMDB ID en vez de TMDB ID (común en varias APIs
-      // de streaming reales). El placeholder {imdb_id} se resuelve
-      // automáticamente pidiendo external_ids a TMDB antes de cargar.
-      formatoUrl: {
-        movie: "{urlBase}/movie/{imdb_id}",
-        tv: "{urlBase}/tv/{imdb_id}-{season}x{episode}",
-      },
-},
-    {
-      nombre: "Warezcdn",
-      icono: "https://www.google.com/s2/favicons?domain=warezcdn.lat&sz=64",
-      color: "#E50914", // rojo Streamix
-      urlBase: "https://warezcdn.lat",
-      idioma: "pt",
-      formatoUrl: {
-        movie: "{urlBase}/filme/{tmdb_id}/",
-        tv: "{urlBase}/serie/{tmdb_id}/{season}/{episode}",
-    },
-},
-{
-      nombre: "Superflixapi",
-      icono: "https://www.google.com/s2/favicons?domain=superflixapi.pro&sz=64",
-      color: "#E50914", // rojo Streamix
-      urlBase: "https://superflixapi.pro",
-      idioma: "pt",
-      formatoUrl: {
-        movie: "{urlBase}/filme/{tmdb_id}/",
-        tv: "{urlBase}/serie/{tmdb_id}/{season}/{episode}",
-    },
-},
-{
-      nombre: "Pomfy",
-      icono: "https://api.pomfy.stream/favicon.ico",
-      color: "#E50914", // rojo Streamix
-      urlBase: "https://api.pomfy.stream",
-      idioma: "pt",
-      formatoUrl: {
-        movie: "{urlBase}/filme/{tmdb_id}/",
-        tv: "{urlBase}/serie/{tmdb_id}/{season}/{episode}",
-    },
-},
-{
-      nombre: "Megaembed",
-      icono: "https://www.google.com/s2/favicons?domain=megaembed.com&sz=64",
-      color: "#E50914", // rojo Streamix
-      urlBase: "https://mgeb.top",
-      idioma: "pt",
-      formatoUrl: {
-        movie: "{urlBase}/embed/{tmdb_id}/",
-        tv: "{urlBase}/embed/{tmdb_id}/{season}/{episode}",
-    },
-},
-{
-      nombre: "Betterflix",
-      icono: "https://www.google.com/s2/favicons?domain=betterflix.lat&sz=64",
-      color: "#E50914", // rojo Streamix
-      urlBase: "https://betterflix.lat",
-      idioma: "pt",
-      formatoUrl: {
-        movie: "{urlBase}/api/player?id={tmdb_id}&type=movie",
-        tv: "{urlBase}/https://betterflix.lat/api/player?id={tmdb_id}&type=tv&season={season}&episode={episode}",
-    },
-},
-{
-      nombre: "Primesrc",
-      icono: "https://www.google.com/s2/favicons?domain=primesrc.me&sz=64",
-      color: "#E50914", // rojo Streamix
-      urlBase: "https://primesrc.me",
-      idioma: "en",
-      formatoUrl: {
-        movie: "{urlBase}/embed/movie?tmdb={tmdb_id}/",
-        tv: "{urlBase}/embed/tv?tmdb={tmdb_id}&season={season}&episode={episode}",
-    },
-},
-{
-      nombre: "Vidcore",
-      icono: "https://www.google.com/s2/favicons?domain=vidcore.org&sz=64",
-      color: "#E50914", // rojo Streamix
-      urlBase: "https://vidcore.org",
-      idioma: "en",
-      formatoUrl: {
-        movie: "{urlBase}/embed/movie/{tmdb_id}/",
-        tv: "{urlBase}/embed/tv/{tmdb_id}/{season}/{episode}",
-    },
-},
-{
-      nombre: "Vaplayer",
-      icono: "https://www.google.com/s2/favicons?domain=vaplayer.ru&sz=64",
-      color: "#E50914", // rojo Streamix
-      urlBase: "https://vaplayer.ru",
-      idioma: "en",
-      formatoUrl: {
-        movie: "{urlBase}/embed/movie/{tmdb_id}/",
-        tv: "{urlBase}/embed/tv/{tmdb_id}/{season}/{episode}",
-},
-},
-{
-      nombre: "Viduki",
-      icono: "https://www.google.com/s2/favicons?domain=www.viduki.net&sz=64",
-      color: "#E50914", // rojo Streamix
-      urlBase: "https://www.viduki.net",
-      idioma: "en",
-      formatoUrl: {
-        movie: "{urlBase}/1/movie/{tmdb_id}/",
-        tv: "{urlBase}/1/tv/{tmdb_id}/{season}/{episode}",
-    },
-},
-{
-      nombre: "2embed",
-      icono: "https://www.google.com/s2/favicons?domain=2embed.online&sz=64",
-      color: "#E50914", // rojo Streamix
-      urlBase: "https://www.2embed.online",
-      idioma: "en",
-      formatoUrl: {
-        movie: "{urlBase}/embed/movie/{imdb_id}",
-        tv: "{urlBase}/embed/tv/{tmdb_id}/{season}/{episode}",
-    },
-},
-{
-      nombre: "Frembed",
-      icono: "https://www.google.com/s2/favicons?domain=frembed.casa&sz=64",
-      color: "#E50914", // rojo Streamix
-      urlBase: "https://frembed.casa",
-      idioma: "fr",
-      formatoUrl: {
-        movie: "{urlBase}/embed/movie/{tmdb_id}",
-        tv: "{urlBase}/embed/serie/{tmdb_id}?sa={season}&epi={episode}",
-    },
-},
-  ];
-
-  /* ================================================================
-     LISTA NEGRA DE SERVIDORES
-     ----------------------------------------------------------------
-     Los servidores cuyo "nombre" (normalizado: minúsculas, sin
-     espacios extra) coincida con alguno de esta lista quedan
-     completamente excluidos: no aparecen en el grid, no se pueden
-     seleccionar, no se cargan nunca (ni siquiera como último servidor
-     recordado) y el sistema de fallback automático los salta solos.
-     ================================================================ */
-  const BLOCKED_SERVER_NAMES = [
-    "Servidortrinity",
-    "Servidormahoutokoro",
-    "Servidordeathstar",
-    "Servidorgoldmember",
-  ];
-
-  function normalizeServerName(name) {
-    return (name || "").toString().trim().toLowerCase().replace(/\s+/g, "");
-  }
-  const BLOCKED_SERVER_SET = new Set(BLOCKED_SERVER_NAMES.map(normalizeServerName));
-
-  function isServerBlocked(server) {
-    return BLOCKED_SERVER_SET.has(normalizeServerName(server.nombre));
-  }
-
-  // Ícono de reserva (SVG en base64) usado cuando un servidor no define
-  // "icono", o cuando la URL de su favicon falla al cargar.
-  const FALLBACK_ICON =
-    "data:image/svg+xml;base64," +
-    btoa(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="4"/><path d="M9 8v8l7-4z" fill="white" stroke="none"/></svg>`);
-
-  /* ================================================================
-     2. ESTADO Y CONSTANTES
-     ================================================================ */
-  const LAST_LANGUAGE_KEY = "streamix_last_language_v1";
-  const WATCHED_EPISODES_KEY = "streamix_watched_episodes_v1";
-
-  let currentLanguage = LANGUAGES[0].code; // se resuelve de verdad en init()
-  let media = { tipo: "movie", tmdbId: null, temporada: null, episodio: null, imdbId: null };
-
-  // Estado de episodios (solo series): usado para calcular "Siguiente episodio",
-  // incluyendo saltar a la primera de la siguiente temporada si corresponde.
-  let allSeasons = [];           // lista completa de temporadas de la serie
-  let currentSeasonEpisodes = []; // episodios de la temporada actualmente cargada
-
-  const byId = (id) => document.getElementById(id);
-
-  /* ================================================================
-     3. LECTURA DE PARÁMETROS DESDE LA URL
-     ----------------------------------------------------------------
-     Soporta dos formatos de query string:
-       Película: ?tipo=movie&id=550
-       Serie:    ?tipo=tv&id=1396&temporada=1&episodio=1
-     También soporta alias en inglés (type/id/season/episode) por si
-     la página que enlaza aquí usa esa nomenclatura.
-     ================================================================ */
-  function parseMediaFromUrl() {
-    const params = new URLSearchParams(window.location.search);
-
-    const tipoRaw = (params.get("tipo") || params.get("type") || "movie").toLowerCase();
-    const tipo = tipoRaw === "tv" || tipoRaw === "serie" || tipoRaw === "series" ? "tv" : "movie";
-
-    const tmdbId = params.get("id") || params.get("tmdb_id") || params.get("tmdbId");
-    const temporada = params.get("temporada") || params.get("season") || "1";
-    const episodio = params.get("episodio") || params.get("episode") || "1";
-    const titulo = params.get("titulo") || params.get("title") || null;
-
-    return {
-      tipo,
-      tmdbId: tmdbId ? tmdbId.trim() : null,
-      temporada: tipo === "tv" ? temporada : null,
-      episodio: tipo === "tv" ? episodio : null,
-      titulo,
-    };
-  }
-
-  /* ================================================================
-     5. RIPPLE EN BOTONES
-     ================================================================ */
-  function ripple(e, btn) {
-    const circle = document.createElement("span");
-    const rect = btn.getBoundingClientRect();
-    const size = Math.max(rect.width, rect.height);
-    circle.className = "ripple-el";
-    circle.style.width = circle.style.height = size + "px";
-    circle.style.left = (e.clientX ? e.clientX - rect.left : rect.width / 2) - size / 2 + "px";
-    circle.style.top = (e.clientY ? e.clientY - rect.top : rect.height / 2) - size / 2 + "px";
-    btn.appendChild(circle);
-    setTimeout(() => circle.remove(), 650);
-  }
-  document.addEventListener("click", (e) => {
-    const btn = e.target.closest(".btn-ripple");
-    if (btn) ripple(e, btn);
-  });
-
-  /* ================================================================
-     9. RENDER: GRID DE SERVIDORES + DROPDOWN
-     ----------------------------------------------------------------
-     Ambos se generan a partir del mismo arreglo "servers", así que
-     agregar un servidor nuevo actualiza automáticamente toda la UI.
-     ================================================================ */
-
-  // Navegación por teclado con flechas dentro de un grupo de botones
-  // (grid de servidores, tabs de idioma, lista de episodios): Flecha
-  // derecha/abajo mueve el foco al siguiente elemento, izquierda/arriba
-  // al anterior, Home/End al primero/último. El grid puede envolver en
-  // varias filas: usamos el orden real del DOM, que ya sigue el flujo
-  // visual (grid-auto-flow por defecto es "row").
-  function enableArrowKeyNav(container, itemSelector) {
-    if (container.dataset.arrowNavBound === "true") return; // evita apilar listeners si se llama varias veces sobre el mismo contenedor
-    container.dataset.arrowNavBound = "true";
-
-    container.addEventListener("keydown", (e) => {
-      const keys = ["ArrowRight", "ArrowDown", "ArrowLeft", "ArrowUp", "Home", "End"];
-      if (!keys.includes(e.key)) return;
-
-      const items = Array.from(container.querySelectorAll(itemSelector));
-      const currentIndex = items.indexOf(document.activeElement);
-      if (currentIndex === -1) return;
-
-      e.preventDefault();
-      let nextIndex = currentIndex;
-      if (e.key === "ArrowRight" || e.key === "ArrowDown") nextIndex = (currentIndex + 1) % items.length;
-      else if (e.key === "ArrowLeft" || e.key === "ArrowUp") nextIndex = (currentIndex - 1 + items.length) % items.length;
-      else if (e.key === "Home") nextIndex = 0;
-      else if (e.key === "End") nextIndex = items.length - 1;
-
-      items[nextIndex].focus();
-    });
-  }
-
-  // Genera el HTML del ícono de un servidor: usa la URL de "icono" si existe,
-  // y cae al ícono de reserva (FALLBACK_ICON) si la URL falla al cargar o
-  // el servidor no definió ninguna.
-  function buildServerIconHtml(server, sizeClass) {
-    const src = server.icono && server.icono.trim() ? server.icono : FALLBACK_ICON;
-    return `<img src="${src}" alt="" class="${sizeClass} object-contain rounded" loading="lazy" decoding="async" onerror="this.onerror=null;this.src='${FALLBACK_ICON}';" />`;
-  }
-
-  // Devuelve los servidores (con su índice ORIGINAL en "servers") que
-  // pertenecen al idioma actualmente seleccionado, excluyendo los
-  // servidores de la lista negra (ver BLOCKED_SERVER_NAMES).
-  function getServersForCurrentLanguage() {
-    return servers
-      .map((server, index) => ({ server, index }))
-      .filter(({ server }) => server.idioma === currentLanguage && !isServerBlocked(server));
-  }
-
-  // Grid de servidores: puramente informativo/selector. Cada botón
-  // navega a player.html, que decide el servidor real a cargar con su
-  // propia lógica (último servidor guardado, idioma, lista negra) —
-  // esta página no reproduce nada ni guarda preferencia de servidor.
-  function renderServerGrid() {
-    const grid = byId("serverGrid");
-    grid.innerHTML = "";
-
-    const filtered = getServersForCurrentLanguage();
-
-    if (!filtered.length) {
-      grid.innerHTML = `<p class="col-span-full text-center text-white/40 text-sm py-4">No hay servidores disponibles en este idioma todavía.</p>`;
-      return;
-    }
-
-    const playerHref = buildPlayerHref(media);
-
-    filtered.forEach(({ server }) => {
-      const link = document.createElement("a");
-      link.href = playerHref;
-      link.className = "server-btn btn-ripple flex flex-row items-center gap-2.5 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 py-2.5 px-3 text-left";
-      link.setAttribute("aria-label", `Ver con el servidor ${server.nombre}`);
-
-      link.innerHTML = `
-        ${buildServerIconHtml(server, "w-5 h-5 shrink-0")}
-        <span class="text-xs font-semibold leading-tight truncate">${server.nombre}</span>
-      `;
-
-      grid.appendChild(link);
-    });
-
-    enableArrowKeyNav(grid, ".server-btn");
-  }
-
-  // Renderiza las pestañas de idioma (Español / Português / English) a
-  // partir de LANGUAGES. Solo filtra qué servidores se listan; no carga
-  // ni recuerda nada (esa lógica vive en player.html).
-  function renderLanguageTabs() {
-    const wrap = byId("languageTabs");
-    wrap.innerHTML = "";
-
-    LANGUAGES.forEach((lang) => {
-      const tab = document.createElement("button");
-      tab.className = `lang-tab btn-ripple px-3 py-1.5 rounded-lg text-xs md:text-sm font-semibold flex items-center gap-1.5 ${lang.code === currentLanguage ? "active" : ""}`;
-      tab.dataset.lang = lang.code;
-      tab.setAttribute("aria-pressed", lang.code === currentLanguage ? "true" : "false");
-      tab.innerHTML = `<span>${lang.flag}</span><span class="hidden sm:inline">${lang.label}</span>`;
-
-      tab.addEventListener("click", () => {
-        if (lang.code === currentLanguage) return;
-        currentLanguage = lang.code;
-
-        document.querySelectorAll("#languageTabs .lang-tab").forEach((t) => {
-          const isActive = t.dataset.lang === lang.code;
-          t.classList.toggle("active", isActive);
-          t.setAttribute("aria-pressed", isActive ? "true" : "false");
-        });
-
-        renderServerGrid();
-      });
-
-      wrap.appendChild(tab);
-    });
-
-    enableArrowKeyNav(wrap, ".lang-tab");
-  }
 
   /* ================================================================
      11. INFO DE MEDIA EN EL HEADER
@@ -1132,6 +692,17 @@
     return h > 0 ? `${h}h ${m.toString().padStart(2, "0")}m` : `${m}m`;
   }
 
+  // TMDB reporta presupuesto/recaudación siempre en USD, sin importar
+  // el idioma configurado en TMDB_LANG — por eso se formatea fijo en
+  // dólares en vez de usar el locale del navegador.
+  function formatMoney(amount) {
+    if (!amount) return null;
+    if (amount >= 1_000_000_000) return `$${(amount / 1_000_000_000).toFixed(1).replace(/\.0$/, "")}B`;
+    if (amount >= 1_000_000) return `$${(amount / 1_000_000).toFixed(1).replace(/\.0$/, "")}M`;
+    if (amount >= 1_000) return `$${(amount / 1_000).toFixed(0)}K`;
+    return `$${amount}`;
+  }
+
   function buildCastCard(person) {
     const card = document.createElement("button");
     card.className = "cast-card shrink-0 w-20 md:w-24 text-center";
@@ -1160,7 +731,7 @@
     try {
       const endpoint = media.tipo === "tv" ? `/tv/${media.tmdbId}` : `/movie/${media.tmdbId}`;
       const data = await tmdbFetch(endpoint, {
-        append_to_response: "credits,videos,external_ids,images",
+        append_to_response: "credits,videos,external_ids,images,keywords",
         include_image_language: "en,es,null",
       });
 
@@ -1263,6 +834,105 @@
       if (genres) {
         byId("detailsGenres").textContent = genres;
         byId("detailsGenresWrap").classList.remove("hidden");
+      }
+
+      // --- Eslogan ---
+      if (data.tagline) {
+        byId("detailsTagline").textContent = `"${data.tagline}"`;
+        byId("detailsTaglineWrap").classList.remove("hidden");
+      }
+
+      // --- Estado (En emisión, Finalizada, Estrenada, etc.) ---
+      const statusLabels = {
+        "Released": "Estrenada", "Rumored": "Rumor", "Post Production": "Postproducción",
+        "In Production": "En producción", "Planned": "Planeada", "Canceled": "Cancelada",
+        "Returning Series": "En emisión", "Ended": "Finalizada", "Pilot": "Piloto",
+      };
+      if (data.status) {
+        byId("detailsStatus").textContent = statusLabels[data.status] || data.status;
+        byId("detailsStatusWrap").classList.remove("hidden");
+      }
+
+      // --- Idioma original ---
+      if (data.original_language) {
+        const langNames = { en: "Inglés", es: "Español", ja: "Japonés", ko: "Coreano", fr: "Francés", de: "Alemán", it: "Italiano", pt: "Portugués", zh: "Chino", hi: "Hindi", ru: "Ruso" };
+        byId("detailsLanguage").textContent = langNames[data.original_language] || data.original_language.toUpperCase();
+        byId("detailsLanguageWrap").classList.remove("hidden");
+      }
+
+      // --- País de origen ---
+      const countries = media.tipo === "tv"
+        ? (data.origin_country || [])
+        : (data.production_countries || []).map(c => c.iso_3166_1);
+      if (countries.length) {
+        byId("detailsCountries").textContent = countries.join(", ");
+        byId("detailsCountriesWrap").classList.remove("hidden");
+      }
+
+      // --- Presupuesto / Recaudación (solo películas: TMDB no lo reporta para series) ---
+      if (media.tipo === "movie") {
+        if (data.budget) {
+          byId("detailsBudget").textContent = formatMoney(data.budget);
+          byId("detailsBudgetWrap").classList.remove("hidden");
+        }
+        if (data.revenue) {
+          byId("detailsRevenue").textContent = formatMoney(data.revenue);
+          byId("detailsRevenueWrap").classList.remove("hidden");
+        }
+      }
+
+      // --- Cadena / plataforma (solo series) ---
+      if (media.tipo === "tv" && data.networks && data.networks.length) {
+        byId("detailsNetworks").textContent = data.networks.map(n => n.name).join(", ");
+        byId("detailsNetworksWrap").classList.remove("hidden");
+      }
+
+      // --- Episodios totales (solo series) ---
+      if (media.tipo === "tv" && data.number_of_episodes) {
+        const seasonsCount = data.number_of_seasons ? ` (${data.number_of_seasons} temporada${data.number_of_seasons === 1 ? "" : "s"})` : "";
+        byId("detailsEpisodesCount").textContent = `${data.number_of_episodes}${seasonsCount}`;
+        byId("detailsEpisodesCountWrap").classList.remove("hidden");
+      }
+
+      // --- Palabras clave ---
+      const keywordsList = data.keywords
+        ? (media.tipo === "tv" ? data.keywords.results : data.keywords.keywords) || []
+        : [];
+      if (keywordsList.length) {
+        const keywordsRow = byId("keywordsRow");
+        keywordsRow.innerHTML = "";
+        keywordsList.slice(0, 12).forEach(k => {
+          const chip = document.createElement("span");
+          chip.className = "bg-white/5 border border-white/10 text-white/70 text-xs font-medium px-2.5 py-1 rounded-full";
+          chip.textContent = k.name;
+          keywordsRow.appendChild(chip);
+        });
+        byId("keywordsWrap").classList.remove("hidden");
+      }
+
+      // --- Compañías productoras: logo si TMDB lo tiene, texto simple si no ---
+      const companies = data.production_companies || [];
+      if (companies.length) {
+        const companiesRow = byId("companiesRow");
+        companiesRow.innerHTML = "";
+        companies.slice(0, 8).forEach(company => {
+          if (company.logo_path) {
+            const img = document.createElement("img");
+            img.src = tmdbLogoUrl(company.logo_path, "w185");
+            img.alt = company.name;
+            img.title = company.name;
+            img.loading = "lazy";
+            img.decoding = "async";
+            img.className = "h-6 md:h-8 max-w-[110px] object-contain opacity-80 hover:opacity-100 transition-opacity bg-white/95 rounded px-2 py-1";
+            companiesRow.appendChild(img);
+          } else {
+            const span = document.createElement("span");
+            span.className = "text-white/60 text-xs md:text-sm font-semibold";
+            span.textContent = company.name;
+            companiesRow.appendChild(span);
+          }
+        });
+        byId("companiesWrap").classList.remove("hidden");
       }
 
       // --- Reparto ---
@@ -1907,26 +1577,9 @@
   /* ================================================================
      15. INICIALIZACIÓN
      ================================================================ */
-
-  // Resuelve el idioma inicial: preferencia guardada > idioma del
-  // navegador (si coincide con alguno soportado) > primer idioma de LANGUAGES.
-  function resolveInitialLanguage() {
-    const saved = localStorage.getItem(LAST_LANGUAGE_KEY);
-    if (saved && LANGUAGES.some(l => l.code === saved)) return saved;
-
-    const browserLang = (navigator.language || "").slice(0, 2).toLowerCase();
-    if (LANGUAGES.some(l => l.code === browserLang)) return browserLang;
-
-    return LANGUAGES[0].code;
-  }
-
   function init() {
     media = parseMediaFromUrl();
     renderMediaHeader(); // ya actualiza document.title (con T/E si es serie)
-
-    currentLanguage = resolveInitialLanguage();
-    renderLanguageTabs();
-    renderServerGrid();
 
     // Sin TMDB ID en la URL: no hay nada que mostrar.
     if (!media.tmdbId) {
