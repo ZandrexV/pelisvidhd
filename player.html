@@ -152,22 +152,19 @@
     border: 1px solid rgba(255, 255, 255, 0.06);
   }
 
-  /* ========== VIDRIO ESMERILADO (estilo iOS/tvOS) ==========
-     Blur real del contenido que queda detrás + superficie translúcida
-     neutra + borde de luz muy sutil (blanco, no de color) + sombra
-     suave. Se usa en las barras flotantes (header, bottom nav, toasts)
-     en vez del fondo sólido de .glass/.glass-strong. */
-  .frosted-glass {
-    background: rgba(30, 30, 32, 0.55);
-    -webkit-backdrop-filter: saturate(180%) blur(24px);
-    backdrop-filter: saturate(180%) blur(24px);
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    box-shadow:
-      0 8px 32px -8px rgba(0, 0, 0, 0.55),
-      inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  /* ========== HEADER SUPERIOR: transparente ==========
+     Sin fondo, sin blur, sin borde — solo flotan el logo y los botones
+     sobre el contenido de la página. */
+  .navbar-transparent {
+    background: transparent;
   }
-  @supports not ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
-    .frosted-glass { background: rgba(18, 18, 20, 0.92); }
+
+  /* ========== BARRAS SÓLIDAS (bottom nav, toasts) ==========
+     Fondo oscuro sólido y legible — sin blur. */
+  .frosted-glass {
+    background: rgba(8, 8, 8, 0.97);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 8px 32px -8px rgba(0, 0, 0, 0.6);
   }
 
   /* Panel desplegable (notificaciones, cuenta, etc.) */
@@ -367,7 +364,7 @@
 <!-- ============================================================ -->
 <!-- HEADER MÍNIMO -->
 <!-- ============================================================ -->
-<header class="frosted-glass sticky top-2 mx-2 md:mx-4 rounded-full z-30">
+<header class="navbar-transparent sticky top-2 mx-2 md:mx-4 rounded-full z-30">
   <div class="max-w-6xl mx-auto px-4 md:px-6 h-14 md:h-16 flex items-center justify-between gap-3">
     <div class="flex items-center gap-2 min-w-0">
       <a href="index.html" class="shrink-0" aria-label="PelisVidHD inicio">

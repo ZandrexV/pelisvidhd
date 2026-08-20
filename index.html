@@ -268,24 +268,19 @@
     pointer-events: none;
   }
 
-  /* ========== VIDRIO ESMERILADO (estilo iOS/tvOS) ==========
-     Blur real del contenido que queda detrás + superficie translúcida
-     neutra + borde de luz muy sutil (blanco, no de color) + sombra
-     suave. Reemplaza el fondo sólido de .glass-strong en
-     las barras flotantes (navbar, bottom nav, toasts). */
-  .frosted-glass {
-    background: rgba(30, 30, 32, 0.55);
-    -webkit-backdrop-filter: saturate(180%) blur(24px);
-    backdrop-filter: saturate(180%) blur(24px);
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    box-shadow:
-      0 8px 32px -8px rgba(0, 0, 0, 0.55),
-      inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  /* ========== NAVBAR/HEADER SUPERIOR: transparente ==========
+     Sin fondo, sin blur, sin borde — solo flotan el logo y los botones
+     sobre el contenido de la página. */
+  .navbar-transparent {
+    background: transparent;
   }
-  /* Sin soporte de backdrop-filter: cae a un fondo sólido oscuro para
-     no quedar transparente sobre el contenido. */
-  @supports not ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
-    .frosted-glass { background: rgba(18, 18, 20, 0.92); }
+
+  /* ========== BARRAS SÓLIDAS (bottom nav, toasts) ==========
+     Fondo oscuro sólido y legible — sin blur. */
+  .frosted-glass {
+    background: rgba(8, 8, 8, 0.97);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 8px 32px -8px rgba(0, 0, 0, 0.6);
   }
 
   /* ========== BOTTOM NAV (móvil) ========== */
@@ -378,7 +373,7 @@
 <!-- ============================================================ -->
 <!-- NAVBAR -->
 <!-- ============================================================ -->
-<header id="navbar" class="fixed top-3 left-3 right-3 md:left-4 md:right-4 z-50 frosted-glass rounded-full">
+<header id="navbar" class="fixed top-3 left-3 right-3 md:left-4 md:right-4 z-50 navbar-transparent rounded-full">
   <div class="max-w-[1600px] mx-auto px-5 md:px-8 h-14 md:h-16 flex items-center justify-between gap-4">
 
     <!-- Logo -->
@@ -743,10 +738,6 @@
       <i class="fa-solid fa-tv text-sm"></i>
       <span class="text-[9px] font-semibold">Series</span>
     </a>
-    <button id="bottomNavSearch" type="button" class="bottom-nav-item flex flex-col items-center justify-center gap-0.5 text-white/55 rounded-full" aria-label="Buscar">
-      <i class="fa-solid fa-magnifying-glass text-sm"></i>
-      <span class="text-[9px] font-semibold">Buscar</span>
-    </button>
     <button id="bottomNavSaved" type="button" class="bottom-nav-item flex flex-col items-center justify-center gap-0.5 text-white/55 rounded-full" aria-label="Guardados">
       <i class="fa-solid fa-bookmark text-sm"></i>
       <span class="text-[9px] font-semibold">Guardados</span>
@@ -1226,9 +1217,9 @@ async function loadAllRows() {
       if (byId('mi-lista-row-anchor')) renderMyList();
     });
 
-    node.addEventListener('click', () => goToDetails(title.id));
+    node.addEventListener('click', () => goToDetails(title));
     node.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); goToDetails(title.id); }
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); goToDetails(title); }
     });
 
     // Optional rank badge (Top 10 row)
@@ -1390,7 +1381,7 @@ async function loadAllRows() {
     }
 
     byId('heroPlayBtn').onclick = () => goToPlayer(t);
-    byId('heroInfoBtn').onclick = () => goToDetails(t.id);
+    byId('heroInfoBtn').onclick = () => goToDetails(t);
     byId('heroListBtn').onclick = () => {
       const nowFav = toggleFav(t.id);
       showToast(nowFav ? `Agregado a Mi Lista: ${t.titulo}` : `Quitado de Mi Lista: ${t.titulo}`);
@@ -1464,8 +1455,14 @@ async function loadAllRows() {
   // una página propia con la ficha completa (sinopsis, reparto, saga,
   // recomendaciones, y los servidores como último paso antes de
   // reproducir), en vez de abrir un popup resumido.
-  function goToDetails(id) {
-    const t = TITLES.find(x => x.id === id) || getHistory().find(x => x.id === id);
+  //
+  // Recibe el objeto título completo directamente (igual que
+  // goToPlayer), en vez de un id a rebuscar: los resultados de
+  // búsqueda, de una filmografía o de una colección no siempre están
+  // en TITLES/getHistory(), así que rebuscar por id ahí fallaba en
+  // silencio para cualquier título que no perteneciera al catálogo ya
+  // cargado en las filas del home.
+  function goToDetails(t) {
     if (!t) return;
 
     const tipoParam = t.tipo === 'Serie' ? 'tv' : 'movie';
@@ -1525,9 +1522,6 @@ async function loadAllRows() {
     });
   });
 
-  // "Buscar" en la bottom nav: abre el mismo buscador que el ícono de
-  // lupa del navbar superior (se conecta más abajo, junto a mobileSearchWrap).
-
   // "Guardados" en la bottom nav: resetea filtros y hace scroll directo
   // a la fila de "Mi Lista", igual que el link "Mi Lista" del navbar.
   byId('bottomNavSaved').addEventListener('click', () => {
@@ -1547,18 +1541,6 @@ async function loadAllRows() {
     const isOpen = mobileSearchWrap.style.maxHeight && mobileSearchWrap.style.maxHeight !== '0px';
     mobileSearchWrap.style.maxHeight = isOpen ? '0px' : '80px';
     if (!isOpen) byId('searchInputMobile').focus();
-  });
-
-  // "Buscar" en la bottom nav: mismo comportamiento que el ícono de
-  // lupa del navbar, pero además hace scroll arriba para que el input
-  // expandido quede visible sin importar dónde estaba el usuario.
-  byId('bottomNavSearch').addEventListener('click', () => {
-    const isOpen = mobileSearchWrap.style.maxHeight && mobileSearchWrap.style.maxHeight !== '0px';
-    if (!isOpen) {
-      mobileSearchWrap.style.maxHeight = '80px';
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-    byId('searchInputMobile').focus();
   });
 
   /* ---------- SEARCH ---------- */
@@ -1689,6 +1671,45 @@ async function loadAllRows() {
     const personName = link.dataset.personName;
     if (personId) openPersonView(personId, personName);
   });
+
+  // Muestra todas las películas de una saga/colección reutilizando el
+  // mismo overlay del buscador. Pide /collection/{id}, que trae la
+  // lista completa de "parts" (películas) de esa saga.
+  async function openCollectionView(collectionId, collectionName) {
+    searchOverlay.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+    byId('searchResultsTitle').textContent = collectionName;
+
+    searchGrid.innerHTML = `
+      <div class="col-span-full flex items-center justify-center py-16">
+        <div class="w-8 h-8 border-2 border-white/20 border-t-brand rounded-full animate-spin"></div>
+      </div>`;
+    searchEmptyMsg.classList.add('hidden');
+
+    try {
+      const data = await tmdbFetch(`/collection/${collectionId}`);
+      const rawResults = (data.parts || [])
+        .filter(r => r.release_date) // descarta películas sin fecha (aún no estrenadas / sin datos)
+        .sort((a, b) => (a.release_date || '').localeCompare(b.release_date || ''));
+
+      const normalized = rawResults.map(r => normalizeItem(r, 'Película'));
+
+      // Reutiliza instancias ya conocidas (con logo cacheado) si el título ya estaba en TITLES
+      const known = new Map(TITLES.map(t => [t.id, t]));
+      const results = normalized.map(item => known.get(item.id) || item);
+
+      searchGrid.innerHTML = '';
+      results.forEach(t => searchGrid.appendChild(buildCard(t)));
+      observePendingLogos(searchGrid);
+      searchEmptyMsg.textContent = `No se encontraron películas para ${collectionName}.`;
+      searchEmptyMsg.classList.toggle('hidden', results.length > 0);
+    } catch (err) {
+      console.error('[PelisVidHD] Error cargando colección:', err);
+      searchGrid.innerHTML = '';
+      searchEmptyMsg.textContent = 'No se pudo cargar la saga. Intenta de nuevo.';
+      searchEmptyMsg.classList.remove('hidden');
+    }
+  }
 
   function closeSearch() {
     searchOverlay.classList.add('hidden');
