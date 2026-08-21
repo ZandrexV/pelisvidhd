@@ -551,6 +551,7 @@
     <div class="max-w-[1600px] mx-auto px-4 md:px-8 w-full">
       <div id="heroContent" class="max-w-xl hero-content">
         <span id="heroBadge" class="inline-block mb-3 px-3 py-1 rounded-full text-xs font-bold bg-brand/90 badge tracking-wide uppercase">Tendencia #1</span>
+        <img id="heroLogo" class="max-h-14 sm:max-h-20 md:max-h-28 max-w-[85%] object-contain object-left mb-4 hidden" alt="" decoding="async" />
         <h1 id="heroTitle" class="text-3xl sm:text-4xl md:text-6xl font-black leading-[1.05] mb-4 drop-shadow-2xl"></h1>
 
         <div id="heroMeta" class="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-sm text-white/85 mb-4 font-medium"></div>
@@ -654,7 +655,7 @@
 
       <!-- Title area: logo real de TMDB si existe (reemplaza al texto); si no hay logo, o falla, se ve el nombre en texto -->
       <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent pt-10 pb-3 px-3 flex flex-col items-start gap-1.5 min-h-[30%]">
-        <img class="title-logo-img max-h-8 md:max-h-10 max-w-[70%] object-contain object-left hidden" alt="" loading="lazy" decoding="async" />
+        <img class="title-logo-img max-h-8 md:max-h-10 max-w-[70%] object-contain object-left hidden" alt="" decoding="async" />
         <p class="card-title-fallback font-extrabold text-sm md:text-base leading-tight text-left drop-shadow-lg"></p>
       </div>
 
@@ -769,6 +770,10 @@
     <a href="?tipo=Serie" data-nav-filter="Serie" class="bottom-nav-item flex flex-col items-center justify-center gap-0.5 text-white/55 rounded-full" aria-label="Series">
       <i class="fa-solid fa-tv text-sm"></i>
       <span class="text-[9px] font-semibold">Series</span>
+    </a>
+    <a href="?tipo=anime" data-nav-filter="anime" class="bottom-nav-item flex flex-col items-center justify-center gap-0.5 text-white/55 rounded-full" aria-label="Anime">
+      <i class="fa-solid fa-dragon text-sm"></i>
+      <span class="text-[9px] font-semibold">Anime</span>
     </a>
     <button id="bottomNavSaved" type="button" class="bottom-nav-item flex flex-col items-center justify-center gap-0.5 text-white/55 rounded-full" aria-label="Guardados">
       <i class="fa-solid fa-bookmark text-sm"></i>
@@ -1148,16 +1153,13 @@ async function loadAllRows() {
   // path disponible y la imagen carga bien. Si no hay logo, o falla al
   // cargar, se mantiene visible el texto (fallback).
   function applyTitleLogo(path, imgEl, fallbackEl) {
-    if (!path) { console.log('[PelisVidHD DEBUG] applyTitleLogo: sin path, se queda el texto'); return; }
-    console.log('[PelisVidHD DEBUG] applyTitleLogo: aplicando', path, 'a', imgEl);
+    if (!path) return; // sin logo disponible: se queda solo el texto
     const url = logoUrl(path);
     imgEl.onload = () => {
-      console.log('[PelisVidHD DEBUG] imgEl.onload disparado, quitando .hidden de', imgEl);
       imgEl.classList.remove('hidden');
       if (fallbackEl) fallbackEl.classList.add('hidden');
     };
     imgEl.onerror = () => {
-      console.log('[PelisVidHD DEBUG] imgEl.onerror disparado (la imagen no cargó) para url:', url);
       imgEl.classList.add('hidden');
       if (fallbackEl) fallbackEl.classList.remove('hidden');
     };
@@ -1180,12 +1182,10 @@ async function loadAllRows() {
       logoLoadObserver.unobserve(node);
 
       const title = cardTitleMap.get(node);
-      if (!title || title.logoPath !== undefined) { console.log('[PelisVidHD DEBUG] observer: sin title o ya resuelto', title); return; }
+      if (!title || title.logoPath !== undefined) return; // ya resuelto o sin datos
 
-      console.log('[PelisVidHD DEBUG] observer: card entró en viewport, pidiendo logo de', title.titulo);
       const logoImg = node.querySelector('.title-logo-img');
       const fallbackEl = node.querySelector('.card-title-fallback');
-      console.log('[PelisVidHD DEBUG] logoImg encontrado?', !!logoImg, 'fallbackEl encontrado?', !!fallbackEl);
       fetchLogo(title).then(path => {
         title.logoPath = path;
         applyTitleLogo(path, logoImg, fallbackEl);
@@ -1404,6 +1404,28 @@ async function loadAllRows() {
 
     byId('heroBadge').innerHTML = t.rating >= 8.5 ? '<i class="fa-solid fa-fire"></i> Tendencia' : 'Destacado';
     byId('heroTitle').textContent = t.titulo;
+
+    // Logo del hero: mismo criterio que las cards (logo real de TMDB
+    // reemplaza al título en texto si existe). Se pide directo, sin
+    // diferir con IntersectionObserver, porque el hero es un único
+    // elemento siempre visible al cargar la página (no una fila de
+    // scroll con decenas de cards).
+    const heroLogoImg = byId('heroLogo');
+    const heroTitleEl = byId('heroTitle');
+    heroLogoImg.classList.add('hidden');
+    heroTitleEl.classList.remove('hidden');
+    if (t.logoPath !== undefined) {
+      applyTitleLogo(t.logoPath, heroLogoImg, heroTitleEl);
+    } else {
+      fetchLogo(t).then(path => {
+        t.logoPath = path;
+        // Evita aplicar el logo si el usuario ya avanzó a otro slide mientras se pedía.
+        if (HERO_ITEMS[heroIndex] === t) {
+          applyTitleLogo(path, heroLogoImg, heroTitleEl);
+        }
+      });
+    }
+
     byId('heroMeta').innerHTML = `
       <span class="text-green-400 font-bold"><i class="fa-solid fa-star"></i> ${t.rating}</span>
       <span>${t.anio}</span>
