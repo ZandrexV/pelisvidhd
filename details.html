@@ -357,10 +357,6 @@
           <img src="https://i.ibb.co/V0Sst1qh/20260203-025506.png" alt="PelisVidHD" class="w-full h-full object-cover" decoding="async" />
         </span>
       </a>
-      <div class="min-w-0">
-        <p id="mediaTitle" class="font-bold text-sm md:text-base leading-tight truncate">Cargando título…</p>
-        <p id="mediaSubtitle" class="text-[11px] md:text-xs text-white/45 leading-tight truncate"></p>
-      </div>
     </div>
 
     <!-- Buscar + Notificaciones + Perfil: mismo estilo minimalista que index.html -->
@@ -762,24 +758,12 @@
   }
 
   function renderMediaHeader() {
-    const titleEl = byId("mediaTitle");
-    const subtitleEl = byId("mediaSubtitle");
-
     if (!media.tmdbId) {
-      titleEl.textContent = "Sin contenido seleccionado";
-      subtitleEl.textContent = "Falta el parámetro id en la URL";
+      updatePageTitle("Sin contenido seleccionado");
       return;
     }
 
     const displayTitle = media.titulo || (media.tipo === "tv" ? `Serie · TMDB #${media.tmdbId}` : `Película · TMDB #${media.tmdbId}`);
-    titleEl.textContent = displayTitle;
-
-    if (media.tipo === "tv") {
-      subtitleEl.textContent = `Temporada ${media.temporada} · Episodio ${media.episodio}`;
-    } else {
-      subtitleEl.textContent = "Película";
-    }
-
     updatePageTitle(displayTitle);
   }
 

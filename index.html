@@ -898,6 +898,11 @@ const logoCache = new Map();
 // Se pide SIN el parámetro "language" por defecto (que filtraría demasiado)
 // y se prioriza: logo sin idioma marcado (el más "limpio", como en el poster
 // oficial) > español > inglés > cualquier otro disponible.
+//
+// Nota sobre iso_639_1: normalmente TMDB devuelve `null` (el valor JSON,
+// no el texto) para las imágenes sin idioma marcado, pero en la práctica
+// también se ha visto el string literal "null" para el mismo caso — se
+// aceptan ambas formas para no perder esos logos por un detalle de tipos.
 async function fetchLogo(item) {
   const cacheKey = item.id;
   if (logoCache.has(cacheKey)) return logoCache.get(cacheKey);
@@ -906,14 +911,13 @@ async function fetchLogo(item) {
   try {
     const data = await tmdbFetch(endpoint, { include_image_language: "en,es,null" }, true);
     const logos = data.logos || [];
-    console.log(`[PelisVidHD] Logos para "${item.titulo}" (${endpoint}):`, logos.length, logos);
+    const isNoLanguage = (l) => l.iso_639_1 === null || l.iso_639_1 === "null" || l.iso_639_1 === undefined || l.iso_639_1 === "";
     const pick =
-      logos.find(l => l.iso_639_1 === null) ||
+      logos.find(isNoLanguage) ||
       logos.find(l => l.iso_639_1 === "es") ||
       logos.find(l => l.iso_639_1 === "en") ||
       logos[0];
     const path = pick ? pick.file_path : null;
-    if (!path) console.warn(`[PelisVidHD] Sin logo disponible para "${item.titulo}"`);
     logoCache.set(cacheKey, path);
     return path;
   } catch (err) {
@@ -1144,13 +1148,16 @@ async function loadAllRows() {
   // path disponible y la imagen carga bien. Si no hay logo, o falla al
   // cargar, se mantiene visible el texto (fallback).
   function applyTitleLogo(path, imgEl, fallbackEl) {
-    if (!path) return; // sin logo disponible: se queda solo el texto
+    if (!path) { console.log('[PelisVidHD DEBUG] applyTitleLogo: sin path, se queda el texto'); return; }
+    console.log('[PelisVidHD DEBUG] applyTitleLogo: aplicando', path, 'a', imgEl);
     const url = logoUrl(path);
     imgEl.onload = () => {
+      console.log('[PelisVidHD DEBUG] imgEl.onload disparado, quitando .hidden de', imgEl);
       imgEl.classList.remove('hidden');
       if (fallbackEl) fallbackEl.classList.add('hidden');
     };
     imgEl.onerror = () => {
+      console.log('[PelisVidHD DEBUG] imgEl.onerror disparado (la imagen no cargó) para url:', url);
       imgEl.classList.add('hidden');
       if (fallbackEl) fallbackEl.classList.remove('hidden');
     };
@@ -1173,10 +1180,12 @@ async function loadAllRows() {
       logoLoadObserver.unobserve(node);
 
       const title = cardTitleMap.get(node);
-      if (!title || title.logoPath !== undefined) return; // ya resuelto o sin datos
+      if (!title || title.logoPath !== undefined) { console.log('[PelisVidHD DEBUG] observer: sin title o ya resuelto', title); return; }
 
+      console.log('[PelisVidHD DEBUG] observer: card entró en viewport, pidiendo logo de', title.titulo);
       const logoImg = node.querySelector('.title-logo-img');
       const fallbackEl = node.querySelector('.card-title-fallback');
+      console.log('[PelisVidHD DEBUG] logoImg encontrado?', !!logoImg, 'fallbackEl encontrado?', !!fallbackEl);
       fetchLogo(title).then(path => {
         title.logoPath = path;
         applyTitleLogo(path, logoImg, fallbackEl);
