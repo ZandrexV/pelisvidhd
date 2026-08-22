@@ -660,6 +660,14 @@
       <option value="">Año</option>
     </select>
   </div>
+
+  <!-- Plataformas de streaming (TMDB Watch Providers): al elegir una,
+       muestra el catálogo disponible ahí, reutilizando el overlay de
+       búsqueda (mismo patrón que colecciones/filmografías). -->
+  <div class="flex items-center gap-2.5 overflow-x-auto no-scrollbar pt-3 mt-1 border-t border-white/10">
+    <span class="text-white/40 text-xs font-semibold uppercase tracking-wide shrink-0 pr-1">Plataformas</span>
+    <div id="watchProvidersRow" class="flex items-center gap-2.5"></div>
+  </div>
 </section>
 
 <!-- Filtered results grid (shown when a filter is active) -->
@@ -1391,8 +1399,60 @@ async function loadAllRows() {
     });
     renderMyList();
     renderHistoryRow();
+    renderBecauseYouWatchedRow();
     initScrollReveal();
     observePendingLogos();
+  }
+
+  /* ---------- "PORQUE VISTE..." (recomendaciones basadas en el último título visto) ---------- */
+  // A diferencia de las demás filas (ya resueltas en rowResults), esta
+  // depende de un fetch adicional a /recommendations del último título
+  // del historial, así que se agrega aparte, sin bloquear el render
+  // inicial: aparece en cuanto la respuesta llega.
+  async function renderBecauseYouWatchedRow() {
+    const existing = byId('becauseYouWatchedSection');
+    if (existing) existing.remove();
+
+    const history = getHistory();
+    if (!history.length) return; // sin historial: nada que recomendar todavía
+
+    const lastWatched = history[0]; // unshift en addToHistory: el índice 0 es siempre el último visto
+    const tipoEndpoint = lastWatched.tipo === 'Serie' ? 'tv' : 'movie';
+
+    let items;
+    try {
+      items = await fetchAndNormalizeList(`/${tipoEndpoint}/${lastWatched.tmdbId}/recommendations`, {}, lastWatched.tipo);
+    } catch (err) {
+      console.error('Error cargando "Porque viste...":', err);
+      return;
+    }
+    if (!items.length) return; // TMDB no tiene recomendaciones para este título: la fila no se muestra
+
+    // Reutiliza instancias ya conocidas (con logo cacheado) si el título ya estaba en TITLES
+    const known = new Map(TITLES.map(t => [t.id, t]));
+    const dedupedItems = items.map(item => known.get(item.id) || item);
+    dedupedItems.forEach(item => { if (!known.has(item.id)) TITLES.push(item); });
+
+    const section = document.createElement('section');
+    section.id = 'becauseYouWatchedSection';
+    section.className = 'dynamic-row reveal in-view';
+    section.innerHTML = `
+      <div class="flex items-center justify-between mb-3 md:mb-4">
+        <h2 class="text-lg md:text-2xl font-bold tracking-tight truncate">Porque viste <span class="text-brand">${lastWatched.titulo}</span></h2>
+      </div>
+      <div class="row-scroll flex items-end gap-3 md:gap-4 overflow-x-auto no-scrollbar pb-3"></div>
+    `;
+    const scrollWrap = section.querySelector('.row-scroll');
+    dedupedItems.forEach(item => scrollWrap.appendChild(buildCard(item)));
+
+    // Justo después de "Visto recientemente" (si existe) o al principio.
+    const historySection = byId('historySection');
+    if (historySection) {
+      historySection.after(section);
+    } else {
+      rowsContainer.prepend(section);
+    }
+    observePendingLogos(section);
   }
 
   /* ---------- MI LISTA ---------- */
@@ -1850,6 +1910,81 @@ async function loadAllRows() {
     }
   }
 
+  /* ---------- PLATAFORMAS DE STREAMING (TMDB Watch Providers) ---------- */
+  // IDs de proveedor estables de TMDB (https://www.themoviedb.org/talk/...
+  // /watch/providers) — no cambian salvo que TMDB retire la plataforma.
+  const WATCH_PROVIDERS = [
+    { id: 8, name: 'Netflix', logo: 'https://image.tmdb.org/t/p/original/t2yyOv40HZeVlLjYsCsPHnWLk4W.jpg' },
+    { id: 337, name: 'Disney+', logo: 'https://image.tmdb.org/t/p/original/97yvRBw1GzX7fXprcF80er19ot.jpg' },
+    { id: 1899, name: 'HBO Max', logo: 'https://image.tmdb.org/t/p/original/aS2zvJWn9mwiCOeaaCkIh4wleZS.jpg' },
+    { id: 9, name: 'Prime Video', logo: 'https://image.tmdb.org/t/p/original/68MNrwlkpF7WnmNPXLah69CR5cb.jpg' },
+    { id: 350, name: 'Apple TV+', logo: 'https://image.tmdb.org/t/p/original/6uhKBfmtzFqOcLousHwZuzcrScK.jpg' },
+    { id: 531, name: 'Paramount+', logo: 'https://image.tmdb.org/t/p/original/xbhHHa1YgtpwhC8lb1NQ3ACVcLd.jpg' },
+    { id: 15, name: 'Hulu', logo: 'https://image.tmdb.org/t/p/original/giwM8XX4V2AQb9vsoN7yti82tKK.jpg' },
+  ];
+  // Región usada para el catálogo/disponibilidad (los Watch Providers de
+  // TMDB varían por país); coincide con el idioma fijo de la app (es-ES).
+  const WATCH_REGION = 'ES';
+
+  function renderWatchProviders() {
+    const row = byId('watchProvidersRow');
+    row.innerHTML = '';
+    WATCH_PROVIDERS.forEach(p => {
+      const btn = document.createElement('button');
+      btn.className = 'watch-provider-btn shrink-0 w-9 h-9 md:w-10 md:h-10 rounded-lg overflow-hidden border-2 border-transparent hover:border-brand transition-colors';
+      btn.setAttribute('aria-label', p.name);
+      btn.title = p.name;
+      btn.innerHTML = `<img src="${p.logo}" alt="${p.name}" loading="lazy" decoding="async" class="w-full h-full object-cover" />`;
+      btn.addEventListener('click', () => openWatchProviderView(p));
+      row.appendChild(btn);
+    });
+  }
+
+  // Abre el overlay de búsqueda con el catálogo disponible en una
+  // plataforma (mezcla películas y series, cada una vía /discover con
+  // with_watch_providers). Mismo patrón que openCollectionView/openPersonView.
+  async function openWatchProviderView(provider) {
+    searchOverlay.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+    byId('searchResultsTitle').textContent = `Disponible en ${provider.name}`;
+
+    searchGrid.innerHTML = `
+      <div class="col-span-full flex items-center justify-center py-16">
+        <div class="w-8 h-8 border-2 border-white/20 border-t-brand rounded-full animate-spin"></div>
+      </div>`;
+    searchEmptyMsg.classList.add('hidden');
+
+    const discoverParams = {
+      with_watch_providers: provider.id,
+      watch_region: WATCH_REGION,
+      sort_by: 'popularity.desc',
+    };
+
+    try {
+      const [movies, series] = await Promise.all([
+        fetchAndNormalizeList('/discover/movie', discoverParams, 'Película'),
+        fetchAndNormalizeList('/discover/tv', discoverParams, 'Serie'),
+      ]);
+      const combined = [...movies, ...series].sort((a, b) => b.rating - a.rating);
+
+      // Reutiliza instancias ya conocidas (con logo cacheado) si el título ya estaba en TITLES
+      const known = new Map(TITLES.map(t => [t.id, t]));
+      const results = combined.map(item => known.get(item.id) || item);
+      results.forEach(item => { if (!known.has(item.id)) TITLES.push(item); });
+
+      searchGrid.innerHTML = '';
+      results.forEach(t => searchGrid.appendChild(buildCard(t)));
+      observePendingLogos(searchGrid);
+      searchEmptyMsg.textContent = `No se encontraron títulos disponibles en ${provider.name}.`;
+      searchEmptyMsg.classList.toggle('hidden', results.length > 0);
+    } catch (err) {
+      console.error('[PelisVidHD] Error cargando catálogo de la plataforma:', err);
+      searchGrid.innerHTML = '';
+      searchEmptyMsg.textContent = 'No se pudo cargar el catálogo de esta plataforma. Intenta de nuevo.';
+      searchEmptyMsg.classList.remove('hidden');
+    }
+  }
+
   function closeSearch() {
     searchOverlay.classList.add('hidden');
     document.body.style.overflow = '';
@@ -2100,6 +2235,8 @@ async function loadAllRows() {
   }
 
   async function initApp() {
+    renderWatchProviders(); // estático, no depende de TMDB: se pinta de inmediato
+
     const cached = loadCatalogCache();
 
     if (cached) {
