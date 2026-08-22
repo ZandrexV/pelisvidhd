@@ -314,6 +314,28 @@
   }
 
   /* ================================================================
+     DONUT DE PUNTUACIÓN
+     ----------------------------------------------------------------
+     Círculo de progreso tipo Rotten Tomatoes/Netflix, con el
+     porcentaje en el centro (r=15.9155 → circunferencia exacta 100,
+     así stroke-dashoffset = 100 - porcentaje directo desde JS/HTML).
+     ================================================================ */
+  .rating-donut-track {
+    fill: none;
+    stroke: rgba(255,255,255,0.18);
+  }
+  .rating-donut-progress {
+    fill: none;
+    stroke: #22c55e;
+    stroke-linecap: round;
+    transform: rotate(-90deg);
+    transform-origin: center;
+    transition: stroke-dashoffset 0.6s ease, stroke 0.3s ease;
+  }
+  .rating-donut[data-tier="mid"] .rating-donut-progress { stroke: #eab308; }
+  .rating-donut[data-tier="low"] .rating-donut-progress { stroke: #ef4444; }
+
+  /* ================================================================
      RECOMMENDATION CARDS
      ================================================================ */
   .rec-card {
@@ -2122,15 +2144,21 @@
     card.className = "rec-card relative block rounded-lg md:rounded-xl overflow-hidden bg-bgcard cursor-pointer";
     card.setAttribute("aria-label", `Ver ${item.titulo}`);
 
+    const pct = Math.round((item.rating || 0) * 10);
+    const tier = pct >= 70 ? "high" : pct >= 40 ? "mid" : "low";
+
     card.innerHTML = `
       <div class="relative w-full aspect-[2/3] overflow-hidden">
         <img src="${tmdbPosterUrl(item.posterPath)}" alt="${item.titulo}" loading="lazy" decoding="async"
              class="w-full h-full object-cover" />
 
-        <!-- Rating badge -->
-        <span class="absolute top-1.5 right-1.5 md:top-2 md:right-2 flex items-center gap-1 bg-black/70 border border-white/15 text-white text-[9px] md:text-[11px] font-bold px-1.5 py-0.5 rounded-full">
-          <svg class="w-2.5 h-2.5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.958a1 1 0 00.95.69h4.162c.969 0 1.371 1.24.588 1.81l-3.368 2.447a1 1 0 00-.364 1.118l1.287 3.957c.3.922-.755 1.688-1.539 1.118l-3.367-2.446a1 1 0 00-1.176 0l-3.367 2.446c-.784.57-1.838-.196-1.539-1.118l1.287-3.957a1 1 0 00-.364-1.118L2.063 9.385c-.783-.57-.38-1.81.588-1.81h4.163a1 1 0 00.95-.69l1.285-3.958z"/></svg>
-          ${item.rating.toFixed(1)}
+        <!-- Donut de puntuación -->
+        <span class="rating-donut absolute top-1.5 right-1.5 md:top-2 md:right-2 w-8 h-8 md:w-9 md:h-9 rounded-full bg-black/70 border border-white/15 flex items-center justify-center" data-tier="${tier}">
+          <svg class="absolute inset-0 w-full h-full" viewBox="0 0 36 36">
+            <circle class="rating-donut-track" cx="18" cy="18" r="15.9155" stroke-width="3"></circle>
+            <circle class="rating-donut-progress" cx="18" cy="18" r="15.9155" stroke-width="3" stroke-dasharray="100" stroke-dashoffset="${100 - pct}"></circle>
+          </svg>
+          <span class="relative text-white text-[8px] md:text-[9px] font-extrabold leading-none">${pct}%</span>
         </span>
 
         <!-- Play overlay al hover -->

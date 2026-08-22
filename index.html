@@ -64,10 +64,7 @@
   html { scroll-behavior: smooth; }
   body {
     font-family: 'Poppins', sans-serif;
-    background:
-      radial-gradient(ellipse 900px 500px at 15% 0%, rgba(229,9,20,0.10), transparent 60%),
-      radial-gradient(ellipse 700px 500px at 100% 20%, rgba(176,6,16,0.08), transparent 55%),
-      #0A0A0A;
+    background: #0A0A0A;
     color: #fff;
     overflow-x: hidden;
   }
@@ -166,6 +163,31 @@
     opacity: 1;
     transform: translateY(0);
   }
+
+  /* ========== DONUT DE PUNTUACIÓN ==========
+     Círculo de progreso tipo Rotten Tomatoes/Netflix, con el porcentaje
+     en el centro. El arco se dibuja con stroke-dasharray/dashoffset
+     (variables CSS, seteadas por JS según el rating de 0-10 de TMDB
+     convertido a 0-100%). Color del arco: verde ≥70%, amarillo ≥40%,
+     rojo por debajo — igual criterio que Rotten Tomatoes. */
+  .rating-donut {
+    --pct: 0; /* 0 a 100, seteado por JS */
+    --donut-color: #22c55e;
+  }
+  .rating-donut-track {
+    fill: none;
+    stroke: rgba(255,255,255,0.18);
+  }
+  .rating-donut-progress {
+    fill: none;
+    stroke: var(--donut-color);
+    stroke-linecap: round;
+    transform: rotate(-90deg);
+    transform-origin: center;
+    transition: stroke-dashoffset 0.6s ease, stroke 0.3s ease;
+  }
+  .rating-donut[data-tier="mid"] { --donut-color: #eab308; }
+  .rating-donut[data-tier="low"] { --donut-color: #ef4444; }
   @media (hover: none) {
     .card:active { transform: scale(1.06); z-index: 30; }
     .card:active .card-overlay { opacity: 1; transform: translateY(0); }
@@ -581,7 +603,16 @@
           <img id="heroLogo" class="max-h-14 sm:max-h-20 md:max-h-28 max-w-[85%] object-contain object-left mb-4 hidden" alt="" decoding="async" />
           <h1 id="heroTitle" class="text-3xl sm:text-4xl md:text-6xl font-black leading-[1.05] mb-4 drop-shadow-2xl"></h1>
 
-          <div id="heroMeta" class="flex flex-wrap items-center justify-center md:justify-start gap-x-3 gap-y-1.5 text-sm text-white/85 mb-4 font-medium"></div>
+          <div class="flex flex-wrap items-center justify-center md:justify-start gap-3 mb-4">
+            <span id="heroRatingDonut" class="rating-donut relative w-12 h-12 md:w-14 md:h-14 shrink-0 flex items-center justify-center" data-tier="high">
+              <svg class="absolute inset-0 w-full h-full" viewBox="0 0 36 36">
+                <circle class="rating-donut-track" cx="18" cy="18" r="15.9155" stroke-width="2.5"></circle>
+                <circle class="rating-donut-progress" cx="18" cy="18" r="15.9155" stroke-width="2.5" stroke-dasharray="100" stroke-dashoffset="100"></circle>
+              </svg>
+              <span class="rating-value relative text-white text-xs md:text-sm font-extrabold leading-none"></span>
+            </span>
+            <div id="heroMeta" class="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-sm text-white/85 font-medium"></div>
+          </div>
 
           <p id="heroDesc" class="text-white/80 text-sm md:text-base leading-relaxed mb-6 clamp-3 max-w-lg mx-auto md:mx-0"></p>
 
@@ -670,10 +701,13 @@
       <div class="skeleton absolute inset-0"></div>
       <img class="poster-img w-full h-full object-cover relative opacity-0 transition-opacity duration-500" loading="lazy" decoding="async" alt="" />
 
-      <!-- Rating badge (estrella) -->
-      <span class="rating-badge absolute top-1.5 right-1.5 md:top-2 md:right-2 flex items-center gap-1 bg-black/70 border border-white/15 text-white text-[9px] md:text-xs font-bold px-1.5 py-0.5 md:px-2 md:py-1 rounded-full">
-        <svg class="w-2.5 h-2.5 md:w-3 md:h-3 text-yellow-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.958a1 1 0 00.95.69h4.162c.969 0 1.371 1.24.588 1.81l-3.368 2.447a1 1 0 00-.364 1.118l1.287 3.957c.3.922-.755 1.688-1.539 1.118l-3.367-2.446a1 1 0 00-1.176 0l-3.367 2.446c-.784.57-1.838-.196-1.539-1.118l1.287-3.957a1 1 0 00-.364-1.118L2.063 9.385c-.783-.57-.38-1.81.588-1.81h4.163a1 1 0 00.95-.69l1.285-3.958z"/></svg>
-        <span class="rating-value"></span>
+      <!-- Donut de puntuación (círculo de progreso + porcentaje al centro) -->
+      <span class="rating-donut absolute top-1.5 right-1.5 md:top-2 md:right-2 w-8 h-8 md:w-9 md:h-9 rounded-full bg-black/70 border border-white/15 flex items-center justify-center" data-tier="high">
+        <svg class="absolute inset-0 w-full h-full -rotate-0" viewBox="0 0 36 36">
+          <circle class="rating-donut-track" cx="18" cy="18" r="15.9155" stroke-width="3"></circle>
+          <circle class="rating-donut-progress" cx="18" cy="18" r="15.9155" stroke-width="3" stroke-dasharray="100" stroke-dashoffset="100"></circle>
+        </svg>
+        <span class="rating-value relative text-white text-[8px] md:text-[9px] font-extrabold leading-none"></span>
       </span>
 
       <!-- Favorite icon -->
@@ -836,6 +870,20 @@ function bannerUrl(path, size = "w1280") {
 }
 function logoUrl(path, size = "w300") {
   return path ? `${TMDB_IMG}/${size}${path}` : null;
+}
+
+// Aplica el donut de puntuación (círculo de progreso + porcentaje) a un
+// contenedor .rating-donut. Recibe el rating de TMDB en escala 0-10 y lo
+// convierte a porcentaje 0-100, con el mismo criterio de color que
+// Rotten Tomatoes: verde ≥70%, amarillo ≥40%, rojo por debajo.
+// El círculo usa r=15.9155 (radio elegido para que la circunferencia
+// sea exactamente 100), así que stroke-dashoffset = 100 - porcentaje.
+function applyRatingDonut(donutEl, rating0to10) {
+  const pct = Math.round((rating0to10 || 0) * 10);
+  const tier = pct >= 70 ? 'high' : pct >= 40 ? 'mid' : 'low';
+  donutEl.dataset.tier = tier;
+  donutEl.querySelector('.rating-donut-progress').style.strokeDashoffset = String(100 - pct);
+  donutEl.querySelector('.rating-value').textContent = `${pct}%`;
 }
 
 let GENRE_MAP_MOVIE = {};
@@ -1256,7 +1304,7 @@ async function loadAllRows() {
       img.previousElementSibling.remove(); // remove skeleton
     };
 
-    node.querySelector('.rating-value').textContent = title.rating.toFixed(1);
+    applyRatingDonut(node.querySelector('.rating-donut'), title.rating);
     node.querySelector('.card-title').textContent = title.titulo;
     node.querySelector('.card-meta').innerHTML =
       `<span>${title.anio}</span><span>&middot;</span><span>${title.duracion}</span><span>&middot;</span><span class="text-brand font-bold"><i class="fa-solid fa-star text-[10px]"></i> ${title.rating}</span>`;
@@ -1454,8 +1502,8 @@ async function loadAllRows() {
       });
     }
 
+    applyRatingDonut(byId('heroRatingDonut'), t.rating);
     byId('heroMeta').innerHTML = `
-      <span class="text-green-400 font-bold"><i class="fa-solid fa-star"></i> ${t.rating}</span>
       <span>${t.anio}</span>
       <span>&middot;</span>
       <span>${t.duracion}</span>

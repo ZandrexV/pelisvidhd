@@ -233,6 +233,28 @@
     to { background-position: -200% 0; }
   }
 
+  /* ================================================================
+     DONUT DE PUNTUACIÓN
+     ----------------------------------------------------------------
+     Círculo de progreso tipo Rotten Tomatoes/Netflix, con el
+     porcentaje en el centro (r=15.9155 → circunferencia exacta 100,
+     así stroke-dashoffset = 100 - porcentaje directo desde JS/HTML).
+     ================================================================ */
+  .rating-donut-track {
+    fill: none;
+    stroke: rgba(255,255,255,0.18);
+  }
+  .rating-donut-progress {
+    fill: none;
+    stroke: #22c55e;
+    stroke-linecap: round;
+    transform: rotate(-90deg);
+    transform-origin: center;
+    transition: stroke-dashoffset 0.6s ease, stroke 0.3s ease;
+  }
+  .rating-donut[data-tier="mid"] .rating-donut-progress { stroke: #eab308; }
+  .rating-donut[data-tier="low"] .rating-donut-progress { stroke: #ef4444; }
+
   .rec-card {
     transition: transform 0.35s cubic-bezier(.16,1,.3,1), box-shadow 0.35s ease;
   }
@@ -455,7 +477,16 @@
           <h1 id="heroTitleText" class="text-2xl md:text-4xl font-black leading-tight drop-shadow-xl"></h1>
         </div>
 
-        <div id="heroMeta" class="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs md:text-sm text-white/75 font-medium"></div>
+        <div class="flex items-center gap-3">
+          <span id="heroRatingDonut" class="rating-donut hidden relative w-11 h-11 md:w-14 md:h-14 shrink-0 items-center justify-center" data-tier="high">
+            <svg class="absolute inset-0 w-full h-full" viewBox="0 0 36 36">
+              <circle class="rating-donut-track" cx="18" cy="18" r="15.9155" stroke-width="2.5"></circle>
+              <circle class="rating-donut-progress" cx="18" cy="18" r="15.9155" stroke-width="2.5" stroke-dasharray="100" stroke-dashoffset="100"></circle>
+            </svg>
+            <span class="rating-value relative text-white text-[10px] md:text-xs font-extrabold leading-none"></span>
+          </span>
+          <div id="heroMeta" class="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs md:text-sm text-white/75 font-medium"></div>
+        </div>
       </div>
     </div>
 
@@ -900,15 +931,24 @@
       // --- Open Graph / redes sociales: refleja el título real que se está viendo ---
       updateOpenGraphTags(titulo, data.overview, data.poster_path);
 
-      // --- Metadatos (año, duración, rating) ---
+      // --- Metadatos (año, duración) + donut de puntuación aparte ---
       const anio = (data.release_date || data.first_air_date || "").slice(0, 4);
       const rating = data.vote_average ? Math.round(data.vote_average * 10) / 10 : null;
       const runtime = media.tipo === "tv"
         ? (data.episode_run_time && data.episode_run_time[0] ? `${data.episode_run_time[0]}m/ep` : null)
         : formatRuntime(data.runtime);
 
+      const ratingDonutEl = byId("heroRatingDonut");
+      if (rating) {
+        ratingDonutEl.classList.remove("hidden");
+        ratingDonutEl.classList.add("flex");
+        applyRatingDonut(ratingDonutEl, rating);
+      } else {
+        ratingDonutEl.classList.add("hidden");
+        ratingDonutEl.classList.remove("flex");
+      }
+
       const metaParts = [];
-      if (rating) metaParts.push(`<span class="flex items-center gap-1 text-green-400 font-bold"><svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.958a1 1 0 00.95.69h4.162c.969 0 1.371 1.24.588 1.81l-3.368 2.447a1 1 0 00-.364 1.118l1.287 3.957c.3.922-.755 1.688-1.539 1.118l-3.367-2.446a1 1 0 00-1.176 0l-3.367 2.446c-.784.57-1.838-.196-1.539-1.118l1.287-3.957a1 1 0 00-.364-1.118L2.063 9.385c-.783-.57-.38-1.81.588-1.81h4.163a1 1 0 00.95-.69l1.285-3.958z"/></svg>${rating}</span>`);
       if (anio) metaParts.push(`<span>${anio}</span>`);
       if (runtime) metaParts.push(`<span>${runtime}</span>`);
       metaParts.push(`<span class="badge bg-white/10 px-2 py-0.5 rounded text-[11px] font-bold">${media.tipo === "tv" ? "Serie" : "Película"}</span>`);
@@ -1315,6 +1355,18 @@
     return path ? `${TMDB_IMG}/${size}${path}` : null;
   }
 
+  // Aplica el donut de puntuación (círculo de progreso + porcentaje) a un
+  // contenedor .rating-donut. Recibe el rating de TMDB en escala 0-10 y lo
+  // convierte a porcentaje 0-100, con el mismo criterio de color que
+  // Rotten Tomatoes: verde ≥70%, amarillo ≥40%, rojo por debajo.
+  function applyRatingDonut(donutEl, rating0to10) {
+    const pct = Math.round((rating0to10 || 0) * 10);
+    const tier = pct >= 70 ? "high" : pct >= 40 ? "mid" : "low";
+    donutEl.dataset.tier = tier;
+    donutEl.querySelector(".rating-donut-progress").style.strokeDashoffset = String(100 - pct);
+    donutEl.querySelector(".rating-value").textContent = `${pct}%`;
+  }
+
   /* ================================================================
      TEMA DINÁMICO POR POSTER
      ----------------------------------------------------------------
@@ -1610,15 +1662,21 @@
     card.className = "rec-card relative shrink-0 w-[38vw] sm:w-[160px] md:w-[180px] rounded-xl overflow-hidden bg-bgcard cursor-pointer block";
     card.setAttribute("aria-label", `Reproducir ${item.titulo}`);
 
+    const pct = Math.round((item.rating || 0) * 10);
+    const tier = pct >= 70 ? "high" : pct >= 40 ? "mid" : "low";
+
     card.innerHTML = `
       <div class="relative w-full aspect-[2/3] overflow-hidden">
         <img src="${tmdbPosterUrl(item.posterPath)}" alt="${item.titulo}" loading="lazy" decoding="async"
              class="w-full h-full object-cover" />
 
-        <!-- Rating badge -->
-        <span class="absolute top-2 right-2 flex items-center gap-1 bg-black/70 border border-white/15 text-white text-[10px] md:text-[11px] font-bold px-1.5 py-0.5 rounded-full">
-          <svg class="w-2.5 h-2.5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.958a1 1 0 00.95.69h4.162c.969 0 1.371 1.24.588 1.81l-3.368 2.447a1 1 0 00-.364 1.118l1.287 3.957c.3.922-.755 1.688-1.539 1.118l-3.367-2.446a1 1 0 00-1.176 0l-3.367 2.446c-.784.57-1.838-.196-1.539-1.118l1.287-3.957a1 1 0 00-.364-1.118L2.063 9.385c-.783-.57-.38-1.81.588-1.81h4.163a1 1 0 00.95-.69l1.285-3.958z"/></svg>
-          ${item.rating.toFixed(1)}
+        <!-- Donut de puntuación -->
+        <span class="rating-donut absolute top-2 right-2 w-8 h-8 md:w-9 md:h-9 rounded-full bg-black/70 border border-white/15 flex items-center justify-center" data-tier="${tier}">
+          <svg class="absolute inset-0 w-full h-full" viewBox="0 0 36 36">
+            <circle class="rating-donut-track" cx="18" cy="18" r="15.9155" stroke-width="3"></circle>
+            <circle class="rating-donut-progress" cx="18" cy="18" r="15.9155" stroke-width="3" stroke-dasharray="100" stroke-dashoffset="${100 - pct}"></circle>
+          </svg>
+          <span class="relative text-white text-[8px] md:text-[9px] font-extrabold leading-none">${pct}%</span>
         </span>
 
         <!-- Play overlay al hover -->
