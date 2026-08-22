@@ -646,6 +646,27 @@
   </section>
 
   <!-- ============================================================ -->
+  <!-- SOBRE ESTE TÍTULO: poster + logo/título + sinopsis (resumen) -->
+  <!-- ============================================================ -->
+  <section id="aboutSection" class="hidden px-4 md:px-0 mt-4 md:mt-6">
+    <div class="glass rounded-2xl p-4 md:p-5">
+      <div class="flex gap-3 md:gap-4">
+        <img id="aboutPoster" src="" alt="" class="hidden sm:block w-16 md:w-20 rounded-lg object-cover shrink-0" decoding="async" />
+
+        <div class="min-w-0 flex-1">
+          <img id="aboutLogo" src="" alt="" class="hidden max-h-8 md:max-h-10 max-w-[75%] object-contain object-left mb-1.5" decoding="async" />
+          <h2 id="aboutTitle" class="font-bold text-sm md:text-base leading-tight mb-1.5"></h2>
+          <p id="aboutOverview" class="text-white/60 text-xs md:text-sm leading-relaxed line-clamp-3"></p>
+          <a id="aboutDetailsLink" href="#" class="inline-flex items-center gap-1 text-xs md:text-sm font-semibold text-brand hover:text-brandlight transition-colors mt-2">
+            Ver ficha completa
+            <i class="fa-solid fa-chevron-right text-[10px]"></i>
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
   <!-- SELECTOR DE TEMPORADA / EPISODIO (solo series) -->
   <!-- ============================================================ -->
   <section id="episodesSection" class="hidden px-4 md:px-0 mt-4 md:mt-6">
@@ -1690,7 +1711,10 @@
 
     try {
       const endpoint = media.tipo === "tv" ? `/tv/${media.tmdbId}` : `/movie/${media.tmdbId}`;
-      const data = await tmdbFetch(endpoint, { append_to_response: "external_ids" });
+      const data = await tmdbFetch(endpoint, {
+        append_to_response: "external_ids,images",
+        include_image_language: "en,es,null",
+      });
 
       // Guarda el IMDB ID en "media" si no lo teníamos ya (por ejemplo,
       // pedido antes por loadServer() para un servidor con {imdb_id}).
@@ -1713,6 +1737,42 @@
 
       // --- Open Graph / redes sociales: refleja el título real que se está viendo ---
       updateOpenGraphTags(titulo, data.overview, data.poster_path);
+
+      // --- "Sobre este título": poster + logo/título + sinopsis (resumen
+      // debajo de los servidores, con link a la ficha completa) ---
+      const aboutPosterEl = byId("aboutPoster");
+      if (data.poster_path) {
+        aboutPosterEl.src = tmdbPosterUrl(data.poster_path, "w185");
+        aboutPosterEl.alt = titulo;
+        aboutPosterEl.classList.remove("hidden");
+      } else {
+        aboutPosterEl.classList.add("hidden");
+      }
+
+      const aboutLogoEl = byId("aboutLogo");
+      const aboutTitleEl = byId("aboutTitle");
+      const logos = (data.images && data.images.logos) || [];
+      const logoPick =
+        logos.find(l => l.iso_639_1 === null) ||
+        logos.find(l => l.iso_639_1 === "es") ||
+        logos.find(l => l.iso_639_1 === "en") ||
+        logos[0];
+      if (logoPick) {
+        aboutLogoEl.onload = () => { aboutLogoEl.classList.remove("hidden"); aboutTitleEl.classList.add("hidden"); };
+        aboutLogoEl.onerror = () => { aboutLogoEl.classList.add("hidden"); aboutTitleEl.classList.remove("hidden"); };
+        aboutLogoEl.src = tmdbLogoUrl(logoPick.file_path);
+        aboutLogoEl.alt = titulo;
+      } else {
+        aboutLogoEl.classList.add("hidden");
+        aboutTitleEl.classList.remove("hidden");
+      }
+      aboutTitleEl.textContent = titulo;
+      byId("aboutOverview").textContent = data.overview || "Sin sinopsis disponible.";
+
+      const detailsParams = new URLSearchParams({ tipo: media.tipo, id: media.tmdbId, titulo });
+      byId("aboutDetailsLink").href = `details.html?${detailsParams.toString()}`;
+
+      byId("aboutSection").classList.remove("hidden");
 
       // Si es serie, inicializa el selector de temporada/episodio con
       // las temporadas reales que reporta TMDB para este título.
